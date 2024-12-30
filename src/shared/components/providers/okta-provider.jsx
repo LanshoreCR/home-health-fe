@@ -6,18 +6,13 @@ const clientId = import.meta.env.VITE_OKTA_CLIENT_ID || ''
 const issuer = import.meta.env.VITE_OKTA_ISSUER || ''
 const oktaCallback = import.meta.env.VITE_OKTA_CALLBACK
 const redirectUri = `${window.location.origin}${oktaCallback}`
+console.log("🚀 ~ redirectUri:", redirectUri)
 const oktaAuth = new OktaAuth({
-    issuer: "https://rescare.oktapreview.com",
-    // issuer: "https://rescare.okta.com",
-    // clientId,
-    clientId: '0oavpsyk4g39vTGn60x7',
-    
+    issuer,
+    clientId,
     redirectUri,
-    // redirectUri: "https://google.com",
     scopes: ['openid', 'profile', 'email'],
-    state: "gdgdgbgjggfvjfhdbvfjghbvfjhb",
-    codeChallenge: "Zv3YDZa8yBYp9ZrgRKKHTO0ILh6S1cDGvkwGUiOpJ34",
-    
+
 })
 
 const OktaProvider = ({ children }) => {
