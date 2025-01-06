@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useOktaAuth } from '@okta/okta-react'
+// import { useOktaAuth } from '@okta/okta-react'
 import { Box, AppBar, Toolbar, IconButton, Typography, Button } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import useGoBack from '../hooks/useGoBack'
@@ -10,10 +10,10 @@ const Navbar = () => {
     const location = useLocation()
     const navigate = useNavigate()
 
-    const { oktaAuth } = useOktaAuth()
+    // const { oktaAuth } = useOktaAuth()
 
     const handleLogout = async () => {
-        await oktaAuth.signOut()
+        // await oktaAuth.signOut()
     }
 
     return (

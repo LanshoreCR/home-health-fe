@@ -110,7 +110,7 @@ export default function BannerCard({ audit, refreshAudits }) {
         <article className='gap-x-3 flex'>
           <div className='flex items-center'>
             <DateRangeIcon className='text-blue-400' />
-            <span>{format(packageStartDate, 'short')}</span>
+            <span>{format(packageStartDate ?? new Date().toISOString(), 'short')}</span>
           </div>
           <div className='flex items-center'>
             <PieChartOutlineOutlinedIcon className='text-blue-400' />

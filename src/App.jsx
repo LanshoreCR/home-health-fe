@@ -1,15 +1,18 @@
 import AppRouter from './AppRouter'
-import OktaProvider from './shared/components/providers/okta-provider'
+// import OktaProvider from './shared/components/providers/okta-provider'
 import Navbar from './shared/components/navbar'
 import { Route, Routes } from 'react-router-dom'
 import { LoginCallback } from '@okta/okta-react'
 import { LocalizationProvider } from '@mui/x-date-pickers'
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3'
+import QualityAuditThemeProvider from './shared/components/providers/theme-provider'
 
 function App() {
 
+  // <OktaProvider>
+  {/* </OktaProvider> */ }
   return (
-    <OktaProvider>
+    <QualityAuditThemeProvider>
       <div className='w-full h-full'>
         <header>
           <Navbar />
@@ -25,9 +28,7 @@ function App() {
           </LocalizationProvider>
         </main>
       </div>
-
-    </OktaProvider>
-
+    </QualityAuditThemeProvider>
   )
 }
 

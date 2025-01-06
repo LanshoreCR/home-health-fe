@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Autocomplete, Button, Card, Checkbox, FormControl, IconButton, Modal, TextField } from '@mui/material'
-import { getNotificationUsers, sendCAPANotification } from '../../../shared/services/api/endpoints/capa'
+// import { getNotificationUsers, sendCAPANotification } from '../../../shared/services/api/endpoints/capa'
 import CloseIcon from '@mui/icons-material/Close'
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank'
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
@@ -14,19 +14,19 @@ const SendNotificationModal = ({ isOpen, onClose, packageId }) => {
 
     const onSubmit = async () => {
         setIsLoading(true)
-        if (selectedNotificationUsers.length > 0) {
-            const Receipts = selectedNotificationUsers.map(({ email, employeeID }) => ({ email, employeeID }))
-            const response = await sendCAPANotification({
-                Receipts,
-                CAPALink: `${window.location.origin}/${packageId}/capa`,
-                PackageID: packageId
-            })
-            if (response instanceof Error) {
-                toast.error('error while sending capa notification')
-                return
-            }
-            toast.success('capa notification sent successfully')
-        }
+        // if (selectedNotificationUsers.length > 0) {
+        //     const Receipts = selectedNotificationUsers.map(({ email, employeeID }) => ({ email, employeeID }))
+        //     const response = await sendCAPANotification({
+        //         Receipts,
+        //         CAPALink: `${window.location.origin}/${packageId}/capa`,
+        //         PackageID: packageId
+        //     })
+        //     if (response instanceof Error) {
+        //         toast.error('error while sending capa notification')
+        //         return
+        //     }
+        //     toast.success('capa notification sent successfully')
+        // }
         setIsLoading(false)
         setSelectedNotificationUsers([])
         onClose()
@@ -34,14 +34,14 @@ const SendNotificationModal = ({ isOpen, onClose, packageId }) => {
 
     useEffect(() => {
         if (!isOpen) return
-        getNotificationUsers().then(res => {
-            if (res instanceof Error) {
-                throw new Error('error getting notifications users')
-            }
-            setNotificationUsers(res)
-        }).catch(err => {
-            toast.error(err)
-        })
+        // getNotificationUsers().then(res => {
+        //     if (res instanceof Error) {
+        //         throw new Error('error getting notifications users')
+        //     }
+        //     setNotificationUsers(res)
+        // }).catch(err => {
+        //     toast.error(err)
+        // })
     }, [isOpen])
 
     return (
