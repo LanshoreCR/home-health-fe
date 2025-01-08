@@ -59,7 +59,6 @@ const getAuditorOptions = (audits = []) => {
 }
 
 const getLocationOptions = (audits = []) => {
-  console.log("🚀 ~ getLocationOptions ~ audits:", audits)
   const locations = audits.map((audit) => ({
     id: audit.edNumber,
     name: audit.edName

@@ -41,7 +41,8 @@ export const createTools = async ({ tools, packageId, userId }) => {
       TemplateID: tool.tool,
       AssignedAuditor: userId,
       LocationNumber: tool.location,
-      CustomerName: ''
+      CustomerName: '',
+      StartOfCareDate: tool.date
     }))
     const body = {
       PackageID: packageId,

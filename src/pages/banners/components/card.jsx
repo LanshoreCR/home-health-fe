@@ -1,6 +1,5 @@
 import { useState } from 'react'
 
-import { format } from '@formkit/tempo'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import Chip from '@mui/material/Chip'
@@ -15,7 +14,7 @@ import PieChartOutlineOutlinedIcon from '@mui/icons-material/PieChartOutlineOutl
 import { Link, useNavigate } from 'react-router-dom'
 import AttachFileIcon from '@mui/icons-material/AttachFile'
 import { FormControl, InputLabel, Select } from '@mui/material'
-import { changeAuditStatus } from '../../../shared/services/api/endpoints/audit'
+import { changeAuditStatus, deleteAudit } from '../../../shared/services/api/endpoints/audit'
 import { toast } from 'sonner'
 import useModal from '../../../shared/hooks/useModal'
 import ManageTeamModal from './manage-team-modal'
@@ -25,6 +24,12 @@ import { getReportUrl } from '../../../shared/utils/powerbi-report'
 const CAPA_FLAG = {
   ACTIVE: 1,
   INACTIVE: 0
+}
+
+const STATUS = {
+  PENDING: 'Pending',
+  UNDER_REVIEW: 'Under Review',
+  COMPLETED: 'Approved'
 }
 
 export default function BannerCard({ audit, refreshAudits }) {
@@ -68,6 +73,17 @@ export default function BannerCard({ audit, refreshAudits }) {
       return
     }
     toast.success('audit status changed successfully')
+    refreshAudits()
+  }
+
+  const handleDeleteAudit = async () => {
+    const response = await deleteAudit({ packageId })
+    if (response instanceof Error) {
+      toast.error('error while deleting audit')
+      return
+    }
+    toast.success('audit deleted successfully')
+    refreshAudits()
   }
 
   const handleOpenReport = () => {
@@ -91,8 +107,8 @@ export default function BannerCard({ audit, refreshAudits }) {
               id="demo-simple-select"
               label="Change Status"
               onChange={handleChangeStatus}
+              disabled={packageStatus !== STATUS.UNDER_REVIEW}
             >
-
               <MenuItem value={''}></MenuItem>
               <MenuItem value={'4'}>Approve</MenuItem>
               <MenuItem value={'1'}>Reject</MenuItem>
@@ -109,19 +125,19 @@ export default function BannerCard({ audit, refreshAudits }) {
       <footer className='w-full mt-3 flex justify-between items-center'>
         <article className='gap-x-3 flex'>
           <div className='flex items-center'>
-            <DateRangeIcon className='text-blue-400' />
-            <span>{format(packageStartDate ?? new Date().toISOString(), 'short')}</span>
+            <DateRangeIcon className='text-primary/80' />
+            <span>{packageStartDate}</span>
           </div>
           <div className='flex items-center'>
-            <PieChartOutlineOutlinedIcon className='text-blue-400' />
+            <PieChartOutlineOutlinedIcon className='text-primary/80' />
             <span>{quarter}</span>
           </div>
           <div className='flex items-center'>
-            <PercentIcon className='text-blue-400' />
+            <PercentIcon className='text-primary/80' />
             <span>{packageScore}</span>
           </div>
           <div className='flex items-center'>
-            <PersonIcon className='text-blue-400' />
+            <PersonIcon className='text-primary/80' />
             <span>{teamLead}</span>
           </div>
         </article>
@@ -131,6 +147,9 @@ export default function BannerCard({ audit, refreshAudits }) {
               <Button variant="text">View CAPA</Button>
             </Link>
           )}
+          <Link to={`/${packageId}/tools/new`}>
+            <Button variant="text">Create Tools</Button>
+          </Link>
           <Link to={`/${packageId}/tools`}>
             <Button variant="text">View Tools</Button>
           </Link>
@@ -143,17 +162,25 @@ export default function BannerCard({ audit, refreshAudits }) {
           MenuListProps={{
             'aria-labelledby': 'basic-button'
           }}>
-          <MenuItem onClick={handleClose}>Create tools</MenuItem>
           <MenuItem onClick={handleOpenReport}>Check report</MenuItem>
+          {
+            packageStatus !== STATUS.COMPLETED && (
+              <>
+                <MenuItem onClick={() => {
+                  openSendNotificationsModal()
+                  handleClose()
+                }}>Send Notifications</MenuItem>
+                <MenuItem onClick={() => {
+                  openManageTeamModal()
+                  handleClose()
+                }}>Manage team</MenuItem>
+              </>
+            )
+          }
           <MenuItem onClick={() => {
-            openSendNotificationsModal()
+            handleDeleteAudit()
             handleClose()
-          }}>Send Notifications</MenuItem>
-          <MenuItem onClick={() => {
-            openManageTeamModal()
-            handleClose()
-          }}>Manage team</MenuItem>
-          <MenuItem onClick={handleClose}>Delete</MenuItem>
+          }}>Delete</MenuItem>
         </Menu>
       </footer>
       <ManageTeamModal

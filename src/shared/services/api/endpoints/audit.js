@@ -7,7 +7,6 @@ export const createAudit = async ({ audit, userId }) => {
     const axiosInstance = apiMaster.getInstance()
 
     const { dateRange, edName, businessLineId, locationId } = audit
-    console.log("🚀 ~ createAudit ~ audit:", audit)
     const startDate = dateRange[0]
     const endDate = dateRange[1]
 
@@ -132,5 +131,24 @@ export const changeAuditStatus = async ({ id, status, score }) => {
   } catch (error) {
     console.error(error)
     return new Error('cannot update audit status')
+  }
+}
+
+
+export const deleteAudit = async ({ packageId }) => {
+  try {
+    const axiosInstance = apiMaster.getInstance()
+
+    const body = {
+      PackageID: packageId
+    }
+
+    const response = await axiosInstance.put(ENDPOINTS.DELETE_BANNER, body, {})
+    if (response.status !== 200) return new Error('error deleting audit from database')
+    const data = response.data
+    return data
+  } catch (error) {
+    console.error(error)
+    return new Error('cannot delete audit')
   }
 }

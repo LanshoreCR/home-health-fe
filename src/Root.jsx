@@ -8,11 +8,12 @@ import { getUserInfo } from './shared/services/api/endpoints/user-info'
 import BannersPage from './pages/banners/page'
 import CreateBannerPage from './pages/banners/create-banner/page'
 import BannerToolsPage from './pages/tools/page'
+import CreateToolPage from './pages/tools/create-tool/page'
 
 const RootPage = () => {
   const dispatch = useDispatch()
   // const { token } = useSession()
-  const token = 'eyJraWQiOiJhOVQ0dHJhNE56OWZTOElvaTJTSG96bTVrRXNfd2JGajdmVkRmclgxM2dNIiwidHlwIjoiYXBwbGljYXRpb25cL29rdGEtaW50ZXJuYWwtYXQrand0IiwiYWxnIjoiUlMyNTYifQ.eyJ2ZXIiOjEsImp0aSI6IkFULkFHOTl5NkRoR25fUVZZellScHI2TEo2X2l0QnIzaTdlVHBrZUxtX1dZLXcub2FyMXFnaGY3emxsM01pRGIweDciLCJpc3MiOiJodHRwczovL3Jlc2NhcmUub2t0YS5jb20iLCJhdWQiOiJodHRwczovL3Jlc2NhcmUub2t0YS5jb20iLCJzdWIiOiIwNzczNDcwQHJlc2NhcmUuY29tIiwiaWF0IjoxNzM2Mjc3MDczLCJleHAiOjE3MzYyODA2NzMsImNpZCI6IjBvYXZwc3lrNGczOXZUR242MHg3IiwidWlkIjoiMDB1MTV3YmNhZXJscG82VXIweDgiLCJzY3AiOlsib3BlbmlkIiwib2ZmbGluZV9hY2Nlc3MiXSwiYXV0aF90aW1lIjoxNzM2Mjc3MDcxfQ.VdUp60hAKVgP2YQGyL9aTQ5-5xJfnIo6avgHxTERZzMDAYm6fYWaBkfci9NkGOuYsVMGZ3F_69Qz55eagY0-O9vh2NJGIcdc69CHd7sIT4nlLiDyM0swAWxP4sYAXbkS7BnhOCtJhA2PywRQkjgTIvPSIDLVjPDWDMqCMkQU3o_1cSpmRJo4iCD7Hz5C2lrm65RyxmNpNmB_i56nM4TwV1xaLSVDWtpBWycVD-uUxZbb1H0jN34UyJIYU9bzA4-L1LcR9U7-Y36r0f1SCg5C4vO46MBYv42tgalyfiTc0esTBvQ7uTDbVChWc35WT6uBHMiODvfILrqtXNhYDOTJHw'
+  const token = 'eyJraWQiOiJhOVQ0dHJhNE56OWZTOElvaTJTSG96bTVrRXNfd2JGajdmVkRmclgxM2dNIiwidHlwIjoiYXBwbGljYXRpb25cL29rdGEtaW50ZXJuYWwtYXQrand0IiwiYWxnIjoiUlMyNTYifQ.eyJ2ZXIiOjEsImp0aSI6IkFULnBidHd6UGk5WmFPcmZ2endOT1JROVJ5SzNXNGVnX3dpZVFZQUVzV25vMzgub2FyMXFoeHdoekt5TEtNeWoweDciLCJpc3MiOiJodHRwczovL3Jlc2NhcmUub2t0YS5jb20iLCJhdWQiOiJodHRwczovL3Jlc2NhcmUub2t0YS5jb20iLCJzdWIiOiIwNzczNDcwQHJlc2NhcmUuY29tIiwiaWF0IjoxNzM2MzU1MzkxLCJleHAiOjE3MzYzNTg5OTEsImNpZCI6IjBvYXZwc3lrNGczOXZUR242MHg3IiwidWlkIjoiMDB1MTV3YmNhZXJscG82VXIweDgiLCJzY3AiOlsib3BlbmlkIiwib2ZmbGluZV9hY2Nlc3MiXSwiYXV0aF90aW1lIjoxNzM2MzU1MzkwfQ.IBYD4QjZ4ViWRKmd73rKx3auwclKvTdCdKKRxNO1Al-f8ZAgUKbn_MdhBbdMsdQTlZi65zp_q_UyEcA6D8U1jpW7SN4H-8QuKS2ccIhnS_QWwxnWfm00BboPb9GFPe2c4zu8GnRqTgA7uQJxLXBT8upQavDrL4d6oPAUg6PoANDmQdmM41jS9NsK8bAAPEZe-gb-2DFlQzKCMXrPEc9YZB6jMWuKy9sTlA6yJeT7UVCb5TYfGz6RAYPX2E9viaICypy20gaxuYYbIFv3HqcnXcQRyT0LbgNGPzHY2hBclB7elsNtadQ_XXFneUHG4IKtyXT9U_elytsiZNyW4-WjVA'
 
   useEffect(() => {
     if (token != null) {
@@ -28,9 +29,9 @@ const RootPage = () => {
   return (
     <Routes>
       <Route path='/' exact={true} element={<BannersPage />} />
-      <Route path='/:id/tools' element={<BannerToolsPage />} />
       <Route path='/:id' element={<CreateBannerPage />} />
-
+      <Route path='/:id/tools' element={<BannerToolsPage />} />
+      <Route path='/:id/tools/:idTool' element={<CreateToolPage />} />
     </Routes>
   )
 }
