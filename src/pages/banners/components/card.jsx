@@ -142,11 +142,11 @@ export default function BannerCard({ audit, refreshAudits }) {
           </div>
         </article>
         <footer className='flex gap-x-3 items-center justify-end'>
-          {capaFlag === CAPA_FLAG.ACTIVE && (
+          {/* {capaFlag === CAPA_FLAG.ACTIVE && (
             <Link to={`/${packageId}/capa`}>
               <Button variant="text">View CAPA</Button>
             </Link>
-          )}
+          )} */}
           <Link to={`/${packageId}/tools/new`}>
             <Button variant="text">Create Tools</Button>
           </Link>
