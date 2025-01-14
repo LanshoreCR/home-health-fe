@@ -37,8 +37,6 @@ export const getAttachments = async ({ packageId, userId }) => {
     const response = await axiosInstance.get(ENDPOINTS.GET_ATTACHMENTS, { params })
     if (response.status !== 200) return new Error('error getting attachments')
     const data = response.data
-    console.log("🚀 ~ getAttachments ~ data:", data)
-
     const attachments = data.map((item) => ({
       packageId: item.packageID,
       recordId: item.recordID,
@@ -85,7 +83,6 @@ export const downloadAttachment = async ({ attachmentId }) => {
 }
 
 export const deleteAttachment = async ({ file, userId }) => {
-  console.log("🚀 ~ deleteAttachment ~ file:", file)
   try {
     const axiosInstance = apiMaster.getInstance()
 

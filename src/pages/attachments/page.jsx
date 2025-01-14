@@ -158,7 +158,6 @@ export default function AttachmentsPage() {
         if (data == null) {
           throw new Error('cannot getting audit tools')
         }
-        console.log("🚀 ~ .then ~ data:", data)
         setCurrentAudit(data)
       })
   }, [id])
