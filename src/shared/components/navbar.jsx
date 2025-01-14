@@ -1,14 +1,10 @@
 import React from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, } from 'react-router-dom'
 // import { useOktaAuth } from '@okta/okta-react'
-import { Box, AppBar, Toolbar, IconButton, Typography, Button } from '@mui/material'
-import ArrowBackIcon from '@mui/icons-material/ArrowBack'
-import useGoBack from '../hooks/useGoBack'
-
+import { Box, AppBar, Toolbar, Typography, Button } from '@mui/material'
+import BackButton from './back-button'
 const Navbar = () => {
-    const goBack = useGoBack()
     const location = useLocation()
-    const navigate = useNavigate()
 
     // const { oktaAuth } = useOktaAuth()
 
@@ -21,16 +17,7 @@ const Navbar = () => {
             <AppBar position="static">
                 <Toolbar>
                     {location.pathname !== '/' && (
-                        <IconButton
-                            size="large"
-                            edge="start"
-                            color="inherit"
-                            aria-label="menu"
-                            sx={{ mr: 2 }}
-                            onClick={goBack}
-                        >
-                            <ArrowBackIcon />
-                        </IconButton>
+                        <BackButton />
                     )}
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                         <Link to='/'>
