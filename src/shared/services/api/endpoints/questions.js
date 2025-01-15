@@ -21,7 +21,8 @@ export const getQuestions = async ({ packageTemplateId }) => {
       flagCAPA: item.flagCAPA,
       templateAnswerId: item.templateAnswerID,
       subSection: item.categ,
-      standard: item.standard
+      standard: item.standard,
+      percentages: item.percentages
     }))
 
     return questions
@@ -31,7 +32,7 @@ export const getQuestions = async ({ packageTemplateId }) => {
   }
 }
 
-export const saveAnswer = async ({ answer, comment, questionId, packageId, flag = 0 }) => {
+export const saveAnswer = async ({ answer, comment, questionId, packageId, flag = 0, percentage }) => {
   try {
     const axiosInstance = apiMaster.getInstance()
     const body = {
@@ -41,7 +42,8 @@ export const saveAnswer = async ({ answer, comment, questionId, packageId, flag 
       GeneralComments: null,
       TemplateAnswerID: parseInt(questionId),
       PackageTemplateID: parseInt(packageId),
-      Flag: flag
+      Flag: flag,
+      Percentages: parseInt(percentage)
     }
 
     await axiosInstance.post(ENDPOINTS.SAVE_ANSWER, body, {})

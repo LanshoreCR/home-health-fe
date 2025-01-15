@@ -12,7 +12,7 @@ import { toast } from 'sonner'
 import { useDebounce } from 'use-debounce'
 import { useDispatch } from 'react-redux'
 import { respondQuestion } from '../../../shared/redux/slices/questions'
-import { IconButton } from '@mui/material'
+import { Checkbox, Grid2, IconButton, Slider } from '@mui/material'
 import FlagIcon from '@mui/icons-material/Flag'
 
 const AVAILABLE_OPTIONS = [
@@ -30,21 +30,58 @@ const AVAILABLE_OPTIONS = [
   }
 ]
 
-export default function QuestionCard({ question, sectionId, employeeId, initAnswer, isApproved }) {
+export default function QuestionCard({ question, sectionId, employeeId, initAnswer, initPercentage, isApproved, currentTool }) {
   const { questionText, templateAnswerId, templateQuestionId, comments, flagCAPA } = question
 
   const dispatch = useDispatch()
 
   const [answer, setAnswer] = useState(initAnswer)
+  const [percentage, setPercentage] = useState(initPercentage);
+  const [checkedNA, setCheckedNA] = useState(initAnswer === 2)
   const [comment, setComment] = useState(comments || '')
   const [commentError, setCommentError] = useState(false)
   const [commentDebounced] = useDebounce(comment, 500)
   const [flag, setFlag] = useState(flagCAPA != null && flagCAPA !== 0)
 
+  const isKeyIndicator = currentTool?.templateName === 'Key Indicators'
   const questionName = `${questionText}`
 
-  const handleChangeQuestionAnswer = async (event) => {
+  const handleChangePercentage = async (event) => {
     const newValue = event.target.value
+    setPercentage(newValue)
+    try {
+
+      const response = await saveAnswer({
+        answer, comment,
+        questionId: templateAnswerId,
+        packageId: sectionId,
+        customerName: employeeId,
+        percentage: newValue
+      })
+      if (response instanceof Error) {
+        throw new Error('error while saving answer')
+      }
+      dispatch(respondQuestion({ templateQuestionId, answer, comments, percentage: newValue }))
+    } catch (error) {
+      toast.error('error saving answer. Please try it again')
+
+    }
+
+  }
+
+
+  const handleChangeQuestionAnswer = async (event) => {
+    let newValue = event.target.value
+    const { checked } = event.target
+    if (isKeyIndicator) {
+      setCheckedNA(checked)
+      if (checked) {
+        newValue = '2'
+        setPercentage(0)
+      } else {
+        newValue = null
+      }
+    }
 
     if (newValue === '1' || newValue === '2') {
       setCommentError(false)
@@ -67,7 +104,14 @@ export default function QuestionCard({ question, sectionId, employeeId, initAnsw
     }
 
     try {
-      const response = await saveAnswer({ answer: newValue, comment, questionId: templateAnswerId, packageId: sectionId, customerName: employeeId })
+      const response = await saveAnswer({
+        answer: newValue,
+        comment,
+        questionId: templateAnswerId,
+        packageId: sectionId,
+        customerName: employeeId,
+        percentage: checked ? 0 : percentage
+      })
       if (response instanceof Error) {
         throw new Error('error while saving answer')
       }
@@ -145,21 +189,50 @@ export default function QuestionCard({ question, sectionId, employeeId, initAnsw
             </IconButton>
           </div>
         </div>
-        <RadioGroup
-          row
-          aria-labelledby="demo-radio-buttons-group-label"
-          defaultValue="1"
-          name="radio-buttons-group"
-          value={answer}
-          onChange={handleChangeQuestionAnswer}
-          disabled={isApproved}
-        >
-          {
-            AVAILABLE_OPTIONS.map((option) => (
-              <FormControlLabel value={option.id} key={option.id} control={<Radio />} label={option.label} disabled={isApproved} />
-            ))
-          }
-        </RadioGroup>
+        {
+          isKeyIndicator && (
+            <Grid2 container spacing={2} alignItems='center' direction='row' sx={{ marginTop: 5 }}>
+              <Slider
+                aria-label="Always visible"
+                defaultValue={0}
+                value={percentage}
+                valueLabelDisplay="on"
+                sx={{ width: 300, marginLeft: 3 }}
+                valueLabelFormat={(value) => {
+                  return `${value}%`
+                }}
+                onChange={handleChangePercentage}
+                disabled={checkedNA}
+              />
+              <FormControlLabel
+                control={<Checkbox defaultChecked />}
+                label="N/A"
+                checked={checkedNA}
+                onChange={handleChangeQuestionAnswer}
+              />
+            </Grid2>
+          )
+        }
+        {
+          !isKeyIndicator && (
+            <RadioGroup
+              row
+              aria-labelledby="demo-radio-buttons-group-label"
+              defaultValue="1"
+              name="radio-buttons-group"
+              value={answer}
+              onChange={handleChangeQuestionAnswer}
+              disabled={isApproved}
+
+            >
+              {
+                AVAILABLE_OPTIONS.map((option) => (
+                  <FormControlLabel value={option.id} key={option.id} control={<Radio />} label={option.label} disabled={isApproved} />
+                ))
+              }
+            </RadioGroup>
+          )
+        }
       </FormControl>
       <div className='mt-2 w-full'>
         <FormControl error={commentError} fullWidth>

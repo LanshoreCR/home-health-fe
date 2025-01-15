@@ -23,7 +23,7 @@ const AVAILABLE_OPTIONS = [
   }
 ]
 
-export default function SubSection({ subSection, questions, sectionId, ref, refs, isApproved }) {
+export default function SubSection({ subSection, questions, sectionId, ref, refs, isApproved, currentTool }) {
   const [modalIsOpen, setModalIsOpen] = useState(false)
   const [answer, setAnswer] = useState('')
   const [loading, setLoading] = useState(false)
@@ -110,7 +110,10 @@ export default function SubSection({ subSection, questions, sectionId, ref, refs
               question={question}
               sectionId={sectionId}
               initAnswer={storeQuestions.find((q) => q.templateQuestionId === question.templateQuestionId)?.answers}
+              initPercentage={storeQuestions.find((q) => q.templateQuestionId === question.templateQuestionId)?.percentages}
+
               isApproved={isApproved}
+              currentTool={currentTool}
             />
           </>
         ))

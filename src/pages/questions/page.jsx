@@ -66,7 +66,6 @@ export default function QuestionsPage() {
   const isApproved = currentAudit?.packageStatus === BANNER_STATUS.COMPLETED
 
   const currentTool = tools.find((tool) => tool.packageTemplateId === currentIdTool) ?? null
-
   const [generalComments, setGeneralComments] = useState('')
   const [generalCommentsDebounced] = useDebounce(generalComments, 1000)
 
@@ -369,7 +368,7 @@ export default function QuestionsPage() {
                       key={index}
                       subSection={subSection[0]}
                       questions={subSection[1]}
-                      currentIdTool={currentIdTool}
+                      currentTool={currentTool}
                       handleSetSubSectionAnswers={handleSetSubSectionAnswers}
                       refs={questionRefs}
                       isApproved={isApproved} />
