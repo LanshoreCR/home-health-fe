@@ -9,6 +9,8 @@ import BannersPage from './pages/banners/page'
 import CreateBannerPage from './pages/banners/create-banner/page'
 import BannerToolsPage from './pages/tools/page'
 import CreateToolPage from './pages/tools/create-tool/page'
+import QuestionsPage from './pages/questions/page'
+import AttachmentsPage from './pages/attachments/page'
 
 const RootPage = () => {
   const dispatch = useDispatch()
@@ -32,6 +34,9 @@ const RootPage = () => {
       <Route path='/:id' element={<CreateBannerPage />} />
       <Route path='/:id/tools' element={<BannerToolsPage />} />
       <Route path='/:id/tools/:idTool' element={<CreateToolPage />} />
+      <Route path='/:id/tools/:idTool/questions' element={<QuestionsPage />} />
+      <Route path='/:id/attachments' element={<AttachmentsPage />} />
+
     </Routes>
   )
 }
