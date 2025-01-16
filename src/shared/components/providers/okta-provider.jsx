@@ -10,7 +10,7 @@ const oktaAuth = new OktaAuth({
     issuer,
     clientId,
     redirectUri,
-    scopes: ['openid', 'profile', 'email'],
+    scopes: ['openid', 'profile', 'email', 'offline_access'],
 
 })
 
