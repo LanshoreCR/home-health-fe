@@ -13,7 +13,7 @@ import PersonIcon from '@mui/icons-material/Person'
 import PieChartOutlineOutlinedIcon from '@mui/icons-material/PieChartOutlineOutlined'
 import { Link, useNavigate } from 'react-router-dom'
 import AttachFileIcon from '@mui/icons-material/AttachFile'
-import { FormControl, InputLabel, Select } from '@mui/material'
+import { Divider, FormControl, Grid2, InputLabel, Select, Typography } from '@mui/material'
 import { changeAuditStatus, deleteAudit } from '../../../shared/services/api/endpoints/audit'
 import { toast } from 'sonner'
 import useModal from '../../../shared/hooks/useModal'
@@ -32,12 +32,28 @@ const STATUS = {
   COMPLETED: 'Approved'
 }
 
+const STATUS_COLORS = {
+  'Pending': 'yellow',
+  'Under Review': 'purple',
+  'Approved': 'green',
+  'Ready to Review': 'blue',
+  'Rejected': 'red'
+}
+const STATUS_LABEL_COLORS = {
+  'Pending': 'orange',
+  'Under Review': 'white',
+  'Approved': 'white',
+  'Ready to Review': 'white',
+  'Rejected': 'white'
+}
+
 export default function BannerCard({ audit, refreshAudits }) {
   const {
     packageName, packageStatus, packageStartDate, quarter,
     packageScore, teamLead, teamLeadId, packageId, auditTeamId,
-    capaFlag
+    capaFlag, sectionDesc, businessLineName, isTeam, createdOn
   } = audit
+
 
   const auditTeamLead = {
     employeeId: teamLeadId,
@@ -97,7 +113,7 @@ export default function BannerCard({ audit, refreshAudits }) {
       <header className='flex w-full justify-between '>
         <div className='flex gap-x-3 items-center'>
           <h3 className='text-lg font-bold'>{packageName}</h3>
-          <Chip label={packageStatus} />
+          {/* <Chip label={packageStatus} /> */}
         </div>
         <div className='flex gap-x-3 items-center justify-end'>
           <FormControl size='small' className='w-40'>
@@ -122,11 +138,43 @@ export default function BannerCard({ audit, refreshAudits }) {
           </IconButton>
         </div>
       </header>
+      <Grid2 container mt={1} direction='column' spacing={2}>
+         
+          <Grid2 container direction='row' spacing={1} mt={1} alignItems='center'>
+            <Typography>
+              {sectionDesc}
+            </Typography>
+            <Divider orientation='vertical' flexItem />
+            <Typography>
+              {businessLineName}
+            </Typography>
+            <Divider orientation='vertical' flexItem />
+            <Typography>
+              {isTeam}
+            </Typography>
+            <Divider orientation='vertical' flexItem />
+            <Typography>
+              {createdOn.split('T')[0]}
+            </Typography>
+            <Divider orientation='vertical' flexItem />
+            <Chip label={packageStatus}
+              sx={{
+                backgroundColor: STATUS_COLORS[packageStatus],
+                fontWeight: 'bold',
+                color: STATUS_LABEL_COLORS[packageStatus],
+              }}
+              size='small'
+            />
+
+          </Grid2>
+          {/* <Divider flexItem /> */}
+
+        </Grid2>
       <footer className='w-full mt-3 flex justify-between items-center'>
         <article className='gap-x-3 flex'>
           <div className='flex items-center'>
             <DateRangeIcon className='text-primary/80' />
-            <span>{packageStartDate}</span>
+            <span>{packageStartDate.split('T')[0]}</span>
           </div>
           <div className='flex items-center'>
             <PieChartOutlineOutlinedIcon className='text-primary/80' />

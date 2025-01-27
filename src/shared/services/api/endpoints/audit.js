@@ -20,7 +20,8 @@ export const createAudit = async ({ audit, userId }) => {
       BusinessLineID: businessLineId,
       StartDate: startDateFormatted,
       EndDate: endDateFormatted,
-      LocationNumbers: locationNumbers
+      LocationNumbers: locationNumbers,
+    
     }
 
     const response = await axiosInstance.post(ENDPOINTS.CREATE_BANNER, {}, { params })
@@ -68,7 +69,9 @@ export const getAudits = async ({ userId }) => {
       initialDueDate: item.initialDueDate,
       edNumber: item.edNumber,
       edName: item.edName,
-      capaFlag: item.capaFlag
+      capaFlag: item.capaFlag,
+      businessLineName: item.businessLineName,
+      sectionDesc: item.sectionDesc
     }))
 
     return audits
