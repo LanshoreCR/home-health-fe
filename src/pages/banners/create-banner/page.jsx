@@ -11,8 +11,11 @@ import Button from '@mui/material/Button'
 import FormControl from '@mui/material/FormControl'
 import InputLabel from '@mui/material/InputLabel'
 import MenuItem from '@mui/material/MenuItem'
-import RangeDatePicker from './components/range-picker'
 import Select from '@mui/material/Select'
+import { DatePicker } from '@mui/x-date-pickers'
+import { FormControlLabel, FormLabel, Grid2, IconButton, Radio, RadioGroup, TextField } from '@mui/material'
+import { getTeamAuditors } from '../../../shared/services/api/endpoints/manage-team'
+import { Add, Delete } from '@mui/icons-material'
 
 const CONTROLLERS = {
   BUSINESS: 0,
@@ -34,7 +37,8 @@ const validationSchema = yup.object().shape({
   business: yup.string().required('Business Line is required'),
   region: yup.string().required('Region is required'),
   regionalDirector: yup.string().required('Regional Director is required'),
-  executiveDirector: yup.string().required('Executive Director is required')
+  executiveDirector: yup.string().required('Executive Director is required'),
+  singleOrTeam: yup.string().required('Required')
 })
 
 export default function CreateBannerPage() {
@@ -44,7 +48,7 @@ export default function CreateBannerPage() {
   const currentUser = useSelector(state => state.user)
   const userId = currentUser.employeeId
 
-  const { control, handleSubmit, setValue, formState: { errors, isValid }, reset, getValues } = useForm({
+  const { control, handleSubmit, setValue, formState: { errors, isValid }, reset, getValues, watch } = useForm({
     mode: 'onChange',
     resolver: yupResolver(validationSchema),
     defaultValues: {
@@ -52,9 +56,14 @@ export default function CreateBannerPage() {
       region: '',
       regionalDirector: '',
       executiveDirector: '',
-      locations: []
+      locations: [],
+      singleOrTeam: 'single',
+      teamLeader: '',
+      auditors: []
     }
   })
+
+  const singleOrTeamValue = watch('singleOrTeam')
 
   const params = useRef(DEFAULT_PARAMS)
   const [business, setBusiness] = useState([])
@@ -62,22 +71,25 @@ export default function CreateBannerPage() {
   const [regionDirector, setRegionDirector] = useState(null)
   const [executiveDirector, setExecutiveDirector] = useState(null)
   const [locations, setLocations] = useState(null)
-  const [dateRange, setDateRange] = useState([null, null])
+  const [date, setDate] = useState(new Date(Date.now()))
+  const [locationBy, setLocationBy] = useState('id')
+  const [auditors, setAuditors] = useState([])
+  const [locationsIds, setLocationsIds] = useState([0])
 
   useEffect(() => {
     getLocationHierarchy().then((data) => setBusiness(data))
   }, [])
 
   const handleOnSubmit = async (data) => {
-    if (dateRange[0] == null && dateRange[1] == null) {
-      toast.error('select a valid date range')
+    if (date === null) {
+      toast.error('select a valid date')
       return
     }
     const currentExecutiveDirector = locations.find((item) => item.edId != null)
     const locationNumbers = getValues('locations')
     const audit = {
       ...currentExecutiveDirector,
-      dateRange,
+      dateRange: date,
       locationId: locationNumbers[0],
       locationNumbers: locationNumbers.join(','),
     }
@@ -172,12 +184,21 @@ export default function CreateBannerPage() {
     setLocations(data)
   }
 
-  const handleSelectDate = (dateRange) => {
-    setDateRange(dateRange)
-  }
+  useEffect(() => {
+    getTeamAuditors()
+      .then((res) => {
+        if (res instanceof Error) {
+          throw new Error('error getting team auditors')
+        }
+        setAuditors(res)
+      })
+      .catch((err) => {
+        toast.error(err)
+      })
+  }, [])
 
   return (
-    <div className='w-full max-w-3xl mx-auto'>
+    <div className='w-full max-w-4xl mx-auto'>
       {id === 'new'
         ? (
           <h2 className='font-bold text-3xl text-blue-500 mb-5 text-center'>Create Audit</h2>
@@ -185,153 +206,288 @@ export default function CreateBannerPage() {
         : (
           <h2 className='font-bold text-3xl text-blue-500 mb-5 text-center'>Edit Audit</h2>
         )}
-      <form className='flex flex-col w-full items-center max-w-lg mx-auto mb-10' onSubmit={handleSubmit(handleOnSubmit)}>
-        <div className='mb-6 w-full'>
-          <FormControl className='w-full' required>
-            <RangeDatePicker onSelect={handleSelectDate} />
-          </FormControl>
-        </div>
-        <div className='mb-6 w-full'>
-          <FormControl fullWidth required error={!!errors.business}>
-            <InputLabel id="business-line-label">Business Line</InputLabel>
-            <Controller
-              name="business"
-              control={control}
-              render={({ field }) => (
+      <form className='' onSubmit={handleSubmit(handleOnSubmit)}>
+        <Grid2 container flexGrow={1} justifyContent={'space-between'} p={2}>
+
+          <Grid2 container direction={'column'} spacing={5} mt={1} sx={{ width: 340 }}>
+            <FormControl required>
+              {/* <RangeDatePicker onSelect={handleSelectDate} /> */}
+              <DatePicker
+                value={date}
+                onChange={(date) => setValue(date)}
+                label='Start Date'
+              />
+            </FormControl>
+
+            <Grid2 container direction={'column'} spacing={2} >
+              <FormControl  >
+                <InputLabel id={`team-label`}>Single or Team Audit</InputLabel>
+
                 <Select
-                  {...field}
-                  labelId="business-line-label"
-                  id="business-line"
-                  label="Business Line"
-                  onChange={(e) => {
-                    field.onChange(e)
-                    handleOnChangeBusiness(e.target.value)
+
+                  labelId="team-label"
+                  id="team-line"
+                  label="Single or Team Audit"
+                  name="singleOrTeam"
+                  value={getValues('singleOrTeam')}
+                  onChange={({ target }) => {
+                    setValue('singleOrTeam', target.value)
                   }}
                 >
-                  {business.map((b) => (
-                    <MenuItem key={b.businessLineId} value={b.businessLineId}>{b.businessLine}</MenuItem>
-                  ))}
+                  <MenuItem value={'single'}>Single person audit</MenuItem>
+                  <MenuItem value={'team'}>Team audit</MenuItem>
                 </Select>
-              )}
-            />
-            {errors.business && <p>{errors.business.message}</p>}
-          </FormControl>
-        </div>
-        <div className='mb-6 w-full'>
-          <FormControl fullWidth required error={!!errors.region}>
-            <InputLabel id="region-label">Region</InputLabel>
-            <Controller
-              name="region"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  {...field}
-                  labelId="region-label"
-                  id="region"
-                  label="Region"
-                  disabled={!regions}
-                  onChange={(e) => {
-                    field.onChange(e)
-                    handleOnChangeRegion(e.target.value)
-                  }}
-                >
-                  {regions && regions.map((region) => (
-                    <MenuItem key={region.regionId} value={ifNullReturnEmpty(region.regionId)}>{region.regionName}</MenuItem>
-                  ))}
-                </Select>
-              )}
-            />
-            {errors.region && <p>{errors.region.message}</p>}
-          </FormControl>
-        </div>
-        <div className='mb-6 w-full'>
-          <FormControl fullWidth required error={!!errors.regionalDirector}>
-            <InputLabel id="regional-director-label">Regional Director</InputLabel>
-            <Controller
-              name="regionalDirector"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  {...field}
-                  labelId="regional-director-label"
-                  id="regional-director"
-                  label="Regional Director"
-                  disabled={!regionDirector}
-                  onChange={(e) => {
-                    field.onChange(e)
-                    handleOnChangeRegionalDirector(e.target.value)
-                  }}
-                >
-                  {regionDirector && regionDirector.map((rd) => (
-                    <MenuItem key={rd.rdIda} value={ifNullReturnEmpty(rd.rdIda)}>{rd.rdName}</MenuItem>
-                  ))}
-                </Select>
-              )}
-            />
-            {errors.regionalDirector && <p>{errors.regionalDirector.message}</p>}
-          </FormControl>
-        </div>
-        <div className='mb-6 w-full'>
-          <FormControl fullWidth required error={!!errors.executiveDirector}>
-            <InputLabel id="executive-director-label">Executive Director</InputLabel>
-            <Controller
-              name="executiveDirector"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  {...field}
-                  labelId="executive-director-label"
-                  id="executive-director"
-                  label="Executive Director"
-                  disabled={!executiveDirector}
-                  onChange={(e) => {
-                    field.onChange(e)
-                    handleOnChangeExecutiveDirector(e.target.value)
-                  }}
-                >
-                  {executiveDirector && executiveDirector.map((ed) => (
-                    <MenuItem key={ed.edId} value={ifNullReturnEmpty(ed.edId)}>{ed.edName}</MenuItem>
-                  ))}
-                </Select>
-              )}
-            />
-            {errors.executiveDirector && <p>{errors.executiveDirector.message}</p>}
-          </FormControl>
-        </div>
-        <div className='mb-6 w-full'>
-          <FormControl fullWidth required error={!!errors.locations}>
-            <InputLabel id="locations-label">Locations</InputLabel>
-            <Controller
-              name="locations"
-              control={control}
-              render={({ field }) => {
-                const { onChange, value } = field
-                return (
-                  <Select
-                    {...field}
-                    multiple
-                    labelId="locations-label"
-                    id="locations"
-                    label="Locations"
-                    disabled={!executiveDirector}
-                    onChange={(e) => {
-                      field.onChange(e)
-                    }}
-                  >
-                    {locations?.map((location) => {
-                      return (
-                        <MenuItem key={location.locationId} value={ifNullReturnEmpty(location.locationId)}>{location.locationName}</MenuItem>
-                      )
-                    })}
-                  </Select>
-                 
+
+              </FormControl>
+
+              {
+                singleOrTeamValue !== 'single' &&
+                (
+                  <>
+                    <FormControl  >
+                      <InputLabel id={`team-leader-label`}>Select Team Leader</InputLabel>
+                      <Controller
+                        name="teamLeader"
+                        control={control}
+                        render={({ field }) => (
+                          <Select
+                            {...field}
+                            labelId="team-leader-label"
+                            id="team-leader-line"
+                            label="Select Team Leader"
+                            onChange={(e) => {
+                              field.onChange(e)
+                            }}
+                          >
+                            {
+                              auditors.map((auditor) => (
+                                <MenuItem key={auditor.employeeId} value={auditor.employeeId}>{auditor.name}</MenuItem>
+                              ))
+                            }
+                          </Select>
+                        )}
+                      />
+                    </FormControl>
+                    <FormControl>
+                      <InputLabel id={`auditors-label`}>Select Auditors</InputLabel>
+                      <Controller
+                        name="auditors"
+                        control={control}
+                        render={({ field }) => (
+                          <Select
+                            {...field}
+                            labelId="auditors-label"
+                            id="auditors-line"
+                            label="Select Auditors"
+                            onChange={(e) => {
+                              field.onChange(e)
+                            }}
+                            multiple
+                            sx={{ width: 340 }}
+                          >
+                            {
+                              auditors.map((auditor) => (
+                                <MenuItem key={auditor.employeeId} value={auditor.employeeId}>{auditor.name}</MenuItem>
+                              ))
+                            }
+                          </Select>
+                        )}
+                      />
+                    </FormControl>
+                  </>
                 )
-              }}
-            />
-            {errors.locations && <p>{errors.locations.message}</p>}
-          </FormControl>
-        </div>
-        <div className='w-full flex justify-between'>
+              }
+
+
+            </Grid2>
+
+          </Grid2>
+          <Grid2 container spacing={2} direction={'column'} width={400}>
+
+            <FormControl>
+              <FormLabel>Location</FormLabel>
+              <RadioGroup row aria-labelledby="demo-form-control-label-placement"
+                name="position"
+                defaultValue="top"
+                value={locationBy}
+                onChange={({ target }) => { setLocationBy(target.value) }}
+              >
+                <FormControlLabel
+                  control={<Radio size='small' />}
+                  label="By location Id"
+                  labelPlacement="bottom"
+                  value='id'
+
+                />
+                <FormControlLabel
+                  control={<Radio size='small' />}
+                  label="By full location"
+                  labelPlacement="bottom"
+                  value='full'
+                />
+              </RadioGroup>
+            </FormControl>
+            {
+              locationBy === 'id' ? <Grid2 container >
+                {
+                  locationsIds.map((_, index) => (
+                    <Grid2 container direction={'row'} flexGrow={1}>
+                      <TextField placeholder='Location ID' sx={{ flexGrow: 1 }} key={index} />
+                      {index === locationsIds.length - 1 ?
+                        (<IconButton onClick={() => { setLocationsIds(prev => ([...prev, index + 1])) }}><Add /></IconButton>)
+                        : <IconButton onClick={() => {
+                          setLocationsIds(locationsIds.splice(index))
+                        }}><Delete /></IconButton>
+                      }
+                    </Grid2>
+                  ))
+                }
+              </Grid2>
+                : <Grid2 container >
+                  <FormControl fullWidth required error={!!errors.business}>
+                    <InputLabel id="business-line-label">Business Line</InputLabel>
+                    <Controller
+                      name="business"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                          {...field}
+                          labelId="business-line-label"
+                          id="business-line"
+                          label="Business Line"
+                          onChange={(e) => {
+                            field.onChange(e)
+                            handleOnChangeBusiness(e.target.value)
+                          }}
+                        >
+                          {business.map((b) => (
+                            <MenuItem key={b.businessLineId} value={b.businessLineId}>{b.businessLine}</MenuItem>
+                          ))}
+                        </Select>
+                      )}
+                    />
+                    {errors.business && <p>{errors.business.message}</p>}
+                  </FormControl>
+
+                  <FormControl fullWidth required error={!!errors.region}>
+                    <InputLabel id="region-label">Region</InputLabel>
+                    <Controller
+                      name="region"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                          {...field}
+                          labelId="region-label"
+                          id="region"
+                          label="Region"
+                          disabled={!regions}
+                          onChange={(e) => {
+                            field.onChange(e)
+                            handleOnChangeRegion(e.target.value)
+                          }}
+                        >
+                          {regions && regions.map((region) => (
+                            <MenuItem key={region.regionId} value={ifNullReturnEmpty(region.regionId)}>{region.regionName}</MenuItem>
+                          ))}
+                        </Select>
+                      )}
+                    />
+                    {errors.region && <p>{errors.region.message}</p>}
+                  </FormControl>
+
+                  <FormControl fullWidth required error={!!errors.regionalDirector}>
+                    <InputLabel id="regional-director-label">Regional Director</InputLabel>
+                    <Controller
+                      name="regionalDirector"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                          {...field}
+                          labelId="regional-director-label"
+                          id="regional-director"
+                          label="Regional Director"
+                          disabled={!regionDirector}
+                          onChange={(e) => {
+                            field.onChange(e)
+                            handleOnChangeRegionalDirector(e.target.value)
+                          }}
+                        >
+                          {regionDirector && regionDirector.map((rd) => (
+                            <MenuItem key={rd.rdIda} value={ifNullReturnEmpty(rd.rdIda)}>{rd.rdName}</MenuItem>
+                          ))}
+                        </Select>
+                      )}
+                    />
+                    {errors.regionalDirector && <p>{errors.regionalDirector.message}</p>}
+                  </FormControl>
+
+                  <FormControl fullWidth required error={!!errors.executiveDirector}>
+                    <InputLabel id="executive-director-label">Executive Director</InputLabel>
+                    <Controller
+                      name="executiveDirector"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                          {...field}
+                          labelId="executive-director-label"
+                          id="executive-director"
+                          label="Executive Director"
+                          disabled={!executiveDirector}
+                          onChange={(e) => {
+                            field.onChange(e)
+                            handleOnChangeExecutiveDirector(e.target.value)
+                          }}
+                        >
+                          {executiveDirector && executiveDirector.map((ed) => (
+                            <MenuItem key={ed.edId} value={ifNullReturnEmpty(ed.edId)}>{ed.edName}</MenuItem>
+                          ))}
+                        </Select>
+                      )}
+                    />
+                    {errors.executiveDirector && <p>{errors.executiveDirector.message}</p>}
+                  </FormControl>
+
+                  <FormControl fullWidth required error={!!errors.locations}>
+                    <InputLabel id="locations-label">Locations</InputLabel>
+                    <Controller
+                      name="locations"
+                      control={control}
+                      render={({ field }) => {
+                        const { onChange, value } = field
+                        return (
+                          <Select
+                            {...field}
+                            multiple
+                            labelId="locations-label"
+                            id="locations"
+                            label="Locations"
+                            disabled={!executiveDirector}
+                            onChange={(e) => {
+                              field.onChange(e)
+                            }}
+                          >
+                            {locations?.map((location) => {
+                              return (
+                                <MenuItem key={location.locationId} value={ifNullReturnEmpty(location.locationId)}>{location.locationName}</MenuItem>
+                              )
+                            })}
+                          </Select>
+
+                        )
+                      }}
+                    />
+                    {errors.locations && <p>{errors.locations.message}</p>}
+                  </FormControl>
+                </Grid2>
+            }
+
+
+          </Grid2>
+
+        </Grid2>
+
+
+        <div className='w-full flex justify-between mt-5'>
           <Link to='/'>
             <Button variant="text">Cancel</Button>
           </Link>
