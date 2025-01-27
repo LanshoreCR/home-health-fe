@@ -296,7 +296,7 @@ export default function CreateToolPage() {
                             </FormControl>
                             <FormControl>
                               <DatePicker
-                                label="Date"
+                                label="Start of Care Date"
                                 renderInput={(props) => <TextField {...props} />}
                                 value={field.startOfCareDate}
                                 onChange={(date) => setValue(`tools.${field.realIndex}.startOfCareDate`, date)}
