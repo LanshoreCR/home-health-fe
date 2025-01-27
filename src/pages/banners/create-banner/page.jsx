@@ -44,14 +44,15 @@ export default function CreateBannerPage() {
   const currentUser = useSelector(state => state.user)
   const userId = currentUser.employeeId
 
-  const { control, handleSubmit, setValue, formState: { errors, isValid }, reset } = useForm({
+  const { control, handleSubmit, setValue, formState: { errors, isValid }, reset, getValues } = useForm({
     mode: 'onChange',
     resolver: yupResolver(validationSchema),
     defaultValues: {
       business: '',
       region: '',
       regionalDirector: '',
-      executiveDirector: ''
+      executiveDirector: '',
+      locations: []
     }
   })
 
@@ -73,9 +74,12 @@ export default function CreateBannerPage() {
       return
     }
     const currentExecutiveDirector = locations.find((item) => item.edId != null)
+    const locationNumbers = getValues('locations')
     const audit = {
       ...currentExecutiveDirector,
-      dateRange
+      dateRange,
+      locationId: locationNumbers[0],
+      locationNumbers: locationNumbers.join(','),
     }
 
     const response = await createAudit({ audit, userId })
@@ -294,48 +298,39 @@ export default function CreateBannerPage() {
             {errors.executiveDirector && <p>{errors.executiveDirector.message}</p>}
           </FormControl>
         </div>
-        {/* <div className='mb-6 w-full'>
+        <div className='mb-6 w-full'>
           <FormControl fullWidth required error={!!errors.locations}>
+            <InputLabel id="locations-label">Locations</InputLabel>
             <Controller
               name="locations"
               control={control}
               render={({ field }) => {
                 const { onChange, value } = field
                 return (
-                  <Autocomplete
+                  <Select
+                    {...field}
                     multiple
+                    labelId="locations-label"
+                    id="locations"
+                    label="Locations"
                     disabled={!executiveDirector}
-                    options={locations || []}
-                    value={value}
-                    onChange={(e, newValue) => onChange(newValue)}
-                    isOptionEqualToValue={(option, value) => option.locationId === value.locationId}
-                    getOptionLabel={(option) => option.locationName}
-                    filterSelectedOptions
-                    renderTags={(tagValue, getTagProps) =>
-                      tagValue.map((option, index) => (
-                        <Chip
-                          key={option.locationId}
-                          label={option.locationName}
-                          {...getTagProps({ index })}
-                        />
-                      ))
-                    }
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        variant="outlined"
-                        label="Locations"
-                        placeholder="Select Locations"
-                        error={!!errors.locations}
-                      />
-                    )}
-                  />
+                    onChange={(e) => {
+                      field.onChange(e)
+                    }}
+                  >
+                    {locations?.map((location) => {
+                      return (
+                        <MenuItem key={location.locationId} value={ifNullReturnEmpty(location.locationId)}>{location.locationName}</MenuItem>
+                      )
+                    })}
+                  </Select>
+                 
                 )
               }}
             />
             {errors.locations && <p>{errors.locations.message}</p>}
           </FormControl>
-        </div> */}
+        </div>
         <div className='w-full flex justify-between'>
           <Link to='/'>
             <Button variant="text">Cancel</Button>

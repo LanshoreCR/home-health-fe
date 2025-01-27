@@ -10,7 +10,6 @@ export const getToolTemplates = async ({ locationId }) => {
 
     const response = await axiosInstance.get(ENDPOINTS.GET_TOOL_TEMPLATES_BY_LOCATION_ID, { params })
     const data = response.data
-
     const toolTemplates = data.map((item) => ({
       templateId: item.templateID,
       templateDesc: item.templateDesc,

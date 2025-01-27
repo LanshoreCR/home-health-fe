@@ -38,11 +38,11 @@ export const createTools = async ({ tools, packageId, userId }) => {
     const axiosInstance = apiMaster.getInstance()
 
     const toolsBody = tools.map((tool) => ({
-      TemplateID: tool.tool,
-      AssignedAuditor: userId,
-      LocationNumber: tool.location,
-      CustomerName: '',
-      StartOfCareDate: tool.date
+      TemplateID: tool.templateId,
+      AssignedAuditor: tool.assignedAuditor,
+      LocationNumber: tool.locationNumber,
+      CustomerName: tool.customerName,
+      StartOfCareDate: tool.startOfCareDate
     }))
     const body = {
       PackageID: packageId,

@@ -6,7 +6,7 @@ export const createAudit = async ({ audit, userId }) => {
   try {
     const axiosInstance = apiMaster.getInstance()
 
-    const { dateRange, edName, businessLineId, locationId } = audit
+    const { dateRange, edName, businessLineId, locationId, locationNumbers } = audit
     const startDate = dateRange[0]
     const endDate = dateRange[1]
 
@@ -19,7 +19,8 @@ export const createAudit = async ({ audit, userId }) => {
       CreatedBy: userId,
       BusinessLineID: businessLineId,
       StartDate: startDateFormatted,
-      EndDate: endDateFormatted
+      EndDate: endDateFormatted,
+      LocationNumbers: locationNumbers
     }
 
     const response = await axiosInstance.post(ENDPOINTS.CREATE_BANNER, {}, { params })

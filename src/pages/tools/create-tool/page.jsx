@@ -1,95 +1,120 @@
 import { useEffect, useState } from 'react'
 import { createTools, getTools } from '../../../shared/services/api/endpoints/tools'
 import { DatePicker } from '@mui/x-date-pickers'
-import { FormControl, InputLabel, MenuItem, Select, TextField, FormHelperText, IconButton, Checkbox } from '@mui/material'
+import { FormControl, InputLabel, MenuItem, Select, TextField, Grid2, Box, Typography, Accordion, AccordionSummary, AccordionDetails, List, IconButton } from '@mui/material'
 import { getLocations } from '../../../shared/services/api/endpoints/location'
 import { getToolTemplates } from '../../../shared/services/api/endpoints/tool-template'
 import { toast } from 'sonner'
-import { useForm, useFieldArray, Controller } from 'react-hook-form'
+import { useForm, useFieldArray } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import Button from '@mui/material/Button'
-import DeleteIcon from '@mui/icons-material/Delete'
-import useGoBack from '@shared/hooks/useGoBack'
 import CreateToolSkeleton from './components/skeleton'
+import { Add, Delete } from '@mui/icons-material'
 
-const schema = yup.object().shape({
-  tools: yup.array().of(
-    yup.object().shape({
-      location: yup.string().required('Location is required'),
-      tool: yup.array().min(1, 'At least one tool is required').required('Tool is required'),
-      date: yup.date().required('Date is required')
-    })
-  )
-})
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { getTeamAuditors } from '../../../shared/services/api/endpoints/manage-team'
+// const schema = yup.object().shape({
+//   tools: yup.array().of(
+//     yup.object().shape({
+//       location: yup.string().required('Location is required'),
+//       tool: yup.array().min(1, 'At least one tool is required').required('Tool is required'),
+//       date: yup.date().required('Date is required')
+//     })
+//   )
+// })
 
-const getAvailableToolsPerLocation = (tools, location, toolTemplate) => {
-  if (location == null) return []
-  const locationTemplateTools = toolTemplate[location.id]
-  if (locationTemplateTools == null) return []
-
-  const toolsByLocation = tools.filter(tool => tool.auditPlaceLocation === location.id)
-
-  const availableLocationTools = locationTemplateTools.filter(tool => !toolsByLocation.map(tool => tool.templateId).includes(tool.templateId))
-  return availableLocationTools
-}
-
-const getAvailableTools = (locations, tools, toolTemplate) => {
-  const availableToolsPerLocation = {}
-  for (const location of locations) {
-    availableToolsPerLocation[location.id] = getAvailableToolsPerLocation(tools, location, toolTemplate)
-  }
-  return availableToolsPerLocation
-}
-
-const getLocationsWithAvailableTools = (locations, availableTools) => {
-  const locationsWithAvailableTools = locations.filter(location => availableTools[location.id] ? availableTools[location.id].length > 0 : false)
-  return locationsWithAvailableTools
+const defaultToolValue = {
+  locationNumber: '',
+  templateId: '',
+  customerName: '',
+  assignedAuditor: '',
+  startOfCareDate: new Date(Date.now()),
+  realIndex: 0
 }
 
 export default function CreateToolPage() {
   const { id, idTool } = useParams()
-  const goBack = useGoBack()
   const navigate = useNavigate()
 
+  const [expandedAccordion, setExpandedAccordion] = useState('')
   const [locations, setLocations] = useState([])
   const [toolsByLocation, setToolsByLocation] = useState({})
   const [tools, setTools] = useState([])
+  const [auditors, setAuditors] = useState([])
+  const [prevAddToolForm, setPrevAddToolForm] = useState({
+    locationNumber: '', tool: ''
+  })
+  const [groupedTools, setGroupedTools] = useState({})
 
-  const [availableToolsPerLocation, setAvailableToolsPerLocation] = useState({})
-  const [locationsWithAvailableTools, setLocationsWithAvailableTools] = useState([])
-  const [selectedLocations, setSelectedLocations] = useState([])
 
   const [isLoading, setIsLoading] = useState(true)
 
   const currentUser = useSelector((state) => state.user)
 
-  const { control, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm({
-    resolver: yupResolver(schema),
+  const { control, handleSubmit, watch, reset, setValue, formState: { errors, } } = useForm({
+    // resolver: yupResolver(schema),
     defaultValues: {
-      tools: [{ location: '', tool: [], date: new Date(Date.now()) }]
+      tools: [defaultToolValue]
     }
   })
 
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: 'tools'
-  })
 
-  const onSubmit = async (data) => {
-    const toolsToCreate = []
-    for (const location of data.tools) {
-      for (const tool of location.tool) {
-        toolsToCreate.push({
-          location: location.location,
-          tool,
-          date: location.date
-        })
+  const watchFields = watch('tools')
+
+
+  const getGroupedData = (toolList) => {
+    const groupedData = toolList.filter(tool => tool.locationNumber !== '').reduce((acc, item) => {
+      const groupKey = `${item.locationNumber}-${item.templateId}`;
+      if (!acc[groupKey]) {
+        acc[groupKey] = [];
       }
-    }
-    const response = await createTools({ tools: toolsToCreate, packageId: id, userId: currentUser.employeeId })
+      acc[groupKey].push(item);
+      return acc;
+    }, {});
+
+    return groupedData
+  }
+
+  const handleAddTool = () => {
+    const index = watchFields.length - 1
+    setValue(`tools.${index}.locationNumber`, prevAddToolForm.locationNumber)
+    setValue(`tools.${index}.templateId`, prevAddToolForm.tool)
+    setValue(`tools.${index}.realIndex`, index)
+
+
+    setValue(`tools.${index + 1}`, { ...defaultToolValue, realIndex: index + 1 })
+
+    const groupedData = getGroupedData(watchFields)
+
+    setGroupedTools(groupedData)
+  }
+
+  const handleRemoveTool = (tool, index) => {
+
+    const newTools = watchFields.filter(t => t.realIndex !== index);
+    setValue('tools', newTools)
+
+    const groupedData = getGroupedData(newTools)
+
+    setGroupedTools(groupedData)
+  }
+
+
+
+  const handleAccordionChange =
+    (panel) => (event, newExpanded) => {
+      setExpandedAccordion(newExpanded ? panel : false);
+    };
+
+  const onSubmit = async () => {
+    const response = await createTools({
+      tools: watchFields.filter(tool => tool.locationNumber !== ''),
+      packageId: id,
+      userId: currentUser.employeeId
+    })
     if (response instanceof Error) {
       toast.error('Error while creating new audit')
       return
@@ -101,11 +126,21 @@ export default function CreateToolPage() {
     }, 1000)
   }
 
-  const handleOnAddTool = () => {
-    append({ location: '', tool: [], date: new Date(Date.now()) })
-  }
 
-  const watchFields = watch('tools')
+  useEffect(() => {
+    getTeamAuditors()
+      .then((res) => {
+        if (res instanceof Error) {
+          throw new Error('error getting team auditors')
+        }
+        setAuditors(res)
+      })
+      .catch((err) => {
+        toast.error(err)
+      })
+  }, [])
+
+
 
   useEffect(() => {
     setIsLoading(true)
@@ -156,184 +191,140 @@ export default function CreateToolPage() {
     fetchToolTemplates()
   }, [locations])
 
-  useEffect(() => {
-    const availableToolsPerLocation = getAvailableTools(locations, tools, toolsByLocation)
-    setAvailableToolsPerLocation(availableToolsPerLocation)
-    const locationsWithAvailableTools = getLocationsWithAvailableTools(locations, availableToolsPerLocation)
-    setLocationsWithAvailableTools(locationsWithAvailableTools)
-  }, [locations, toolsByLocation, tools])
 
-  const handleLocationChange = (value, index) => {
-    setValue(`tools.${index}.location`, value)
-    setValue(`tools.${index}.tool`, [])
-
-    const updatedSelectedLocations = watchFields.map(item => item.location).filter(loc => loc !== '')
-    setSelectedLocations(updatedSelectedLocations)
-  }
-
-  const handleRowRemove = (index) => {
-    // filter location where index is not included
-    const locationToRemove = selectedLocations[index]
-    const updatedSelectedLocations = watchFields.map(item => item.location).filter(loc => loc !== '' && loc !== locationToRemove)
-    setSelectedLocations(updatedSelectedLocations)
-    remove(index)
-  }
-
-  const filteredLocations = (index) => {
-    return locationsWithAvailableTools.filter(loc => !selectedLocations.includes(loc.id) || watchFields[index]?.location === loc.id)
-  }
 
   if (isLoading) {
     return <CreateToolSkeleton />
   }
 
-  if (locationsWithAvailableTools.length === 0 && !isLoading) {
-    return (
-      <div className='w-full max-w-4xl mx-auto'>
-        <h2 className='font-bold text-3xl text-blue-500 mb-10 text-center'>All tools are already created for all locations</h2>
-        <div className='justify-center flex flex-col items-center gap-y-5'>
-          <Button variant="contained" onClick={goBack}>Go back</Button>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className='w-full max-w-4xl mx-auto'>
+    <div className='w-full max-w-4xl mx-auto '>
       {idTool === 'new'
         ? <h2 className='font-bold text-3xl text-blue-500 mb-10 text-center'>Create Tools</h2>
         : <h2 className='font-bold text-3xl text-blue-500 mb-10 text-center'>Edit Tools</h2>
       }
-      <form className='flex flex-col w-full mb-10 mt-5' onSubmit={handleSubmit(onSubmit)}>
-        <div className='flex w-full justify-end mb-6 items-center'>
-          <Button variant="outlined" onClick={handleOnAddTool} type='button'>Add tool</Button>
-        </div>
-        <section>
-          <ul className='flex flex-col w-full gap-y-3'>
-            {fields.map((field, index) => (
-              <div key={field.id} className='flex gap-x-2 w-full'>
-                <FormControl sx={{ minWidth: 350 }} error={!!errors.tools?.[index]?.location}>
-                  <InputLabel id={`location-label-${index}`}>Location</InputLabel>
-                  <Controller
-                    control={control}
-                    name={`tools.${index}.location`}
-                    render={({ field }) => (
-                      <Select
-                        {...field}
-                        labelId={`location-label-${index}`}
-                        label="Location"
-                        onChange={(e) => handleLocationChange(e.target.value, index)}
-                        value={field.value}
-                      >
-                        {filteredLocations(index).map((option) => (
-                          <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
-                        ))}
-                      </Select>
-                    )}
-                  />
-                  <FormHelperText>{errors.tools?.[index]?.location?.message}</FormHelperText>
-                </FormControl>
-                <FormControl sx={{ minWidth: 230, maxWidth: 300 }} error={!!errors.tools?.[index]?.tool}>
-                  <InputLabel id={`tool-label-${index}`}>Tool</InputLabel>
-                  <Controller
-                    control={control}
-                    name={`tools.${index}.tool`}
-                    render={({ field }) => {
-                      const allSelected = (availableToolsPerLocation[watchFields[index]?.location] || [])
-                        .map((option) => option.templateId)
-                        .every((templateId) => field.value.includes(templateId))
+      <Grid2 >
 
-                      const handleSelectAll = () => {
-                        if (allSelected) {
-                          field.onChange([])
-                          return
-                        }
-                        field.onChange(
-                          (availableToolsPerLocation[watchFields[index]?.location] || []).map((option) => option.templateId)
-                        )
+        <form className='flex flex-col w-full mb-10 mt-5' onSubmit={handleAddTool}>
+          <Grid2 container spacing={2} flexDirection={'row'} p={2} alignItems='center'>
+            <FormControl sx={{ minWidth: 350 }} >
+              <InputLabel id={`location-label`}>Location</InputLabel>
+              <Select
+                labelId={`location-label`}
+                label="Location"
+                onChange={({ target }) => {
+                  setPrevAddToolForm(prev => ({ ...prev, locationNumber: target.value }))
+                }}
+                value={prevAddToolForm.locationNumber}
+              >
+                {locations.map((option) => (
+                  <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl sx={{ minWidth: 350 }} >
+              <InputLabel id={`tool-label`}>Tool</InputLabel>
+              <Select
+                labelId={`tool-label`}
+                label="Tool"
+                onChange={({ target }) => {
+                  setPrevAddToolForm(prev => ({ ...prev, tool: target.value }))
+                }}
+                value={prevAddToolForm.tool}
+              >
+                {toolsByLocation[prevAddToolForm.locationNumber]?.map((option) => (
+                  <MenuItem key={option.templateId} value={option.templateId}>{option.templateDesc}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+
+            <Box >
+              <Button variant="outlined" onClick={handleAddTool} type='button' startIcon={<Add />}>Add tool</Button>
+            </Box>
+
+          </Grid2>
+
+        </form>
+      </Grid2>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <Grid2 container direction={'column'} paddingX={2} width={'100%'} sx={{
+          overflowY: 'auto',
+        }}>
+          {
+            Object.entries(groupedTools).map(([key, group]) => {
+              const [locationNumber, templateId] = key.split("-");
+              const location = locations.find(l => l.id === locationNumber)
+              const tool = toolsByLocation[locationNumber].find(t => t.templateId.toString() === templateId)
+              return (
+                <Accordion key={key} onChange={handleAccordionChange(key)} expanded={key === expandedAccordion}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />} >
+                    <Typography component="span" sx={{ width: '33%', flexShrink: 0 }}>
+                      {location.name}
+                    </Typography>
+                    <Typography component="span" sx={{ color: 'text.secondary' }}>
+                      {tool.templateDesc}
+                    </Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <List>
+                      {
+                        group.map((field, index) => (
+                          <Grid2 container key={field.realIndex} direction={'row'} mt={1} justifyContent={'space-between'}>
+                            <FormControl >
+                              <TextField label='Client name' value={field.customerName} onChange={({ target }) => {
+                                setValue(`tools.${field.realIndex}.customerName`, target.value)
+
+                              }} />
+                            </FormControl>
+                            <FormControl  >
+                              <InputLabel id={`auditor-label`}>Auditor</InputLabel>
+                              <Select
+                                labelId={`auditor-label`}
+                                label="Auditor"
+                                onChange={({ target }) => {
+                                  setValue(`tools.${field.realIndex}.assignedAuditor`, target.value)
+
+                                }}
+                                value={field.assignedAuditor}
+                                sx={{ minWidth: 200 }}
+                              >
+                                {auditors.map((option) => (
+                                  <MenuItem key={option.employeeId} value={option.employeeId}>{option.name}</MenuItem>
+                                ))}
+                              </Select>
+                            </FormControl>
+                            <FormControl>
+                              <DatePicker
+                                label="Date"
+                                renderInput={(props) => <TextField {...props} />}
+                                value={field.startOfCareDate}
+                                onChange={(date) => setValue(`tools.${field.realIndex}.startOfCareDate`, date)}
+                              />
+                            </FormControl>
+                            <IconButton
+                              color='primary'
+                              onClick={() => {
+                                handleRemoveTool(field, field.realIndex)
+                              }} >
+                              <Delete />
+                            </IconButton>
+                          </Grid2>
+                        ))
                       }
-
-                      return (
-                        <Select
-                          {...field}
-                          labelId={`tool-label-${index}`}
-                          label="Tool"
-                          multiple
-                          value={field.value}
-                          onChange={(e) => field.onChange(e.target.value)}
-                          renderValue={(selected) =>
-                            selected
-                              .map(
-                                (toolId) =>
-                                  availableToolsPerLocation[watchFields[index]?.location]?.find(
-                                    (tool) => tool.templateId === toolId
-                                  )?.templateDesc
-                              )
-                              .join(', ')
-                          }
-                        >
-                          <MenuItem onClick={handleSelectAll}>
-                            <Checkbox
-                              checked={allSelected}
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleSelectAll()
-                              }}
-                            />
-                            Select All
-                          </MenuItem>
-                          {(toolsByLocation[watchFields[index]?.location] || []).map((option) => {
-                            const currentAvailableTools = availableToolsPerLocation[watchFields[index]?.location] || []
-                            const isActive = currentAvailableTools.map((tool) => tool.templateId).includes(option.templateId)
-                            if (!isActive) {
-                              return (
-                                <MenuItem key={option.templateId} disabled={true}>
-                                  <Checkbox checked={true} disabled={true} />
-                                  {option.templateDesc}
-                                </MenuItem>
-                              )
-                            }
-                            const isChecked = field.value.includes(option.templateId)
-                            return (
-                              <MenuItem key={option.templateId} value={option.templateId}>
-                                <Checkbox checked={isChecked} />
-                                {option.templateDesc}
-                              </MenuItem>
-                            )
-                          })}
-                        </Select>
-                      )
-                    }}
-                  />
-                  <FormHelperText>{errors.tools?.[index]?.tool?.message}</FormHelperText>
-                </FormControl>
-                <FormControl error={!!errors.tools?.[index]?.date}>
-                  <Controller
-                    control={control}
-                    name={`tools.${index}.date`}
-                    render={({ field }) => (
-                      <DatePicker
-                        label="Date"
-                        renderInput={(props) => <TextField {...props} />}
-                        {...field}
-                        onChange={(date) => field.onChange(date)}
-                      />
-                    )}
-                  />
-                  <FormHelperText>{errors.tools?.[index]?.date?.message}</FormHelperText>
-                </FormControl>
-                <IconButton onClick={() => handleRowRemove(index)}>
-                  <DeleteIcon />
-                </IconButton>
-              </div>
-            ))}
-          </ul>
-        </section>
-        <div className='w-full flex justify-between mt-8 mb-16'>
-          <Button variant="text" onClick={goBack}>Cancel</Button>
-          <Button variant="contained" type='submit'>Create Tools</Button>
-        </div>
+                    </List>
+                  </AccordionDetails>
+                </Accordion>
+              )
+            })
+          }
+          <Grid2 container mt={5} mb={5} justifyContent={'flex-end'} spacing={2}>
+            <Button variant='contained' color='inherit'>Cancel</Button>
+            <Button variant='contained' disabled={watchFields[0].locationNumber === ''} type='submit'>Create</Button>
+          </Grid2>
+        </Grid2>
       </form>
+
     </div>
   )
 }
