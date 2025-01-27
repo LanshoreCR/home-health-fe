@@ -319,7 +319,7 @@ export default function CreateToolPage() {
             })
           }
           <Grid2 container mt={5} mb={5} justifyContent={'flex-end'} spacing={2}>
-            <Button variant='contained' color='inherit'>Cancel</Button>
+            <Button variant='contained' color='inherit' onClick={() => navigate(-1)}>Cancel</Button>
             <Button variant='contained' disabled={watchFields[0].locationNumber === ''} type='submit'>Create</Button>
           </Grid2>
         </Grid2>
