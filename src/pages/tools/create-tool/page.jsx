@@ -92,7 +92,7 @@ export default function CreateToolPage() {
     setGroupedTools(groupedData)
   }
 
-  const handleRemoveTool = (tool, index) => {
+  const handleRemoveTool = (index) => {
 
     const newTools = watchFields.filter(t => t.realIndex !== index);
     setValue('tools', newTools)
@@ -305,7 +305,7 @@ export default function CreateToolPage() {
                             <IconButton
                               color='primary'
                               onClick={() => {
-                                handleRemoveTool(field, field.realIndex)
+                                handleRemoveTool(field.realIndex)
                               }} >
                               <Delete />
                             </IconButton>
