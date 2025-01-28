@@ -174,7 +174,7 @@ export default function BannerCard({ audit, refreshAudits }) {
         <article className='gap-x-3 flex'>
           <div className='flex items-center'>
             <DateRangeIcon className='text-primary/80' />
-            <span>{packageStartDate.split('T')[0]}</span>
+            <span>{packageStartDate?.split('T')[0]}</span>
           </div>
           <div className='flex items-center'>
             <PieChartOutlineOutlinedIcon className='text-primary/80' />
