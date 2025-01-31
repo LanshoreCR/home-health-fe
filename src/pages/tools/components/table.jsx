@@ -14,6 +14,7 @@ export default function ToolsTable({ tools, addToSelectedTools, removeFromSelect
         <TableHead>
           <TableRow>
             <TableCell>Name</TableCell>
+            <TableCell align='center'>Customer</TableCell>
             <TableCell align="center">Status</TableCell>
             <TableCell align="center">Percent&nbsp;(%)</TableCell>
             <TableCell align="center">Location</TableCell>

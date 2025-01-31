@@ -11,7 +11,7 @@ import ManageAuditorModal from './manage-auditor-modal'
 import useModal from '../../../shared/hooks/useModal'
 
 export default function ToolsTableRow({ tool, refreshTools }) {
-  const { templateName, templateStatus, templateScore, assignedAuditor, memberId, packageTemplateId, locationName, auditTeamId } = tool
+  const { templateName, templateStatus, templateScore, assignedAuditor, memberId, packageTemplateId, locationName, auditTeamId, customerName } = tool
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -43,6 +43,7 @@ export default function ToolsTableRow({ tool, refreshTools }) {
         sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
       >
         <TableCell component="th" scope="row" align="left">{templateName}</TableCell>
+        <TableCell align="center">{customerName}</TableCell>
         <TableCell align="center">{templateStatus}</TableCell>
         <TableCell align="center">{templateScore}</TableCell>
         <TableCell align="center">{locationName}</TableCell>
