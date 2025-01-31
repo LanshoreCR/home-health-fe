@@ -13,7 +13,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { getTools } from '../../shared/services/api/endpoints/tools'
 import { toast } from 'sonner'
 import { getQuestions, saveGeneralComment, submitAnswers } from '../../shared/services/api/endpoints/questions'
-import { TextField } from '@mui/material'
+import { Grid2, TextField, Typography } from '@mui/material'
 import { useDebounce } from 'use-debounce'
 import SubSection from './components/sub-section'
 import useFilterLocationTemplate from './hooks/useFilterLocationTemplate'
@@ -264,6 +264,7 @@ export default function QuestionsPage() {
   }
 
   const completedQuestions = storedQuestions.filter((question) => question.answered).length
+  const missingComments = storedQuestions.filter(question => !question.comments).length
   const totalQuestions = storedQuestions.length
 
   return (
@@ -321,6 +322,29 @@ export default function QuestionsPage() {
 
                   </div>
                 ))}
+                {
+                  currentTool?.templateName !== 'Key Indicators' && (
+                    <Grid2 container spacing={1} direction={'column'} borderRadius={2} bgcolor={'#f5f4f2'} padding={2} paddingRight={4}>
+                      <Grid2 container justifyContent={'space-between'} alignItems={'center'} flexGrow={1} >
+                        <Typography>All questions</Typography>
+                        <Typography fontWeight={'bold'} color='blue'>{totalQuestions}</Typography>
+                      </Grid2>
+                      <Divider flexItem />
+                      <Grid2 container justifyContent={'space-between'} alignItems={'center'} flexGrow={1}>
+                        <Typography>Complete questions</Typography>
+                        <Typography color='green' fontWeight={'bold'}>{completedQuestions}</Typography>
+                      </Grid2>
+                      <Grid2 container justifyContent={'space-between'} alignItems={'center'} flexGrow={1}>
+                        <Typography>Incomplete questions</Typography>
+                        <Typography color='red' fontWeight={'bold'}>{totalQuestions - completedQuestions}</Typography>
+                      </Grid2>
+                      <Grid2 container justifyContent={'space-between'} alignItems={'center'} flexGrow={1}>
+                        <Typography>Missing comments</Typography>
+                        <Typography color='orange' fontWeight={'bold'}>{missingComments}</Typography>
+                      </Grid2>
+                    </Grid2>
+                  )
+                }
               </ul>
               <div className='my-5'>
                 <Divider />
@@ -362,7 +386,7 @@ export default function QuestionsPage() {
                mb-2`}>
               {
                 questionsBySubSection.map((subSection, index) => (
-                  <>
+                  <div key={index}>
                     <div ref={(el) => (subSectionsRefs.current[subSection[0]] = el)}></div>
                     <SubSection
                       key={index}
@@ -372,7 +396,7 @@ export default function QuestionsPage() {
                       handleSetSubSectionAnswers={handleSetSubSectionAnswers}
                       refs={questionRefs}
                       isApproved={isApproved} />
-                  </>
+                  </div>
                 ))
               }
             </div>
