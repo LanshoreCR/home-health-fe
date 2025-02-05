@@ -24,6 +24,7 @@ const AVAILABLE_OPTIONS = [
 ]
 
 export default function SubSection({ subSection, questions, sectionId, ref, refs, isApproved, currentTool }) {
+
   const [modalIsOpen, setModalIsOpen] = useState(false)
   const [answer, setAnswer] = useState('')
   const [loading, setLoading] = useState(false)
@@ -51,6 +52,7 @@ export default function SubSection({ subSection, questions, sectionId, ref, refs
     const newAnswer = parseInt(answer)
 
     const questionsBySubSection = questions.filter((question) => question.subSection === subSection)
+
 
     const responses = await Promise.all(questionsBySubSection.map(async (question) => {
       if (newAnswer !== 0) {
@@ -92,17 +94,14 @@ export default function SubSection({ subSection, questions, sectionId, ref, refs
 
   return (
     <article className='flex flex-col w-full gap-y-5'>
-      <button onClick={handleChangeModal} disabled={isApproved}>
-        <Divider ref={ref} >
-          <div className='flex flex-col'>
-            <Chip label={subSection} size="small" />
-            <span className='text-xs text-gray-500'>{`${completedCount}/${totalCount}`}</span>
-          </div>
-        </Divider>
-      </button>
+      <Divider ref={ref} >
+        <div className='flex flex-col'>
+          <span className='text-xs text-gray-500'>{`${completedCount}/${totalCount}`}</span>
+        </div>
+      </Divider>
       {
         questions.map((question) => (
-          <>
+          <div key={question.standard}>
             <div ref={(el) => (refs.current[question.templateQuestionId] = el)}></div>
             <div ref={(el) => (refs.current[question.standard] = el)}></div>
             <QuestionCard
@@ -115,7 +114,7 @@ export default function SubSection({ subSection, questions, sectionId, ref, refs
               isApproved={isApproved}
               currentTool={currentTool}
             />
-          </>
+          </div>
         ))
       }
       <Modal
