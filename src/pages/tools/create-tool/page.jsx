@@ -44,6 +44,7 @@ export default function CreateToolPage() {
   const [toolsByLocation, setToolsByLocation] = useState({})
   const [tools, setTools] = useState([])
   const [auditors, setAuditors] = useState([])
+  const [quantityTools, setQuantityTools] = useState(1)
   const [prevAddToolForm, setPrevAddToolForm] = useState({
     locationNumber: '', tool: ''
   })
@@ -79,13 +80,17 @@ export default function CreateToolPage() {
   }
 
   const handleAddTool = () => {
-    const index = watchFields.length - 1
-    setValue(`tools.${index}.locationNumber`, prevAddToolForm.locationNumber)
-    setValue(`tools.${index}.templateId`, prevAddToolForm.tool)
-    setValue(`tools.${index}.realIndex`, index)
 
+    for (let counter = 0; counter < quantityTools; counter++) {
 
-    setValue(`tools.${index + 1}`, { ...defaultToolValue, realIndex: index + 1 })
+      const index = watchFields.length - 1
+      setValue(`tools.${index}.locationNumber`, prevAddToolForm.locationNumber)
+      setValue(`tools.${index}.templateId`, prevAddToolForm.tool)
+      setValue(`tools.${index}.realIndex`, index)
+
+      setValue(`tools.${index + 1}`, { ...defaultToolValue, realIndex: index + 1 })
+
+    }
 
     const groupedData = getGroupedData(watchFields)
 
@@ -198,7 +203,7 @@ export default function CreateToolPage() {
   }
 
   return (
-    <div className='w-full max-w-4xl mx-auto '>
+    <div className='w-full max-w-5xl mx-auto '>
       {idTool === 'new'
         ? <h2 className='font-bold text-3xl text-blue-500 mb-10 text-center'>Create Tools</h2>
         : <h2 className='font-bold text-3xl text-blue-500 mb-10 text-center'>Edit Tools</h2>
@@ -238,9 +243,14 @@ export default function CreateToolPage() {
               </Select>
             </FormControl>
 
-
+            <Box width={75}>
+              <TextField type='number' label='Quantity' value={quantityTools} onChange={({ target }) => {
+                if (target.value > 10) return
+                setQuantityTools(target.value)
+              }} />
+            </Box>
             <Box >
-              <Button variant="outlined" onClick={handleAddTool} type='button' startIcon={<Add />}>Add tool</Button>
+              <Button variant="outlined" onClick={handleAddTool} type='button' startIcon={<Add />}>Add tool(s)</Button>
             </Box>
 
           </Grid2>
