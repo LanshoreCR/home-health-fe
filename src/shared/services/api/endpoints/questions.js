@@ -22,7 +22,8 @@ export const getQuestions = async ({ packageTemplateId }) => {
       templateAnswerId: item.templateAnswerID,
       subSection: item.categ,
       standard: item.standard,
-      percentages: item.percentages
+      percentages: item.percentages,
+      flag: item.flag
     }))
 
     return questions

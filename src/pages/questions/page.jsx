@@ -183,6 +183,7 @@ export default function QuestionsPage() {
     ref.scrollIntoView({ behavior: 'smooth' })
   }
 
+  //TODO:apply this same for customer name and audit date
   useEffect(() => {
     const handleSaveGeneralComments = async () => {
       try {
@@ -265,6 +266,7 @@ export default function QuestionsPage() {
 
   const completedQuestions = storedQuestions.filter((question) => question.answered).length
   const missingComments = storedQuestions.filter(question => !question.comments).length
+  const flaggedQuestions = storedQuestions.filter(question => question.flag === 1).length
   const totalQuestions = storedQuestions.length
 
   return (
@@ -342,6 +344,10 @@ export default function QuestionsPage() {
                         <Typography>Missing comments</Typography>
                         <Typography color='orange' fontWeight={'bold'}>{missingComments}</Typography>
                       </Grid2>
+                      <Grid2 container justifyContent={'space-between'} alignItems={'center'} flexGrow={1}>
+                        <Typography>Flagged questions</Typography>
+                        <Typography color='gray' fontWeight={'bold'}>{flaggedQuestions}</Typography>
+                      </Grid2>
                     </Grid2>
                   )
                 }
@@ -362,9 +368,16 @@ export default function QuestionsPage() {
           <section className='flex flex-col w-full gap-y-5'>
             {currentTool != null &&
               <header className='w-full shadow px-4 flex flex-col gap-y-5 py-3'>
-                <div className=''>
-                  <ProgressBar completed={completedQuestions} total={totalQuestions} refs={questionRefs} />
-                </div>
+                <TextField
+                  size='small'
+                  variant='outlined'
+                  required
+                  fullWidth
+                  id="standard"
+                  label='Client Name'
+                  value={currentTool.customerName}
+                  onChange={() => { }} />
+
                 <div className='flex w-full justify-between gap-x-5'>
                   <TextField
                     variant='standard'

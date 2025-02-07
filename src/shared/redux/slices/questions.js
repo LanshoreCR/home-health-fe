@@ -16,13 +16,14 @@ export const questionsSlice = createSlice({
         answers: question.answers,
         answered: question.answers != null,
         subSection: question.subSection,
-        percentages: question.percentages
+        percentages: question.percentages,
+        flag: question.flag
       }))
 
       return state
     },
     respondQuestion: (state, action) => {
-      const { templateQuestionId, answer, comments, answered = true, percentage } = action.payload
+      const { templateQuestionId, answer, comments, answered = true, percentage, flag } = action.payload
       const questionIndex = state.findIndex((question) => question.templateQuestionId === templateQuestionId)
       if (questionIndex === -1) {
         return
@@ -32,7 +33,8 @@ export const questionsSlice = createSlice({
         answers: parseInt(answer),
         comments,
         answered,
-        percentages: parseInt(percentage)
+        percentages: parseInt(percentage),
+        flag: flag
       }
 
       return state

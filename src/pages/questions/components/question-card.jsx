@@ -31,7 +31,7 @@ const AVAILABLE_OPTIONS = [
 ]
 
 export default function QuestionCard({ question, sectionId, employeeId, initAnswer, initPercentage, isApproved, currentTool }) {
-  const { questionText, templateAnswerId, templateQuestionId, comments, flagCAPA } = question
+  const { questionText, templateAnswerId, templateQuestionId, comments, flag } = question
 
   const dispatch = useDispatch()
 
@@ -41,7 +41,7 @@ export default function QuestionCard({ question, sectionId, employeeId, initAnsw
   const [comment, setComment] = useState(comments || '')
   const [commentError, setCommentError] = useState(false)
   const [commentDebounced] = useDebounce(comment, 500)
-  const [flag, setFlag] = useState(flagCAPA != null && flagCAPA !== 0)
+  const [flagged, setFlagged] = useState(flag === 1)
 
   const isKeyIndicator = currentTool?.templateName === 'Key Indicators'
   const questionName = `${questionText}`
@@ -134,7 +134,7 @@ export default function QuestionCard({ question, sectionId, employeeId, initAnsw
   }
 
   const handleChangeFlag = async () => {
-    const newFlagState = !flag
+    const newFlagState = !flagged
     const flagNumber = newFlagState ? 1 : 0
     try {
       const response = await saveAnswer(
@@ -143,7 +143,9 @@ export default function QuestionCard({ question, sectionId, employeeId, initAnsw
       if (response instanceof Error) {
         throw new Error('error while saving answer')
       }
-      setFlag(newFlagState)
+      setFlagged(newFlagState)
+      dispatch(respondQuestion({ templateQuestionId, answer, answered: answer ? true : false, comments, percentage, flag: flagNumber }))
+
     } catch (error) {
       toast.error('error saving answer. Please try it again')
     }
@@ -184,7 +186,7 @@ export default function QuestionCard({ question, sectionId, employeeId, initAnsw
         <div className='flex flex-row justify-between items-center'>
           <FormLabel id="demo-radio-buttons-group-label">{questionName}</FormLabel>
           <div className='flex flex-row justify-end'>
-            <IconButton aria-label="flag" color={flag ? 'warning' : 'default'} onClick={handleChangeFlag} disabled={isApproved}>
+            <IconButton aria-label="flag" color={flagged ? 'warning' : 'default'} onClick={handleChangeFlag} disabled={isApproved}>
               <FlagIcon />
             </IconButton>
           </div>
