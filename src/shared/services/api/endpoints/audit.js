@@ -6,7 +6,7 @@ export const createAudit = async ({ audit, userId }) => {
   try {
     const axiosInstance = apiMaster.getInstance()
 
-    const { dateRange, edName, businessLineId, locationId, locationNumbers } = audit
+    const { dateRange, edName, edId, businessLineId } = audit
     const startDate = dateRange[0]
     const endDate = dateRange[1]
 
@@ -15,12 +15,11 @@ export const createAudit = async ({ audit, userId }) => {
 
     const params = {
       EDName: edName,
-      LocationId: locationId,
+      EDNumber: edId,
       CreatedBy: userId,
       BusinessLineID: businessLineId,
       StartDate: startDateFormatted,
       EndDate: endDateFormatted,
-      LocationNumbers: locationNumbers,
     
     }
 
