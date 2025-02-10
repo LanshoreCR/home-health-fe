@@ -33,7 +33,7 @@ const RootPage = () => {
       <Route path='/' exact={true} element={<BannersPage />} />
       <Route path='/:id' element={<CreateBannerPage />} />
       <Route path='/:id/tools' element={<BannerToolsPage />} />
-      <Route path='/:id/tools/:idTool' element={<CreateToolPage />} />
+      <Route path='/:id/:auditTeamId/tools/:idTool' element={<CreateToolPage />} />
       <Route path='/:id/tools/:idTool/questions' element={<QuestionsPage />} />
       <Route path='/:id/attachments' element={<AttachmentsPage />} />
 
