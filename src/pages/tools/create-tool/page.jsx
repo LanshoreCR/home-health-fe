@@ -15,7 +15,7 @@ import CreateToolSkeleton from './components/skeleton'
 import { Add, Delete } from '@mui/icons-material'
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { getTeamAuditors } from '../../../shared/services/api/endpoints/manage-team'
+import { getAssignedTeamMembers, getTeamAuditors } from '../../../shared/services/api/endpoints/manage-team'
 // const schema = yup.object().shape({
 //   tools: yup.array().of(
 //     yup.object().shape({
@@ -36,7 +36,7 @@ const defaultToolValue = {
 }
 
 export default function CreateToolPage() {
-  const { id, idTool } = useParams()
+  const { id, idTool, auditTeamId } = useParams()
   const navigate = useNavigate()
 
   const [expandedAccordion, setExpandedAccordion] = useState('')
@@ -133,7 +133,7 @@ export default function CreateToolPage() {
 
 
   useEffect(() => {
-    getTeamAuditors()
+    getAssignedTeamMembers({ auditTeamId })
       .then((res) => {
         if (res instanceof Error) {
           throw new Error('error getting team auditors')
@@ -280,7 +280,7 @@ export default function CreateToolPage() {
                     <List>
                       {
                         group.map((field, index) => (
-                          <Grid2 container key={field.realIndex} direction={'row'} mt={1} justifyContent={'space-between'}>
+                          <Grid2 container key={field.realIndex} direction={'row'} rowSpacing={2} justifyContent={'space-between'} mt={2} >
                             <FormControl >
                               <TextField label='Client name' value={field.customerName} onChange={({ target }) => {
                                 setValue(`tools.${field.realIndex}.customerName`, target.value)
