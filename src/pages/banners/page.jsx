@@ -12,7 +12,7 @@ import MenuItem from '@mui/material/MenuItem'
 import SearchIcon from '@mui/icons-material/Search'
 import Select from '@mui/material/Select'
 import { useDebounce } from 'use-debounce'
-import { InputAdornment, OutlinedInput } from '@mui/material'
+import { Box, Grid2, InputAdornment, OutlinedInput } from '@mui/material'
 import ClearIcon from '@mui/icons-material/Clear'
 
 const filterAudits = (audits, filters) => {
@@ -160,79 +160,76 @@ export default function BannersPage() {
   }
   return (
     <div>
-      <header className='flex justify-between items-center w-full mb-10'>
-        <div className='flex items-center w-full justify-between'>
-          <div className='flex gap-x-3 flex-1 items-center'>
-            <FormControl variant="outlined" className='max-w-60 w-full' label='Search by name' size='small'>
-              <OutlinedInput
-                id="outlined-adornment-weight"
-                endAdornment={(searchByName !== ''
-                  ? (
-                    <InputAdornment position="end" onClick={resetSearchName} className='cursor-pointer'>
-                      <ClearIcon />
-                    </InputAdornment>
-                  )
-                  : (
-                    <InputAdornment position="end">
-                      <SearchIcon />
-                    </InputAdornment>
-                  ))}
-                placeholder='Search by name'
-                value={searchByName}
-                onChange={handleChangeSearchByName}
-              />
-            </FormControl>
-            <FormControl className='max-w-60 w-full' size='small'>
-              <InputLabel id="demo-simple-select-label">Filter by Location</InputLabel>
-              <Select
-                labelId="demo-simple-select-label"
-                id="demo-simple-select"
-                label="Filter by Location"
-                value={currentLocation}
-                onChange={handleChangeLocation}>
+      <Grid2 container spacing={2} width={'100%'} alignItems={'center'}>
+        <FormControl variant="outlined" className='max-w-44 w-full' label='Search by name' size='small'>
+          <OutlinedInput
+            id="outlined-adornment-weight"
+            endAdornment={(searchByName !== ''
+              ? (
+                <InputAdornment position="end" onClick={resetSearchName} className='cursor-pointer'>
+                  <ClearIcon />
+                </InputAdornment>
+              )
+              : (
+                <InputAdornment position="end">
+                  <SearchIcon />
+                </InputAdornment>
+              ))}
+            placeholder='Search by name'
+            value={searchByName}
+            onChange={handleChangeSearchByName}
+          />
+        </FormControl>
+        <FormControl className='max-w-44 w-full' size='small'>
+          <InputLabel id="demo-simple-select-label">Filter by Location</InputLabel>
+          <Select
+            labelId="demo-simple-select-label"
+            id="demo-simple-select"
+            label="Filter by Location"
+            value={currentLocation}
+            onChange={handleChangeLocation}>
 
-                <MenuItem value={''}>All</MenuItem>
-                {locations.map((location) => (
-                  <MenuItem value={location.id} key={location.id}>{location.name}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl className='max-w-60 w-full' size='small'>
-              <InputLabel id="demo-simple-select-label">Filter by Quarter</InputLabel>
-              <Select
-                labelId="demo-simple-select-label"
-                id="demo-simple-select"
-                label="Filter by Quarter"
-                value={currentQuarter}
-                onChange={handleChangeQuarter}
-              >
-                <MenuItem value={''}>All</MenuItem>
-                {QUARTER_OPTIONS.map((quarter) => (
-                  <MenuItem value={quarter} key={quarter}>{quarter}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl className='max-w-60 w-full' size='small'>
-              <InputLabel id="demo-simple-select-label">Filter by Auditor</InputLabel>
-              <Select
-                labelId="demo-simple-select-label"
-                id="demo-simple-select"
-                label="Filter by Auditor"
-                value={currentAuditor}
-                onChange={handleChangeAuditor}
-              >
-                <MenuItem value={''}>All</MenuItem>
-                {auditors.map((auditor) => (
-                  <MenuItem value={auditor.id} key={auditor.id}>{auditor.name}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </div>
-          <Link to={'/new'}>
-            <Button variant="contained">New Audit</Button>
-          </Link>
-        </div>
-      </header>
+            <MenuItem value={''}>All</MenuItem>
+            {locations.map((location) => (
+              <MenuItem value={location.id} key={location.id}>{location.name}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <FormControl className='max-w-44 w-full' size='small'>
+          <InputLabel id="demo-simple-select-label">Filter by Quarter</InputLabel>
+          <Select
+            labelId="demo-simple-select-label"
+            id="demo-simple-select"
+            label="Filter by Quarter"
+            value={currentQuarter}
+            onChange={handleChangeQuarter}
+          >
+            <MenuItem value={''}>All</MenuItem>
+            {QUARTER_OPTIONS.map((quarter) => (
+              <MenuItem value={quarter} key={quarter}>{quarter}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <FormControl className='max-w-44 w-full' size='small'>
+          <InputLabel id="demo-simple-select-label">Filter by Auditor</InputLabel>
+          <Select
+            labelId="demo-simple-select-label"
+            id="demo-simple-select"
+            label="Filter by Auditor"
+            value={currentAuditor}
+            onChange={handleChangeAuditor}
+          >
+            <MenuItem value={''}>All</MenuItem>
+            {auditors.map((auditor) => (
+              <MenuItem value={auditor.id} key={auditor.id}>{auditor.name}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <Link to={'/new'} style={{ marginLeft: 'auto' }}>
+          <Button variant="contained">New Audit</Button>
+        </Link>
+      </Grid2>
+
       {
         filteredAudits.length > 0
           ? (

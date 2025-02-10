@@ -36,6 +36,7 @@ export default function RangeDatePicker({ onSelect }) {
     <DateRangePicker size='lg' block appearance="subtle" character=" – "
       disabled={false} format="MM/dd/yyyy" cleanable={false}
       defaultValue={today}
+      showOneCalendar={window.matchMedia('(max-width: 768px)').matches}
       shouldDisableDate={date => isBefore(date, oneMonthAgo) || isAfter(date, oneMonthAhead)}
       onOk={onSelect} style={{ borderBottom: '1px solid #757575', borderRadius: '0px', width: '100%' }} />
   )

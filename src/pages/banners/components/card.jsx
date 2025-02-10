@@ -111,11 +111,8 @@ export default function BannerCard({ audit, refreshAudits }) {
   return (
     <Card className='p-4 hover:bg-blue-50'>
       <header className='flex w-full justify-between '>
-        <div className='flex gap-x-3 items-center'>
-          <h3 className='text-lg font-bold'>{packageName}</h3>
-          {/* <Chip label={packageStatus} /> */}
-        </div>
-        <div className='flex gap-x-3 items-center justify-end'>
+        <Grid2 width={'100%'} container justifyContent={'flex-end'} >
+          <h3 className='text-lg font-bold mr-auto'>{packageName}</h3>
           <FormControl size='small' className='w-40'>
             <InputLabel id="demo-simple-select-label">Change Status</InputLabel>
             <Select
@@ -136,42 +133,37 @@ export default function BannerCard({ audit, refreshAudits }) {
           <IconButton aria-label="more-options" onClick={handleOpenOptions}>
             <MoreVertIcon />
           </IconButton>
-        </div>
-      </header>
-      <Grid2 container mt={1} direction='column' spacing={2}>
-         
-          <Grid2 container direction='row' spacing={1} mt={1} alignItems='center'>
-            <Typography>
-              {sectionDesc}
-            </Typography>
-            <Divider orientation='vertical' flexItem />
-            <Typography>
-              {businessLineName}
-            </Typography>
-            <Divider orientation='vertical' flexItem />
-            <Typography>
-              {isTeam}
-            </Typography>
-            <Divider orientation='vertical' flexItem />
-            <Typography>
-              {createdOn.split('T')[0]}
-            </Typography>
-            <Divider orientation='vertical' flexItem />
-            <Chip label={packageStatus}
-              sx={{
-                backgroundColor: STATUS_COLORS[packageStatus],
-                fontWeight: 'bold',
-                color: STATUS_LABEL_COLORS[packageStatus],
-              }}
-              size='small'
-            />
-
-          </Grid2>
-          {/* <Divider flexItem /> */}
-
         </Grid2>
-      <footer className='w-full mt-3 flex justify-between items-center'>
-        <article className='gap-x-3 flex'>
+      </header>
+      <Grid2 container direction='row' spacing={1} mt={1} alignItems='center'>
+        <Typography >
+          {sectionDesc}
+        </Typography>
+        <Divider orientation='vertical' flexItem />
+        <Typography>
+          {businessLineName}
+        </Typography>
+        <Divider orientation='vertical' flexItem />
+        <Typography>
+          {isTeam}
+        </Typography>
+        <Divider orientation='vertical' flexItem />
+        <Typography>
+          {createdOn.split('T')[0]}
+        </Typography>
+        <Divider orientation='vertical' flexItem />
+        <Chip label={packageStatus}
+          sx={{
+            backgroundColor: STATUS_COLORS[packageStatus],
+            fontWeight: 'bold',
+            color: STATUS_LABEL_COLORS[packageStatus],
+          }}
+          size='small'
+        />
+
+      </Grid2>
+      <Grid2 container width={'100%'} mt={3}>
+        <Grid2 container spacing={2}>
           <div className='flex items-center'>
             <DateRangeIcon className='text-primary/80' />
             <span>{packageStartDate?.split('T')[0]}</span>
@@ -188,49 +180,44 @@ export default function BannerCard({ audit, refreshAudits }) {
             <PersonIcon className='text-primary/80' />
             <span>{teamLead}</span>
           </div>
-        </article>
-        <footer className='flex gap-x-3 items-center justify-end'>
-          {/* {capaFlag === CAPA_FLAG.ACTIVE && (
-            <Link to={`/${packageId}/capa`}>
-              <Button variant="text">View CAPA</Button>
-            </Link>
-          )} */}
-          <Link to={`/${packageId}/tools/new`}>
+        </Grid2>
+        <Grid2 container ml={'auto'}>
+          <Link to={`/${packageId}/${auditTeamId}/tools/new`}>
             <Button variant="text">Create Tools</Button>
           </Link>
           <Link to={`/${packageId}/tools`}>
             <Button variant="text">View Tools</Button>
           </Link>
-        </footer>
-        <Menu
-          id="basic-menu"
-          anchorEl={anchorEl}
-          open={open}
-          onClose={handleClose}
-          MenuListProps={{
-            'aria-labelledby': 'basic-button'
-          }}>
-          <MenuItem onClick={handleOpenReport}>Check report</MenuItem>
-          {
-            packageStatus !== STATUS.COMPLETED && (
-              <>
-                <MenuItem onClick={() => {
-                  openSendNotificationsModal()
-                  handleClose()
-                }}>Send Notifications</MenuItem>
-                <MenuItem onClick={() => {
-                  openManageTeamModal()
-                  handleClose()
-                }}>Manage team</MenuItem>
-              </>
-            )
-          }
-          <MenuItem onClick={() => {
-            handleDeleteAudit()
-            handleClose()
-          }}>Delete</MenuItem>
-        </Menu>
-      </footer>
+        </Grid2>
+      </Grid2>
+      <Menu
+        id="basic-menu"
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+        MenuListProps={{
+          'aria-labelledby': 'basic-button'
+        }}>
+        <MenuItem onClick={handleOpenReport}>Check report</MenuItem>
+        {
+          packageStatus !== STATUS.COMPLETED && (
+            <>
+              <MenuItem onClick={() => {
+                openSendNotificationsModal()
+                handleClose()
+              }}>Send Notifications</MenuItem>
+              <MenuItem onClick={() => {
+                openManageTeamModal()
+                handleClose()
+              }}>Manage team</MenuItem>
+            </>
+          )
+        }
+        <MenuItem onClick={() => {
+          handleDeleteAudit()
+          handleClose()
+        }}>Delete</MenuItem>
+      </Menu>
       <ManageTeamModal
         refreshAudits={refreshAudits}
         auditTeamLead={auditTeamLead}
