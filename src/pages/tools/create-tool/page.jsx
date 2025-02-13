@@ -1,21 +1,19 @@
 import { useEffect, useState } from 'react'
 import { createTools, getTools } from '../../../shared/services/api/endpoints/tools'
 import { DatePicker } from '@mui/x-date-pickers'
-import { FormControl, InputLabel, MenuItem, Select, TextField, Grid2, Box, Typography, Accordion, AccordionSummary, AccordionDetails, List, IconButton } from '@mui/material'
+import { FormControl, InputLabel, MenuItem, Select, TextField, Grid2, Box, Typography, Accordion, AccordionSummary, AccordionDetails, List, IconButton, Checkbox } from '@mui/material'
 import { getLocations } from '../../../shared/services/api/endpoints/location'
 import { getToolTemplates } from '../../../shared/services/api/endpoints/tool-template'
 import { toast } from 'sonner'
-import { useForm, useFieldArray } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useSelector } from 'react-redux'
-import { yupResolver } from '@hookform/resolvers/yup'
-import * as yup from 'yup'
 import Button from '@mui/material/Button'
 import CreateToolSkeleton from './components/skeleton'
 import { Add, Delete } from '@mui/icons-material'
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { getAssignedTeamMembers, getTeamAuditors } from '../../../shared/services/api/endpoints/manage-team'
+import { getAssignedTeamMembers } from '../../../shared/services/api/endpoints/manage-team'
 // const schema = yup.object().shape({
 //   tools: yup.array().of(
 //     yup.object().shape({
@@ -44,9 +42,14 @@ export default function CreateToolPage() {
   const [toolsByLocation, setToolsByLocation] = useState({})
   const [tools, setTools] = useState([])
   const [auditors, setAuditors] = useState([])
-  const [quantityTools, setQuantityTools] = useState(1)
+  const [isSelectAllChecked, setIsSelectAllChecked] = useState(false)
   const [prevAddToolForm, setPrevAddToolForm] = useState({
-    locationNumber: '', tool: ''
+    locationNumber: '', tools: [
+      // {
+      //   id: '',
+      //   quantity: 0
+      // }
+    ]
   })
   const [groupedTools, setGroupedTools] = useState({})
 
@@ -81,16 +84,19 @@ export default function CreateToolPage() {
 
   const handleAddTool = () => {
 
-    for (let counter = 0; counter < quantityTools; counter++) {
+    const { locationNumber, tools } = prevAddToolForm;
 
-      const index = watchFields.length - 1
-      setValue(`tools.${index}.locationNumber`, prevAddToolForm.locationNumber)
-      setValue(`tools.${index}.templateId`, prevAddToolForm.tool)
-      setValue(`tools.${index}.realIndex`, index)
+    let index = 0
+    tools.forEach(tool => {
+      for (let counter = 0; counter < parseInt(tool.quantity); counter++) {
+        setValue(`tools.${index}.locationNumber`, locationNumber)
+        setValue(`tools.${index}.templateId`, tool.id)
+        setValue(`tools.${index}.realIndex`, index)
 
-      setValue(`tools.${index + 1}`, { ...defaultToolValue, realIndex: index + 1 })
-
-    }
+        setValue(`tools.${index + 1}`, { ...defaultToolValue, realIndex: index + 1 })
+        index++;
+      }
+    })
 
     const groupedData = getGroupedData(watchFields)
 
@@ -227,28 +233,88 @@ export default function CreateToolPage() {
                 ))}
               </Select>
             </FormControl>
-            <FormControl sx={{ minWidth: 350 }} >
+            <FormControl sx={{ width: 350 }} >
               <InputLabel id={`tool-label`}>Tool</InputLabel>
               <Select
                 labelId={`tool-label`}
                 label="Tool"
+                multiple
                 onChange={({ target }) => {
-                  setPrevAddToolForm(prev => ({ ...prev, tool: target.value }))
+                  const form = prevAddToolForm.tools;
+                  if (isSelectAllChecked) {
+                    setIsSelectAllChecked(false)
+                    setPrevAddToolForm(prev => ({ ...prev, tools: [] }))
+                    return;
+                  }
+                  if (target.value.includes('all')) {
+
+                    setIsSelectAllChecked(true)
+                    setPrevAddToolForm(prev => ({
+                      ...prev,
+                      tools: toolsByLocation[prevAddToolForm.locationNumber]?.map(item => ({
+
+                        id: item.templateId,
+                        quantity: 1
+                      }))
+                    }))
+                  } else {
+                    setIsSelectAllChecked(false)
+
+                    setPrevAddToolForm(prev => ({
+                      ...prev,
+                      tools: target.value.map((value) => {
+                        const exists = form.find(item => item.id === value)
+                        if (exists) return exists
+                        return {
+                          id: value,
+                          quantity: 1
+                        }
+                      })
+                    }))
+                  }
                 }}
-                value={prevAddToolForm.tool}
+                renderValue={(value) => {
+                  return value.map((v) => toolsByLocation[prevAddToolForm.locationNumber].find(option => option.templateId === v).templateDesc).join(', ')
+                }}
+                value={prevAddToolForm.tools.map(v => v.id)}
               >
+                <MenuItem key={'all'} value={'all'} sx={{ gap: 2 }}>
+                  <Checkbox checked={isSelectAllChecked} />
+                  Select all
+                </MenuItem>
                 {toolsByLocation[prevAddToolForm.locationNumber]?.map((option) => (
-                  <MenuItem key={option.templateId} value={option.templateId}>{option.templateDesc}</MenuItem>
+                  <MenuItem key={option.templateId} value={option.templateId}>
+                    <Grid2 container spacing={2} alignItems={'center'} width={'100%'}>
+
+                      <Checkbox checked={prevAddToolForm.tools.some(v => v.id === option.templateId)} disabled={true} />
+
+                      {option.templateDesc}
+                      <TextField
+                        sx={{ width: 75, ml: 'auto' }}
+                        type='number'
+                        label='Quantity'
+                        onClick={(event) => event.stopPropagation()}
+                        value={prevAddToolForm.tools.find(v => v.id === option.templateId)?.quantity ?? 0}
+                        onChange={(event) => {
+                          event.stopPropagation()
+                          const { target } = event;
+                          if (target.value > 10) return
+                          const form = prevAddToolForm.tools;
+                          const updatedTool = {
+                            id: option.templateId,
+                            quantity: target.value
+                          }
+                          setPrevAddToolForm(prev => ({
+                            ...prev,
+                            tools: form.map(v => v.id === option.templateId ? updatedTool : v)
+                          }))
+                        }} />
+                    </Grid2>
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
 
-            <Box width={75}>
-              <TextField type='number' label='Quantity' value={quantityTools} onChange={({ target }) => {
-                if (target.value > 10) return
-                setQuantityTools(target.value)
-              }} />
-            </Box>
             <Box >
               <Button variant="outlined" onClick={handleAddTool} type='button' startIcon={<Add />}>Add tool(s)</Button>
             </Box>
@@ -256,7 +322,7 @@ export default function CreateToolPage() {
           </Grid2>
 
         </form>
-      </Grid2>
+      </Grid2 >
       <form onSubmit={handleSubmit(onSubmit)}>
         <Grid2 container direction={'column'} paddingX={2} width={'100%'} sx={{
           overflowY: 'auto',
@@ -335,6 +401,6 @@ export default function CreateToolPage() {
         </Grid2>
       </form>
 
-    </div>
+    </div >
   )
 }
