@@ -12,7 +12,7 @@ import LoadingQuestionPage from './loading'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getTools } from '../../shared/services/api/endpoints/tools'
 import { toast } from 'sonner'
-import { getQuestions, saveGeneralComment, submitAnswers } from '../../shared/services/api/endpoints/questions'
+import { getQuestions, saveCustomerNameOrAuditDate, saveGeneralComment, submitAnswers } from '../../shared/services/api/endpoints/questions'
 import { Grid2, TextField, Typography } from '@mui/material'
 import { useDebounce } from 'use-debounce'
 import SubSection from './components/sub-section'
@@ -22,6 +22,7 @@ import { respondQuestion, storeQuestions } from '../../shared/redux/slices/quest
 import ProgressBar from './components/progress-bar'
 import { getAudit } from '../../shared/services/api/endpoints/audit'
 import { BANNER_STATUS } from '../../shared/utils/status'
+import { DatePicker } from '@mui/x-date-pickers'
 
 function groupAndSortQuestions(questions) {
   const groupedBySubSection = {}
@@ -66,8 +67,14 @@ export default function QuestionsPage() {
   const isApproved = currentAudit?.packageStatus === BANNER_STATUS.COMPLETED
 
   const currentTool = tools.find((tool) => tool.packageTemplateId === currentIdTool) ?? null
+
   const [generalComments, setGeneralComments] = useState('')
+  const [toolForm, setToolForm] = useState({
+    customerName: '',
+    auditDate: null
+  })
   const [generalCommentsDebounced] = useDebounce(generalComments, 1000)
+  const [toolFormDebounced] = useDebounce(toolForm, 1000);
 
   const [standard, setStandard] = useState('')
 
@@ -149,6 +156,16 @@ export default function QuestionsPage() {
       })
   }, [currentIdTool, dispatch])
 
+  useEffect(() => {
+    if (currentTool) {
+      setToolForm({
+        auditDate: currentTool.auditDate ? new Date(currentTool.auditDate) : null,
+        customerName: currentTool.customerName
+      })
+    }
+  }, [currentTool])
+
+
   const goToToolsPage = () => {
     goBack()
   }
@@ -183,7 +200,6 @@ export default function QuestionsPage() {
     ref.scrollIntoView({ behavior: 'smooth' })
   }
 
-  //TODO:apply this same for customer name and audit date
   useEffect(() => {
     const handleSaveGeneralComments = async () => {
       try {
@@ -197,6 +213,27 @@ export default function QuestionsPage() {
     }
     handleSaveGeneralComments()
   }, [generalCommentsDebounced, currentIdTool])
+
+  useEffect(() => {
+    const handleSaveCustomerNameOrAuditDate = async () => {
+      try {
+        const response = await saveCustomerNameOrAuditDate({
+          customerName: toolFormDebounced.customerName,
+          auditDate: toolFormDebounced.auditDate ? toolFormDebounced.auditDate.toISOString().slice(0, 19) : null,
+          packageId: currentIdTool
+        })
+        if (response instanceof Error) {
+          throw new Error('error while saving comment')
+        }
+      } catch (error) {
+        toast.error('error saving customer name or audit date. Please try it again')
+
+      }
+
+    }
+    handleSaveCustomerNameOrAuditDate()
+  }, [toolFormDebounced])
+
 
   const filteredTools = tools.filter((tool) => {
     if (currentLocation !== '' && currentToolTemplate !== '') {
@@ -270,34 +307,29 @@ export default function QuestionsPage() {
   const totalQuestions = storedQuestions.length
 
   return (
-    <div className='w-full mx-auto overflow-hidden'>
-      <header className='mb-2 flex flex-col'>
-        <div className='flex items-center gap-x-3'>
-          <IconButton onClick={handleOpenSidebar}>
-            <MenuIcon />
-          </IconButton>
-          {currentTool != null && (
-            <div className='flex justify-between w-full items-center'>
-              <h2 className='font-semibold text-xl text-primary flex'>{currentTool.templateName}</h2>
-              <div>
-                <TextField
-                  size='small'
-                  variant='outlined'
-                  required
-                  fullWidth
-                  id="standard"
-                  placeholder={`${currentTool.templateId}.1`}
-                  value={standard}
-                  onChange={handleChangeStandard}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-      </header>
-      <div className='flex w-full justify-between gap-x-5'>
+    <Grid2 container width={'100%'} direction={'column'}>
+      <Grid2 container width={'100%'} alignItems={'center'} mb={2}>
+        <IconButton onClick={handleOpenSidebar}>
+          <MenuIcon />
+        </IconButton>
+        {currentTool != null && (
+          <Grid2 container justifyContent={'space-between'} flexGrow={1} alignItems={'center'} >
+            <h2 className='font-semibold text-xl text-primary flex'>{currentTool.templateName}</h2>
+            <TextField
+              size='small'
+              variant='outlined'
+              required
+              id="standard"
+              placeholder={`${currentTool.templateId}.1`}
+              value={standard}
+              onChange={handleChangeStandard}
+            />
+          </Grid2>
+        )}
+      </Grid2>
+      <div className=' w-full justify-between gap-x-5 flex flex-col sm:flex-row'>
         {openSidebar &&
-          <div className='flex min-w-80 max-w-80 overflow-y-auto bg-blue-300'>
+          <div className='flex min-w-80 max-w-80 overflow-y-auto '>
             <Paper className='w-full p-3 h-full'>
               <header className='flex items-center justify-between mb-3'>
                 <h3 className='font-semibold text-lg'>Tools</h3>
@@ -355,44 +387,49 @@ export default function QuestionsPage() {
               <div className='my-5'>
                 <Divider />
               </div>
-              {/* <article className='flex gap-x-1 w-full items-center hover:text-primary text-md hover:font-bold cursor-pointer' onClick={goToCapa}>
-                <span className='text-lg'>CAPA</span>
-                <div className='text-sm'>
-                  <OpenInNewIcon fontSize='small' />
-                </div>
-              </article> */}
             </Paper>
           </div>
         }
         <div className='flex items-center w-full justify-between flex-col relative'>
           <section className='flex flex-col w-full gap-y-5'>
             {currentTool != null &&
-              <header className='w-full shadow px-4 flex flex-col gap-y-5 py-3'>
+              <Grid2 container direction={'column'} spacing={3} alignItems={'center'} mt={2}>
+                <Grid2 container alignItems={'center'} width={'100%'}>
+                  <TextField
+                    variant='outlined'
+                    required
+                    sx={{ flexGrow: 1 }}
+                    id="standard"
+                    label='Client Name'
+                    value={toolForm.customerName}
+                    onChange={({ target }) => {
+                      setToolForm(prev => ({ ...prev, customerName: target.value }))
+                    }}
+                  />
+                  <DatePicker
+                    label='Audit Date'
+                    value={toolForm.auditDate}
+                    onChange={(date) => {
+                      setToolForm(prev => ({ ...prev, auditDate: date }))
+                    }}
+                  />
+                </Grid2>
+
                 <TextField
-                  size='small'
-                  variant='outlined'
+                  variant='standard'
                   required
                   fullWidth
-                  id="standard"
-                  label='Client Name'
-                  value={currentTool.customerName}
-                  onChange={() => { }} />
+                  multiline
+                  maxRows={3}
+                  id="outlined-multiline-static"
+                  placeholder="General Comments"
+                  value={generalComments}
+                  onChange={handleChangeGeneralComments}
+                  disabled={isApproved}
+                />
 
-                <div className='flex w-full justify-between gap-x-5'>
-                  <TextField
-                    variant='standard'
-                    required
-                    fullWidth
-                    multiline
-                    maxRows={3}
-                    id="outlined-multiline-static"
-                    placeholder="General Comments"
-                    value={generalComments}
-                    onChange={handleChangeGeneralComments}
-                    disabled={isApproved}
-                  />
-                </div>
-              </header>
+              </Grid2>
+
             }
             <div className={`w-full flex flex-col gap-y-5 overflow-y-auto 
               ${openSidebar ? 'h-screen' : 'xl:h-[calc(100vh-330px)] md:h-[calc(100vh-350px)]'}
@@ -420,6 +457,6 @@ export default function QuestionsPage() {
           </section>
         </div>
       </div>
-    </div>
+    </Grid2 >
   )
 }

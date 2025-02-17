@@ -41,6 +41,7 @@ export const saveAnswer = async ({ answer, comment, questionId, packageId, flag 
       Comments: comment,
       CustomerName: null,
       GeneralComments: null,
+      AuditDate: null,
       TemplateAnswerID: parseInt(questionId),
       PackageTemplateID: parseInt(packageId),
       Flag: flag,
@@ -62,6 +63,7 @@ export const saveGeneralComment = async ({ generalComment, questionId, packageId
       Comments: null,
       CustomerName: null,
       GeneralComments: generalComment,
+      AuditDate: null,
       TemplateAnswerID: null,
       PackageTemplateID: parseInt(packageId),
       Flag: null
@@ -74,6 +76,29 @@ export const saveGeneralComment = async ({ generalComment, questionId, packageId
     return new Error('cannot save question')
   }
 }
+
+export const saveCustomerNameOrAuditDate = async ({ auditDate, customerName, packageId }) => {
+  try {
+    const axiosInstance = apiMaster.getInstance()
+    const body = {
+      Answers: null,
+      Comments: null,
+      CustomerName: customerName,
+      GeneralComments: null,
+      AuditDate: auditDate,
+      TemplateAnswerID: null,
+      PackageTemplateID: parseInt(packageId),
+      Flag: null
+    }
+
+    const response = await axiosInstance.post(ENDPOINTS.SAVE_ANSWER, body, {})
+    const data = response.data
+    return data
+  } catch (error) {
+    return new Error('cannot save customer name or audit date')
+  }
+}
+
 
 export const saveEmployeeId = async ({ customerName, packageId }) => {
   try {
