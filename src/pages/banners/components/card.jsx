@@ -200,18 +200,24 @@ export default function BannerCard({ audit, refreshAudits }) {
         }}>
         <MenuItem onClick={handleOpenReport}>Check report</MenuItem>
         {
-          packageStatus !== STATUS.COMPLETED && (
-            <>
-              <MenuItem onClick={() => {
-                openSendNotificationsModal()
-                handleClose()
-              }}>Send Notifications</MenuItem>
-              <MenuItem onClick={() => {
-                openManageTeamModal()
-                handleClose()
-              }}>Manage team</MenuItem>
-            </>
-          )
+          packageStatus !== STATUS.COMPLETED &&
+
+          [
+            <MenuItem key={'send'} onClick={() => {
+              openSendNotificationsModal()
+              handleClose()
+            }}>
+              Send Notifications
+            </MenuItem>,
+            <MenuItem key={'manage'} onClick={() => {
+              openManageTeamModal()
+              handleClose()
+            }}>
+              Manage team
+            </MenuItem>
+          ]
+
+
         }
         <MenuItem onClick={() => {
           handleDeleteAudit()
