@@ -32,6 +32,7 @@ export const ENDPOINTS = {
   REASSIGN_AUDITOR: '/api/AuditTeams/ReassignAuditor',
   REASSIGN_TEAM_LEAD: '/api/AuditTeams/ReassignLead',
   MAINTENANCE_TOOLS: '/api/Maintenance/GetMaintenanceAuditTools',
+  MAINTENANCE_BUSINESSLINES: '/api/Maintenance/GetMaintenanceBusinessLines',
   TEMPLATE_QUESTIONS: '/api/Maintenance/GetTemplateDetails',
   UPDATE_MAINTENANCE_QUESTION: '/api/Maintenance/UpdateQuestions',
   CREATE_TEMPLATE: '/api/Maintenance/CreateTemplate',

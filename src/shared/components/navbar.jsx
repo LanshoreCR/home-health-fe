@@ -1,16 +1,23 @@
 import React from 'react'
-import { Link, useLocation, } from 'react-router-dom'
-// import { useOktaAuth } from '@okta/okta-react'
+import { Link, useLocation, useNavigate, } from 'react-router-dom'
+import { useOktaAuth } from '@okta/okta-react'
 import { Box, AppBar, Toolbar, Typography, Button } from '@mui/material'
 import BackButton from './back-button'
+import useRole from '../hooks/useRole'
 const Navbar = () => {
     const location = useLocation()
+    const navigate = useNavigate()
 
-    // const { oktaAuth } = useOktaAuth()
+    const { oktaAuth } = useOktaAuth()
+    const { isReviewer } = useRole()
 
     const handleLogout = async () => {
-        // await oktaAuth.signOut()
+        await oktaAuth.signOut()
     }
+
+    const goToMaintenance = () => {
+        navigate('/maintenance')
+      }
 
     return (
         <Box sx={{ flexGrow: 1 }}>
@@ -25,6 +32,9 @@ const Navbar = () => {
                         </Link>
                     </Typography>
                     <div className='flex gap-x-5'>
+                        {isReviewer && (
+                            <Button variant='text' color='inherit' onClick={goToMaintenance}>Maintenance</Button>
+                        )}
                         <Button variant='text' color='inherit' onClick={handleLogout}>Logout</Button>
                     </div>
                 </Toolbar>

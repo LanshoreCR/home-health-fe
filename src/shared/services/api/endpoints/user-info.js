@@ -17,7 +17,9 @@ export const getUserInfo = async () => {
       edId: data.eD_ID,
       edName: data.edName,
       locationId: data.locationID,
-      locationName: data.locationName
+      locationName: data.locationName,
+      role: data.role
+
     }
   } catch (error) {
     console.error('Error fetching user info:', error)
