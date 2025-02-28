@@ -6,6 +6,7 @@ import { LoginCallback } from '@okta/okta-react'
 import { LocalizationProvider } from '@mui/x-date-pickers'
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3'
 import QualityAuditThemeProvider from './shared/components/providers/theme-provider'
+import { Toaster } from 'sonner'
 
 function App() {
 
@@ -27,6 +28,7 @@ function App() {
             </LocalizationProvider>
           </main>
         </div>
+        <Toaster position="top-center" richColors />
       </QualityAuditThemeProvider>
     </OktaProvider>
   )

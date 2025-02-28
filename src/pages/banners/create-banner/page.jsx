@@ -69,61 +69,78 @@ export default function CreateBannerPage() {
   const [regions, setRegions] = useState(null)
   const [regionDirector, setRegionDirector] = useState(null)
   const [executiveDirector, setExecutiveDirector] = useState(null)
-  const [locations, setLocations] = useState(null)
+  const [locations, setLocations] = useState([])
   const [auditors, setAuditors] = useState([])
   const [dateRange, setDateRange] = useState([null, null])
 
   useEffect(() => {
-    getLocationHierarchy().then((data) => setBusiness(data))
+    toast.promise(
+      getLocationHierarchy().then((data) => setBusiness(data)),
+      {
+        loading: 'Loading Business lines!',
+        success: 'Business lines loaded!',
+        error: 'Error loading business lines!'
+      }
+    )
   }, [])
 
   const handleOnSubmit = async (data) => {
-    if (dateRange[0] == null && dateRange[1] == null) {
-      toast.error('select a valid date range')
-      return
-    }
-    const currentExecutiveDirector = locations.find((item) => item.edId != null)
-    const locationNumbers = getValues('locations')
-    const audit = {
-      ...currentExecutiveDirector,
-      locationId: locationNumbers[0],
-      dateRange,
-    }
-    const response = await createAudit({ audit, userId })
-    if (response instanceof Error) {
-      toast.error('error while creating new audit')
-      return
+    try {
+      if (dateRange[0] == null && dateRange[1] == null) {
+        toast.error('select a valid date range')
+        return
+      }
+      if (locations.length === 0) {
+        toast.error("Executive director doesn't have locations")
+        return;
+      }
+      // const currentExecutiveDirector = locations.find((item) => item.edId != null)
+      const currentExecutiveDirector = locations.find(location => location.edId === data.executiveDirector) ?? { edId: data.executiveDirector }
+      const locationNumbers = getValues('locations')
+      const audit = {
+        ...currentExecutiveDirector,
+        locationId: locationNumbers[0],
+        dateRange,
+      }
+      const response = await createAudit({ audit, userId })
+      if (response instanceof Error) {
+        toast.error('error while creating new audit')
+        return
+      }
+
+      //save team lead
+      const teamLeadResponse = await reassignTeamLead({
+        auditTeamId: response.auditTeamID,
+        userId,
+        auditorId: singleOrTeamValue === 'single' ? userId : data.teamLeader
+      })
+      if (teamLeadResponse instanceof Error) {
+        toast.error('error while reassigning team lead')
+        return
+      }
+
+      //save auditors
+      let auditorsToSave = data.auditors.map(auditor => auditors.find(a => a.employeeId === auditor))
+      if (singleOrTeamValue === 'single')
+        auditorsToSave = [auditors.find(auditor => auditor.employeeId === userId)]
+      const auditorsResponse = await manageTeamAuditors({
+        auditTeamId: response.auditTeamID,
+        auditors: auditorsToSave,
+        userId
+      })
+      if (auditorsResponse instanceof Error) {
+        toast.error('error while updating auditors')
+        return
+      }
+      toast.success('Audit created successfully!')
+      reset()
+      setTimeout(() => {
+        navigate('/')
+      }, 1000)
+    } catch (error) {
+      toast.error("error trying to create the banner")
     }
 
-    //save team lead
-    const teamLeadResponse = await reassignTeamLead({
-      auditTeamId: response.auditTeamID,
-      userId,
-      auditorId: singleOrTeamValue === 'single' ? userId : data.teamLeader
-    })
-    if (teamLeadResponse instanceof Error) {
-      toast.error('error while reassigning team lead')
-      return
-    }
-
-    //save auditors
-    let auditorsToSave = data.auditors.map(auditor => auditors.find(a => a.employeeId === auditor))
-    if (singleOrTeamValue === 'single')
-      auditorsToSave = [auditors.find(auditor => auditor.employeeId === userId)]
-    const auditorsResponse = await manageTeamAuditors({
-      auditTeamId: response.auditTeamID,
-      auditors: auditorsToSave,
-      userId
-    })
-    if (auditorsResponse instanceof Error) {
-      toast.error('error while updating auditors')
-      return
-    }
-    toast.success('Audit created successfully!')
-    reset()
-    setTimeout(() => {
-      navigate('/')
-    }, 1000)
   }
 
   const ifNullReturnEmpty = (param) => {
@@ -154,19 +171,19 @@ export default function CreateBannerPage() {
       setRegions(null)
       setRegionDirector(null)
       setExecutiveDirector(null)
-      setLocations(null)
+      setLocations([])
     }
     if (currentController === CONTROLLERS.REGIONS) {
       setRegionDirector(null)
       setExecutiveDirector(null)
-      setLocations(null)
+      setLocations([])
     }
     if (currentController === CONTROLLERS.REGION_DIRECTOR) {
       setExecutiveDirector(null)
-      setLocations(null)
+      setLocations([])
     }
     if (currentController === CONTROLLERS.EXECUTIVE_DIRECTOR) {
-      setLocations(null)
+      setLocations([])
     }
   }
 
@@ -174,8 +191,15 @@ export default function CreateBannerPage() {
     resetSelects(CONTROLLERS.BUSINESS)
     const newParams = buildParams(params.current, value, CONTROLLERS.BUSINESS)
     params.current = newParams
-    const data = await getLocationHierarchy(params.current)
-    setRegions(data)
+    toast.promise(
+      getLocationHierarchy(params.current).then(data => setRegions(data)),
+      {
+        loading: 'Loading regions!',
+        success: 'Regions loaded!',
+        error: 'Error loading regions!'
+      }
+    )
+
     setValue('region', '')
     setValue('regionalDirector', '')
     setValue('executiveDirector', '')
@@ -185,8 +209,14 @@ export default function CreateBannerPage() {
     resetSelects(CONTROLLERS.REGIONS)
     const newParams = buildParams(params.current, value, CONTROLLERS.REGIONS)
     params.current = newParams
-    const data = await getLocationHierarchy(params.current)
-    setRegionDirector(data)
+    toast.promise(
+      getLocationHierarchy(params.current).then(data => setRegionDirector(data)),
+      {
+        loading: 'Loading regional directors!',
+        success: 'Regional directors loaded!',
+        error: 'Error loading regional directors'
+      }
+    )
     setValue('regionalDirector', '')
     setValue('executiveDirector', '')
   }
@@ -195,8 +225,12 @@ export default function CreateBannerPage() {
     resetSelects(CONTROLLERS.REGION_DIRECTOR)
     const newParams = buildParams(params.current, value, CONTROLLERS.REGION_DIRECTOR)
     params.current = newParams
-    const data = await getLocationHierarchy(params.current)
-    setExecutiveDirector(data)
+    toast.promise(
+      getLocationHierarchy(params.current).then(data => setExecutiveDirector(data)), {
+      loading: 'Loading executive directors!',
+      success: 'Executive directors loaded!',
+      error: 'Error loading executive directors!'
+    })
     setValue('executiveDirector', '')
   }
 
@@ -204,9 +238,17 @@ export default function CreateBannerPage() {
     resetSelects(CONTROLLERS.EXECUTIVE_DIRECTOR)
     const newParams = buildParams(params.current, value, CONTROLLERS.EXECUTIVE_DIRECTOR)
     params.current = newParams
-    const data = await getLocationHierarchy(params.current)
-    setLocations(data)
+    toast.promise(
+      getLocationHierarchy(params.current).then(data => setLocations(data)),
+      {
+        loading: 'Loading locations!',
+        success: 'Locations loaded!',
+        error: 'Error loading locations!'
+      }
+
+    )
   }
+
 
   useEffect(() => {
     getTeamAuditors()
@@ -440,7 +482,7 @@ export default function CreateBannerPage() {
           <Link to='/'>
             <Button variant="text">Cancel</Button>
           </Link>
-          <Button variant="contained" type='submit' disabled={!isValid}>Create Audit</Button>
+          <Button variant="contained" type='submit' disabled={!isValid || locations?.length === 0}>Create Audit</Button>
         </div>
       </form>
     </div>
