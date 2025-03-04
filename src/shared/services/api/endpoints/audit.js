@@ -76,7 +76,7 @@ export const getAudits = async ({ userId }) => {
     return audits
   } catch (error) {
     console.error(error)
-    return new Error('cannot post audit')
+    throw new Error('cannot get audit')
   }
 }
 

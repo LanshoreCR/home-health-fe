@@ -57,7 +57,7 @@ export const createTools = async ({ tools, packageId, userId }) => {
     return data
   } catch (error) {
     console.error(error)
-    return new Error('cannot get audit tools')
+    throw new Error('cannot get audit tools')
   }
 }
 

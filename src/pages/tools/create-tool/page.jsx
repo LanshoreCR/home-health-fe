@@ -120,21 +120,45 @@ export default function CreateToolPage() {
       setExpandedAccordion(newExpanded ? panel : false);
     };
 
+  const loadToolTemplates = (id) => {
+    toast.promise(
+      getToolTemplates({ locationId: id }).then(data => {
+
+        if (data instanceof Error) {
+          toast.error('Error getting tool template by location id')
+        } else {
+          setToolsByLocation(prev => ({ ...prev, [id]: data }))
+        }
+      }),
+      {
+        loading: 'Loading Tools!',
+        success: 'Tools loaded!',
+        error: 'Error loading tools!'
+      }
+    )
+  }
+
   const onSubmit = async () => {
-    const response = await createTools({
-      tools: watchFields.filter(tool => tool.locationNumber !== ''),
-      packageId: id,
-      userId: currentUser.employeeId
-    })
-    if (response instanceof Error) {
-      toast.error('Error while creating new audit')
-      return
-    }
-    toast.success('Audit created successfully!')
-    reset()
-    setTimeout(() => {
-      navigate(`/${id}/tools`)
-    }, 1000)
+
+    toast.promise(
+      createTools({
+        tools: watchFields.filter(tool => tool.locationNumber !== ''),
+        packageId: id,
+        userId: currentUser.employeeId
+      }).then((response) => {
+
+        reset()
+        setTimeout(() => {
+          navigate(`/${id}/tools`)
+        }, 1000)
+      }),
+      {
+        loading: 'Creating audit',
+        success: 'Audit created successfully!',
+        error: 'Error while creating new audit'
+      }
+    )
+
   }
 
 
@@ -161,6 +185,7 @@ export default function CreateToolPage() {
           throw new Error('Error getting locations by audit id')
         }
         setLocations(data)
+        setPrevAddToolForm(prev => ({ ...prev, locationNumber: data[0].id }))
         setIsLoading(false)
       })
       .catch(() => {
@@ -186,20 +211,8 @@ export default function CreateToolPage() {
   useEffect(() => {
     setIsLoading(true)
     if (locations.length === 0) return
-    const fetchToolTemplates = async () => {
-      const updatedToolsByLocation = {}
-      for (const location of locations) {
-        const data = await getToolTemplates({ locationId: location.id })
-        if (data instanceof Error) {
-          toast.error('Error getting tool template by location id')
-        } else {
-          updatedToolsByLocation[location.id] = data
-        }
-      }
-      setToolsByLocation(updatedToolsByLocation)
-      setIsLoading(false)
-    }
-    fetchToolTemplates()
+    loadToolTemplates(locations[0].id)
+    setIsLoading(false)
   }, [locations])
 
 
@@ -224,6 +237,9 @@ export default function CreateToolPage() {
                 labelId={`location-label`}
                 label="Location"
                 onChange={({ target }) => {
+                  if (!toolsByLocation[target.value]) {
+                    loadToolTemplates(target.value)
+                  }
                   setPrevAddToolForm(prev => ({ ...prev, locationNumber: target.value }))
                 }}
                 value={prevAddToolForm.locationNumber}

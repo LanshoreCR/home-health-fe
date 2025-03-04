@@ -117,7 +117,7 @@ export default function BannerToolsPage() {
   })
 
   const handleGoToCreateToolsPage = () => {
-    const url = `${location.pathname}/new`
+    const url = `/${id}/${currentAudit.auditTeamId}/tools/new`
     navigate(url)
   }
 

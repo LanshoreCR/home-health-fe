@@ -12,7 +12,7 @@ import MenuItem from '@mui/material/MenuItem'
 import SearchIcon from '@mui/icons-material/Search'
 import Select from '@mui/material/Select'
 import { useDebounce } from 'use-debounce'
-import { Box, Grid2, InputAdornment, OutlinedInput } from '@mui/material'
+import { Grid2, InputAdornment, OutlinedInput } from '@mui/material'
 import ClearIcon from '@mui/icons-material/Clear'
 
 const filterAudits = (audits, filters) => {
@@ -138,19 +138,19 @@ export default function BannersPage() {
   useEffect(() => {
     if (userId === '') return
     setLoading(true)
-    getAudits({ userId })
-      .then((data) => {
-        if (data instanceof Error) {
-          throw new Error('cannot getting audits')
-        }
-        setAudits(data)
-      })
-      .catch(() => {
-        toast.error('error getting audits')
-      })
-      .finally(() => {
-        setLoading(false)
-      })
+    toast.promise(
+      getAudits({ userId })
+        .then((data) => {
+
+          setAudits(data)
+        })
+        .finally(() => {
+          setLoading(false)
+        }), {
+      loading: 'Loading audits',
+      success: 'Audits loaded successfully!',
+      error: 'Error while loading audits'
+    })
   }, [userId])
 
   if (loading) {
