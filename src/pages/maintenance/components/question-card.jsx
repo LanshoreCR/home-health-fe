@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Card, FormControl, InputLabel, MenuItem, Select, Switch, TextField } from '@mui/material'
+import { Card, Checkbox, FormControl, FormControlLabel, InputLabel, MenuItem, Select, Switch, TextField } from '@mui/material'
 import { activateQuestion, deleteQuestion, updateMaintenanceQuestion } from '../../../shared/services/api/endpoints/maintenance'
 import { useSelector } from 'react-redux'
 import { toast } from 'sonner'
@@ -11,10 +11,11 @@ const STATUS = {
 }
 
 export default function MaintenanceQuestionCard({ tool, provided, sections, reRenderQuestions }) {
-  const { questionSort, questionStatus, questionId } = tool
+  const { questionSort, questionStatus, questionId, keyIndicator } = tool
   const [questionText, setQuestionText] = useState(tool.questionText)
   const [section, setSection] = useState(tool.category)
   const [isActive, setIsActive] = useState(questionStatus === STATUS.ACTIVE)
+  const [isKeyIndicator, setIsKeyIndicator] = useState(keyIndicator === 1)
 
   const [debouncedQuestionText] = useDebounce(questionText, 500)
 
@@ -36,7 +37,31 @@ export default function MaintenanceQuestionCard({ tool, provided, sections, reRe
       templateId: tool.templateId,
       category: newValue,
       questionId: tool.questionId,
-      releaseDate: tool.releaseDate
+      releaseDate: tool.releaseDate,
+      keyIndicator
+    }
+
+    const response = await updateMaintenanceQuestion({ question: updatedQuestion, userId })
+    if (response instanceof Error) {
+      toast.error('Error while updating maintenance question')
+      return
+    }
+    toast.success('Maintenance question updated successfully')
+    reRenderQuestions()
+  }
+
+  const handleChangeKeyIndicator = async (event) => {
+    const newValue = event.target.checked
+    setIsKeyIndicator(newValue)
+
+    const updatedQuestion = {
+      questionText: tool.questionText,
+      questionSort: tool.questionSort,
+      templateId: tool.templateId,
+      category: tool.category,
+      questionId: tool.questionId,
+      releaseDate: tool.releaseDate,
+      keyIndicator: newValue ? 1 : 0
     }
 
     const response = await updateMaintenanceQuestion({ question: updatedQuestion, userId })
@@ -78,7 +103,8 @@ export default function MaintenanceQuestionCard({ tool, provided, sections, reRe
           templateId: tool.templateId,
           category: tool.category,
           questionId: tool.questionId,
-          releaseDate: tool.releaseDate
+          releaseDate: tool.releaseDate,
+          keyIndicator
         }
 
         const response = await updateMaintenanceQuestion({ question: updatedQuestion, userId })
@@ -131,6 +157,12 @@ export default function MaintenanceQuestionCard({ tool, provided, sections, reRe
                     ))}
                   </Select>
                 </FormControl>
+                <FormControlLabel
+                  label="Key Indicator"
+                  control={<Checkbox />}
+                  checked={isKeyIndicator}
+                  onChange={handleChangeKeyIndicator}
+                />
               </section>
             </article>
             <Switch checked={isActive} onChange={handleChangeStatus} />

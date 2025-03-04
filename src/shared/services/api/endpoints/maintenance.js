@@ -76,7 +76,8 @@ export const getTemplateQuestions = async ({ templateId }) => {
       templateStatus: question.templateStatus,
       questionModifiedOn: question.questionModifiedOn,
       templateModifiedOn: question.templateModifiedOn,
-      releaseDate: question.releaseDate
+      releaseDate: question.releaseDate,
+      keyIndicator: question.keyIndicator
     }))
 
     return questions
@@ -97,7 +98,8 @@ export const updateMaintenanceQuestion = async ({ question, userId }) => {
       TemplateID: question.templateId,
       Categ: question.category,
       QuestionID: question.questionId,
-      ReleaseDate: question.releaseDate
+      ReleaseDate: question.releaseDate,
+      KeyIndicator: question.keyIndicator
     }
 
     const response = await axiosInstance.put(ENDPOINTS.UPDATE_MAINTENANCE_QUESTION, [body], {})
