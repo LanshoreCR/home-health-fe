@@ -20,8 +20,9 @@ export default function BackButton() {
   const goBack = () => {
     const pathName = location.pathname
     if (pathName.includes(GO_TO.TOOLS_NEW)) {
-      const url = pathName.replace(GO_TO.TOOLS_NEW, GO_TO.TOOLS)
-      navigate(url, { replace: true })
+      const pathValues = pathName.split('/');
+      const url = `/${pathValues[1]}${GO_TO.TOOLS}`
+      navigate(url)
       return
     }
     if (pathName.includes(GO_TO.CAMERA)) {

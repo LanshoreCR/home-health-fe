@@ -185,7 +185,8 @@ export default function CreateToolPage() {
           throw new Error('Error getting locations by audit id')
         }
         setLocations(data)
-        setPrevAddToolForm(prev => ({ ...prev, locationNumber: data[0].id }))
+        if (data.length > 0)
+          setPrevAddToolForm(prev => ({ ...prev, locationNumber: data[0]?.id }))
         setIsLoading(false)
       })
       .catch(() => {
@@ -210,8 +211,8 @@ export default function CreateToolPage() {
 
   useEffect(() => {
     setIsLoading(true)
-    if (locations.length === 0) return
-    loadToolTemplates(locations[0].id)
+    if (locations.length > 0)
+      loadToolTemplates(locations[0].id)
     setIsLoading(false)
   }, [locations])
 
