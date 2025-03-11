@@ -9,7 +9,7 @@ const Navbar = () => {
     const navigate = useNavigate()
 
     const { oktaAuth } = useOktaAuth()
-    const { isReviewer } = useRole()
+    const { isAdmin } = useRole()
 
     const handleLogout = async () => {
         await oktaAuth.signOut()
@@ -32,7 +32,7 @@ const Navbar = () => {
                         </Link>
                     </Typography>
                     <div className='flex gap-x-5'>
-                        {isReviewer && (
+                        {isAdmin && (
                             <Button variant='text' color='inherit' onClick={goToMaintenance}>Maintenance</Button>
                         )}
                         <Button variant='text' color='inherit' onClick={handleLogout}>Logout</Button>

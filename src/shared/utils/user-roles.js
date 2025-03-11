@@ -1,6 +1,6 @@
 export const USER_ROLES = {
-  REVIEWER: 'Reviewer',
-  AUDITOR: 'Auditor',
+  ADMIN: 'Admin',
+  USER: 'User',
   NO_ACCESS: 'No Access',
   EXTERNAL: 'External'
 }

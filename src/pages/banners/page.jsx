@@ -126,7 +126,7 @@ export default function BannersPage() {
 
   const refreshAudits = async () => {
     setLoading(true)
-    const response = await getAudits({ userId })
+    const response = await getAudits({ userId, isAdmin: currentUser.role.includes("Admin") })
     if (response instanceof Error) {
       toast.error('error getting audits')
       return
@@ -139,7 +139,7 @@ export default function BannersPage() {
     if (userId === '') return
     setLoading(true)
     toast.promise(
-      getAudits({ userId })
+      getAudits({ userId, isAdmin: currentUser.role.includes("Admin") })
         .then((data) => {
 
           setAudits(data)

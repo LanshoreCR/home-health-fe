@@ -33,13 +33,13 @@ export const createAudit = async ({ audit, userId }) => {
   }
 }
 
-export const getAudits = async ({ userId }) => {
+export const getAudits = async ({ userId, isAdmin }) => {
   try {
     const axiosInstance = apiMaster.getInstance()
 
     const params = {
       UserID: userId,
-      Controller: 1,
+      Controller: isAdmin ? 1 : 2,
       StartIndex: 0,
       PageSize: 15
     }

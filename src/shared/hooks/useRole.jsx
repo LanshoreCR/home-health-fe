@@ -7,16 +7,16 @@ export default function useRole() {
 
   if (role == null) {
     return {
-      isReviewer: false,
-      isAuditor: false,
+      isAdmin: false,
+      isUser: false,
       isExternal: false,
       isNoAccess: false
     }
   }
 
   return {
-    isReviewer: role.includes(USER_ROLES.REVIEWER),
-    isAuditor: role.includes(USER_ROLES.AUDITOR) && !role.includes(USER_ROLES.REVIEWER),
+    isAdmin: role.includes(USER_ROLES.ADMIN),
+    isUser: role.includes(USER_ROLES.USER) && !role.includes(USER_ROLES.ADMIN),
     isExternal: role.includes(USER_ROLES.EXTERNAL),
     isNoAccess: role.includes(USER_ROLES.NO_ACCESS)
   }
