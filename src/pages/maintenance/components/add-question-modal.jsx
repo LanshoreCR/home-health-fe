@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import {
-  Autocomplete, Button, Card, createFilterOptions, FormControl,
-  FormHelperText, InputLabel, MenuItem, Modal, Select, TextField
+  Autocomplete, Button, Card, Checkbox, createFilterOptions, FormControl,
+  FormControlLabel,
+  FormHelperText, Modal, TextField
 } from '@mui/material'
 import * as yup from 'yup'
 import { Controller, useForm } from 'react-hook-form'
@@ -29,6 +30,7 @@ export default function AddQuestionModal({ sections, questions, reRenderQuestion
     defaultValues: {
       name: '',
       category: '',
+      isKeyIndicator: false
     }
   })
 
@@ -144,6 +146,12 @@ export default function AddQuestionModal({ sections, questions, reRenderQuestion
                   )}
                 />
               </FormControl>
+              <FormControlLabel
+                label="Key Indicator"
+                control={<Checkbox />}
+                id="isKeyIndicator"
+                {...register('isKeyIndicator')}
+              />
             </section>
             <footer className='flex items-center justify-center'>
               <Button variant="contained" type='submit' disabled={isLoading}>Create</Button>

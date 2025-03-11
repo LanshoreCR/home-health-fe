@@ -113,14 +113,16 @@ export const updateMaintenanceQuestion = async ({ question, userId }) => {
   }
 }
 
-export const addTool = async ({ name, userId }) => {
+export const addTool = async ({ name, userId, templateTypeId, state }) => {
   try {
     const axiosInstance = apiMaster.getInstance()
 
     const body = {
       TemplateDesc: name,
+      TemplateTypeId: templateTypeId,
       CreatedBy: userId,
-      ModifiedBy: userId
+      ModifiedBy: userId,
+      State: state
     }
 
     const response = await axiosInstance.post(ENDPOINTS.CREATE_TEMPLATE, body, {})
@@ -145,7 +147,7 @@ export const addQuestion = async ({ question, userId }) => {
       QuestionSort: question.questionSort,
       TemplateID: question.templateId,
       Categ: question.category,
-      ReleaseDate: new Date()
+      KeyIndicator: question.isKeyIndicator ? 1 : 0
     }
 
     const response = await axiosInstance.post(ENDPOINTS.CREATE_MAINTENANCE_QUESTION, body, {})

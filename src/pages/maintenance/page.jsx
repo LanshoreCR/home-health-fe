@@ -130,7 +130,7 @@ export default function MaintenancePage() {
   }
 
   const reRenderTools = async () => {
-    const response = await getMaintenanceTools()
+    const response = await getMaintenanceTools(selectedState?.templateTypeId, selectedState?.state ?? '')
     if (response instanceof Error) {
       toast.error(response.message)
       return
@@ -227,7 +227,7 @@ export default function MaintenancePage() {
           </IconButton>
           <h2 className='font-semibold text-xl text-primary'>Maintenance</h2>
         </div>
-        <AddToolModal reRender={reRenderTools} />
+        <AddToolModal reRender={reRenderTools} selectedState={selectedState} />
       </header>
       <div className='flex w-full justify-between gap-x-5 flex-col sm:flex-row'>
         {openSidebar &&

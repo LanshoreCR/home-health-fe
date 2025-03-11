@@ -11,7 +11,8 @@ const schema = yup.object().shape({
   name: yup.string().required('Tool Name is required')
 })
 
-export default function AddToolModal({ reRender }) {
+export default function AddToolModal({ reRender, selectedState }) {
+  const { templateTypeId, state } = selectedState
   const [open, setOpen] = useState(false)
 
   const user = useSelector((state) => state.user)
@@ -31,7 +32,9 @@ export default function AddToolModal({ reRender }) {
 
   const onSubmit = async (data) => {
     const { name } = data
-    const response = await addTool({ name, userId })
+    const response = await addTool({
+      name, userId, templateTypeId, state
+    })
     if (response instanceof Error) {
       toast.error(response.message)
       return
