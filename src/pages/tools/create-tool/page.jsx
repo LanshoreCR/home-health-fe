@@ -79,6 +79,7 @@ export default function CreateToolPage() {
     const groupedData = getGroupedData(watchFields)
 
     setGroupedTools(groupedData)
+    setExpandedAccordion(Object.keys(groupedData)[0])
   }
 
   const handleRemoveTool = (index) => {
@@ -321,7 +322,7 @@ export default function CreateToolPage() {
               const location = locations.find(l => l.id === locationNumber)
               const tool = toolsByLocation[locationNumber].find(t => t.templateId.toString() === templateId)
               return (
-                <Accordion key={key} onChange={handleAccordionChange(key)} expanded={key === expandedAccordion}>
+                <Accordion key={key} onChange={handleAccordionChange(key)} expanded={key === expandedAccordion} >
                   <AccordionSummary expandIcon={<ExpandMoreIcon />} >
                     <Typography component="span" sx={{ width: '33%', flexShrink: 0 }}>
                       {location.name}
