@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { createTools, getTools } from '../../../shared/services/api/endpoints/tools'
+import { createTools } from '../../../shared/services/api/endpoints/tools'
 import { DatePicker } from '@mui/x-date-pickers'
 import { FormControl, InputLabel, MenuItem, Select, TextField, Grid2, Box, Typography, Accordion, AccordionSummary, AccordionDetails, List, IconButton, Checkbox } from '@mui/material'
 import { getLocations } from '../../../shared/services/api/endpoints/location'
@@ -14,24 +14,7 @@ import { Add, Delete } from '@mui/icons-material'
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { getAssignedTeamMembers } from '../../../shared/services/api/endpoints/manage-team'
-// const schema = yup.object().shape({
-//   tools: yup.array().of(
-//     yup.object().shape({
-//       location: yup.string().required('Location is required'),
-//       tool: yup.array().min(1, 'At least one tool is required').required('Tool is required'),
-//       date: yup.date().required('Date is required')
-//     })
-//   )
-// })
 
-const defaultToolValue = {
-  locationNumber: '',
-  templateId: '',
-  customerName: '',
-  assignedAuditor: '',
-  startOfCareDate: new Date(Date.now()),
-  realIndex: 0
-}
 
 export default function CreateToolPage() {
   const { id, idTool, auditTeamId } = useParams()
@@ -40,16 +23,10 @@ export default function CreateToolPage() {
   const [expandedAccordion, setExpandedAccordion] = useState('')
   const [locations, setLocations] = useState([])
   const [toolsByLocation, setToolsByLocation] = useState({})
-  const [tools, setTools] = useState([])
   const [auditors, setAuditors] = useState([])
   const [isSelectAllChecked, setIsSelectAllChecked] = useState(false)
   const [prevAddToolForm, setPrevAddToolForm] = useState({
-    locationNumber: '', tools: [
-      // {
-      //   id: '',
-      //   quantity: 0
-      // }
-    ]
+    locationNumber: '', tools: []
   })
   const [groupedTools, setGroupedTools] = useState({})
 
@@ -58,10 +35,9 @@ export default function CreateToolPage() {
 
   const currentUser = useSelector((state) => state.user)
 
-  const { control, handleSubmit, watch, reset, setValue, formState: { errors, } } = useForm({
-    // resolver: yupResolver(schema),
+  const { handleSubmit, watch, reset, setValue, } = useForm({
     defaultValues: {
-      tools: [defaultToolValue]
+      tools: []
     }
   })
 
@@ -70,7 +46,7 @@ export default function CreateToolPage() {
 
 
   const getGroupedData = (toolList) => {
-    const groupedData = toolList.filter(tool => tool.locationNumber !== '').reduce((acc, item) => {
+    const groupedData = toolList.reduce((acc, item) => {
       const groupKey = `${item.locationNumber}-${item.templateId}`;
       if (!acc[groupKey]) {
         acc[groupKey] = [];
@@ -92,8 +68,10 @@ export default function CreateToolPage() {
         setValue(`tools.${index}.locationNumber`, locationNumber)
         setValue(`tools.${index}.templateId`, tool.id)
         setValue(`tools.${index}.realIndex`, index)
+        setValue(`tools.${index}.customerName`, '')
+        setValue(`tools.${index}.assignedAuditor`, '')
+        setValue(`tools.${index}.startOfCareDate`, new Date(Date.now()),)
 
-        setValue(`tools.${index + 1}`, { ...defaultToolValue, realIndex: index + 1 })
         index++;
       }
     })
@@ -179,34 +157,29 @@ export default function CreateToolPage() {
 
   useEffect(() => {
     setIsLoading(true)
-    getLocations({ packageId: id })
-      .then((data) => {
-        if (data instanceof Error) {
-          throw new Error('Error getting locations by audit id')
-        }
-        setLocations(data)
-        if (data.length > 0)
-          setPrevAddToolForm(prev => ({ ...prev, locationNumber: data[0]?.id }))
-        setIsLoading(false)
-      })
-      .catch(() => {
-        toast.error('Error getting locations by audit id')
-      })
-  }, [id])
+    toast.promise(
+      getLocations({ packageId: id })
+        .then((data) => {
+          if (data instanceof Error) {
+            throw new Error('Error getting locations by audit id')
+          }
+          setLocations(data)
+          if (data.length > 0)
+            setPrevAddToolForm(prev => ({ ...prev, locationNumber: data[0]?.id }))
 
-  useEffect(() => {
-    setIsLoading(true)
-    getTools({ packageId: id })
-      .then((data) => {
-        if (data instanceof Error) {
-          throw new Error('Error getting tools by audit id')
-        }
-        setTools(data)
-        setIsLoading(false)
-      })
-      .catch(() => {
-        toast.error('Error getting tools by audit id')
-      })
+        })
+        .catch(() => {
+          toast.error('Error getting locations by audit id')
+        })
+        .finally(() => setIsLoading(false))
+      ,
+      {
+        loading: 'Loading Locations!',
+        success: 'Locations loaded!',
+        error: 'Error loading locations!'
+      }
+
+    )
   }, [id])
 
   useEffect(() => {
@@ -215,8 +188,6 @@ export default function CreateToolPage() {
       loadToolTemplates(locations[0].id)
     setIsLoading(false)
   }, [locations])
-
-
 
   if (isLoading) {
     return <CreateToolSkeleton />
@@ -377,7 +348,6 @@ export default function CreateToolPage() {
                                 label="Auditor"
                                 onChange={({ target }) => {
                                   setValue(`tools.${field.realIndex}.assignedAuditor`, target.value)
-
                                 }}
                                 value={field.assignedAuditor}
                                 sx={{ minWidth: 200 }}
@@ -413,7 +383,12 @@ export default function CreateToolPage() {
           }
           <Grid2 container mt={5} mb={5} justifyContent={'flex-end'} spacing={2}>
             <Button variant='contained' color='inherit' onClick={() => navigate(-1)}>Cancel</Button>
-            <Button variant='contained' disabled={watchFields[0].locationNumber === ''} type='submit'>Create</Button>
+            <Button variant='contained' disabled={
+              watchFields.length === 0 ||
+              watchFields.some(tool =>
+                tool.customerName === "" || tool.assignedAuditor === "" || tool.locationNumber === ""
+              )
+            } type='submit'>Create</Button>
           </Grid2>
         </Grid2>
       </form>
