@@ -17,7 +17,8 @@ export const questionsSlice = createSlice({
         answered: question.answers != null,
         subSection: question.subSection,
         percentages: question.percentages,
-        flag: question.flag
+        flag: question.flag,
+        standard: question.standard
       }))
 
       return state

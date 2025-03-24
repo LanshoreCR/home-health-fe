@@ -4,7 +4,9 @@ import Divider from '@mui/material/Divider'
 import FilterModal from './components/filter-modal'
 import IconButton from '@mui/material/IconButton'
 import MenuIcon from '@mui/icons-material/Menu'
-import OpenInNewIcon from '@mui/icons-material/OpenInNew'
+import ArrowLeftIcon from '@mui/icons-material/ArrowLeft';
+import ArrowRightIcon from '@mui/icons-material/ArrowRight';
+
 import Paper from '@mui/material/Paper'
 import SidebarToolRow from './components/sidebar-tool-row'
 import useGoBack from '@shared/hooks/useGoBack'
@@ -19,7 +21,6 @@ import SubSection from './components/sub-section'
 import useFilterLocationTemplate from './hooks/useFilterLocationTemplate'
 import { useDispatch, useSelector } from 'react-redux'
 import { respondQuestion, storeQuestions } from '../../shared/redux/slices/questions'
-import ProgressBar from './components/progress-bar'
 import { getAudit } from '../../shared/services/api/endpoints/audit'
 import { BANNER_STATUS } from '../../shared/utils/status'
 import { DatePicker } from '@mui/x-date-pickers'
@@ -81,6 +82,17 @@ export default function QuestionsPage() {
   const dispatch = useDispatch()
 
   const storedQuestions = useSelector((state) => state.questions)
+  const completedQuestions = storedQuestions.filter((question) => question.answered)
+  const incompletedQuestions = storedQuestions.filter((question) => !question.answered)
+  const missingComments = storedQuestions.filter(question => !question.comments)
+  const flaggedQuestions = storedQuestions.filter(question => question.flag === 1)
+  const totalQuestions = storedQuestions.length
+
+  const [lastCompletedIndex, setLastCompletedIndex] = useState(-1);
+  const [lastIncompletedIndex, setLastIncompletedIndex] = useState(-1)
+  const [lastMissingIndex, setLastMissingIndex] = useState(-1)
+  const [lastFlaggedIndex, setLastFlaggedIndex] = useState(-1)
+
 
   const currentToolSubsections = getCurrentToolSubsections(questions)
 
@@ -138,6 +150,7 @@ export default function QuestionsPage() {
     setLoading(true)
     getQuestions({ packageTemplateId: currentIdTool })
       .then((data) => {
+        const sortedQuestions = data.sort((a, b) => a.standard - b.standard)
         if (data instanceof Error) {
           throw new Error('cannot getting audit tools')
         }
@@ -145,8 +158,8 @@ export default function QuestionsPage() {
           const generalComment = data[0].generalComments || ''
           setGeneralComments(generalComment)
         }
-        dispatch(storeQuestions(data))
-        setQuestions(data)
+        dispatch(storeQuestions(sortedQuestions))
+        setQuestions(sortedQuestions)
       })
       .catch(() => {
         toast.error('error getting questions')
@@ -199,6 +212,37 @@ export default function QuestionsPage() {
     const ref = questionRefs.current[newStandard]
     ref.scrollIntoView({ behavior: 'smooth' })
   }
+
+  const handleMoveToCompleteQuestion = (index) => {
+    const question = completedQuestions[index] ?? completedQuestions[0]
+
+    const ref = questionRefs.current[question.standard]
+    setStandard(question.standard)
+    ref.scrollIntoView({ behavior: 'smooth' })
+
+  }
+
+  const handleMoveToIncompleteQuestion = (index) => {
+    const question = incompletedQuestions[index] ?? incompletedQuestions[0]
+    const ref = questionRefs.current[question.standard]
+    setStandard(question.standard)
+    ref.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  const handleMoveToMissingQuestion = (index) => {
+    const question = missingComments[index] ?? missingComments[0]
+    const ref = questionRefs.current[question.standard]
+    setStandard(question.standard)
+    ref.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  const handleMoveToFlaggedQuestion = (index) => {
+    const question = flaggedQuestions[index] ?? flaggedQuestions[0]
+    const ref = questionRefs.current[question.standard]
+    setStandard(question.standard)
+    ref.scrollIntoView({ behavior: 'smooth' })
+  }
+
 
   useEffect(() => {
     const handleSaveGeneralComments = async () => {
@@ -264,7 +308,6 @@ export default function QuestionsPage() {
   }
 
   const questionsBySubSection = groupAndSortQuestions(questions)
-
   const handleSubmitAnswers = async () => {
     const unAnsweredQuestions = storedQuestions.filter((question) => !question.answered)
     if (unAnsweredQuestions.length > 0) {
@@ -301,10 +344,7 @@ export default function QuestionsPage() {
     dispatch(storeQuestions(newQuestions))
   }
 
-  const completedQuestions = storedQuestions.filter((question) => question.answered).length
-  const missingComments = storedQuestions.filter(question => !question.comments).length
-  const flaggedQuestions = storedQuestions.filter(question => question.flag === 1).length
-  const totalQuestions = storedQuestions.length
+
 
   return (
     <Grid2 container width={'100%'} direction={'column'}>
@@ -358,27 +398,112 @@ export default function QuestionsPage() {
                 ))}
                 {
                   currentTool?.templateName !== 'Key Indicators' && (
-                    <Grid2 container spacing={1} direction={'column'} borderRadius={2} bgcolor={'#f5f4f2'} padding={2} paddingRight={4}>
-                      <Grid2 container justifyContent={'space-between'} alignItems={'center'} flexGrow={1} >
+                    <Grid2 container spacing={1} direction={'column'} flexGrow={1} borderRadius={2} bgcolor={'#f5f4f2'} padding={2} paddingRight={0}>
+                      <Grid2 container justifyContent={'space-between'} alignItems={'center'} flexGrow={1} paddingRight={5}>
                         <Typography>All questions</Typography>
                         <Typography fontWeight={'bold'} color='blue'>{totalQuestions}</Typography>
                       </Grid2>
                       <Divider flexItem />
-                      <Grid2 container justifyContent={'space-between'} alignItems={'center'} flexGrow={1}>
-                        <Typography>Complete questions</Typography>
-                        <Typography color='green' fontWeight={'bold'}>{completedQuestions}</Typography>
+                      <Grid2 container flexDirection={'row'} alignItems={'center'} flexGrow={1} >
+                        <Typography flexGrow={1}>Complete questions</Typography>
+                        <Grid2 container alignItems={'center'} spacing={completedQuestions.length === 0 ? 0.5 : 0} flexGrow={1} justifyContent={'flex-end'} ml={'auto'}>
+                          <IconButton onClick={() => {
+                            let index = lastCompletedIndex - 1
+                            if (lastCompletedIndex <= 0)
+                              index = completedQuestions.length - 1
+                            setLastCompletedIndex(index)
+                            handleMoveToCompleteQuestion(index)
+                          }} disabled={completedQuestions.length === 0}>
+                            <ArrowLeftIcon />
+                          </IconButton>
+                          <Typography color='green' fontWeight={'bold'}>{completedQuestions.length}</Typography>
+                          <IconButton onClick={() => {
+                            let index = 0
+                            if (lastCompletedIndex < completedQuestions.length) {
+                              index = lastCompletedIndex + 1
+                            }
+                            setLastCompletedIndex(index)
+                            handleMoveToCompleteQuestion(index)
+                          }} disabled={completedQuestions.length === 0}>
+                            <ArrowRightIcon />
+                          </IconButton>
+                        </Grid2>
                       </Grid2>
-                      <Grid2 container justifyContent={'space-between'} alignItems={'center'} flexGrow={1}>
+                      <Grid2 container flexDirection={'row'} alignItems={'center'} flexGrow={1} >
                         <Typography>Incomplete questions</Typography>
-                        <Typography color='red' fontWeight={'bold'}>{totalQuestions - completedQuestions}</Typography>
+                        <Grid2 container alignItems={'center'} spacing={incompletedQuestions.length === 0 ? 0.5 : 0} flexGrow={1} justifyContent={'flex-end'} ml={'auto'}>
+                          <IconButton onClick={() => {
+                            let index = lastIncompletedIndex - 1
+                            if (lastIncompletedIndex <= 0)
+                              index = incompletedQuestions.length - 1
+                            setLastIncompletedIndex(index)
+                            handleMoveToIncompleteQuestion(index)
+                          }} disabled={incompletedQuestions.length === 0}>
+                            <ArrowLeftIcon />
+                          </IconButton>
+                          <Typography color='red' fontWeight={'bold'}>{incompletedQuestions.length}</Typography>
+                          <IconButton onClick={() => {
+                            let index = 0
+                            if (lastIncompletedIndex < incompletedQuestions.length) {
+                              index = lastIncompletedIndex + 1
+                            }
+                            setLastIncompletedIndex(index)
+                            handleMoveToIncompleteQuestion(index)
+                          }} disabled={incompletedQuestions.length === 0}>
+                            <ArrowRightIcon />
+                          </IconButton>
+                        </Grid2>
                       </Grid2>
-                      <Grid2 container justifyContent={'space-between'} alignItems={'center'} flexGrow={1}>
+                      <Grid2 container flexDirection={'row'} alignItems={'center'} flexGrow={1} >
                         <Typography>Missing comments</Typography>
-                        <Typography color='orange' fontWeight={'bold'}>{missingComments}</Typography>
+                        <Grid2 container alignItems={'center'} spacing={missingComments.length === 0 ? 0.5 : 0} flexGrow={1} justifyContent={'flex-end'} ml={'auto'}>
+                          <IconButton onClick={() => {
+                            let index = lastMissingIndex - 1
+                            if (lastMissingIndex <= 0)
+                              index = missingComments.length - 1
+                            setLastMissingIndex(index)
+                            handleMoveToMissingQuestion(index)
+                          }} disabled={missingComments.length === 0}>
+                            <ArrowLeftIcon />
+                          </IconButton>
+                          <Typography color='orange' fontWeight={'bold'}>{missingComments.length}</Typography>
+                          <IconButton onClick={() => {
+                            let index = 0
+                            if (lastMissingIndex < missingComments.length) {
+                              index = lastMissingIndex + 1
+                            }
+                            setLastMissingIndex(index)
+                            handleMoveToMissingQuestion(index)
+                          }} disabled={missingComments.length === 0}>
+                            <ArrowRightIcon />
+                          </IconButton>
+                        </Grid2>
                       </Grid2>
-                      <Grid2 container justifyContent={'space-between'} alignItems={'center'} flexGrow={1}>
+                      <Grid2 container flexDirection={'row'} alignItems={'center'} flexGrow={1} >
                         <Typography>Flagged questions</Typography>
-                        <Typography color='gray' fontWeight={'bold'}>{flaggedQuestions}</Typography>
+                        <Grid2 container alignItems={'center'} spacing={flaggedQuestions.length === 0 ? 0.5 : 0} flexGrow={1} justifyContent={'flex-end'} ml={'auto'}>
+                          <IconButton onClick={() => {
+                            let index = lastFlaggedIndex - 1
+                            if (lastFlaggedIndex <= 0)
+                              index = flaggedQuestions.length - 1
+                            setLastFlaggedIndex(index)
+                            handleMoveToFlaggedQuestion(index)
+                          }} disabled={flaggedQuestions.length === 0}>
+                            <ArrowLeftIcon />
+                          </IconButton>
+                          <Typography color='gray' fontWeight={'bold'}>{flaggedQuestions.length}</Typography>
+                          <IconButton onClick={() => {
+                            let index = 0
+                            if (lastFlaggedIndex < flaggedQuestions.length) {
+                              index = lastFlaggedIndex + 1
+                            }
+                            setLastFlaggedIndex(index)
+                            handleMoveToFlaggedQuestion(index)
+                          }} disabled={flaggedQuestions.length === 0}>
+                            <ArrowRightIcon />
+                          </IconButton>
+                        </Grid2>
+
                       </Grid2>
                     </Grid2>
                   )
