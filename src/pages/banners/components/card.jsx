@@ -93,13 +93,20 @@ export default function BannerCard({ audit, refreshAudits }) {
   }
 
   const handleDeleteAudit = async () => {
-    const response = await deleteAudit({ packageId })
-    if (response instanceof Error) {
-      toast.error('error while deleting audit')
-      return
-    }
-    toast.success('audit deleted successfully')
-    refreshAudits()
+    toast.promise(
+      deleteAudit({ packageId }).then((response) => {
+        if (response instanceof Error) {
+          toast.error('error while deleting audit')
+          return
+        }
+        refreshAudits()
+      }),
+      {
+        loading: 'Deleting audit',
+        success: 'Audit deleted successfully!',
+        error: 'Error while deleting the audit'
+      }
+    )
   }
 
   const handleOpenReport = () => {
