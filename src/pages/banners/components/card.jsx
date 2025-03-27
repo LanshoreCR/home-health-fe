@@ -122,9 +122,8 @@ export default function BannerCard({ audit, refreshAudits }) {
               onChange={handleChangeStatus}
               disabled={packageStatus !== STATUS.UNDER_REVIEW}
             >
-              <MenuItem value={''}></MenuItem>
-              <MenuItem value={'4'}>Approve</MenuItem>
-              <MenuItem value={'1'}>Reject</MenuItem>
+              <MenuItem value={'2'}>Approve</MenuItem>
+              <MenuItem value={'3'}>Reject</MenuItem>
             </Select>
           </FormControl>
           <IconButton onClick={goToAttachments}>
