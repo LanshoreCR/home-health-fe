@@ -91,7 +91,13 @@ export default function QuestionCard({ question, sectionId, employeeId, initAnsw
 
     if (newValue === '0' && comment === '') {
       try {
-        const response = await saveAnswer({ answer: null, comment: '', questionId: templateAnswerId, packageId: sectionId, customerName: employeeId })
+        const response = await saveAnswer({
+          answer: null,
+          comment: '',
+          questionId: templateAnswerId,
+          packageId: sectionId,
+          customerName: employeeId
+        })
         if (response instanceof Error) {
           throw new Error('error while saving answer')
         }
@@ -104,13 +110,14 @@ export default function QuestionCard({ question, sectionId, employeeId, initAnsw
     }
 
     try {
+      const percentageValue = !isKeyIndicator ? null : (checked ? 0 : percentage)
       const response = await saveAnswer({
         answer: newValue,
         comment,
         questionId: templateAnswerId,
         packageId: sectionId,
         customerName: employeeId,
-        percentage: checked ? 0 : percentage
+        percentage: percentageValue
       })
       if (response instanceof Error) {
         throw new Error('error while saving answer')
