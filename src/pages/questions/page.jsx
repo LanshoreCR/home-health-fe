@@ -515,7 +515,7 @@ export default function QuestionsPage() {
             </Paper>
           </div>
         }
-        <div className='flex items-center w-full justify-between flex-col relative'>
+        <div className='flex items-center w-full justify-between flex-col relative h-[80vh] overflow-y-auto'>
           <section className='flex flex-col w-full gap-y-5'>
             {currentTool != null &&
               <Grid2 container direction={'column'} spacing={3} alignItems={'center'} mt={2}>
