@@ -20,6 +20,7 @@ import useModal from '../../../shared/hooks/useModal'
 import ManageTeamModal from './manage-team-modal'
 import SendNotificationModal from './send-notifications-modal'
 import { getReportUrl } from '../../../shared/utils/powerbi-report'
+import useRole from '../../../shared/hooks/useRole'
 
 const CAPA_FLAG = {
   ACTIVE: 1,
@@ -53,6 +54,7 @@ export default function BannerCard({ audit, refreshAudits }) {
     packageScore, teamLead, teamLeadId, packageId, auditTeamId,
     capaFlag, sectionDesc, businessLineName, isTeam, createdOn
   } = audit
+    const { isAdmin } = useRole()
 
 
   const auditTeamLead = {
@@ -225,10 +227,14 @@ export default function BannerCard({ audit, refreshAudits }) {
 
 
         }
-        <MenuItem onClick={() => {
-          handleDeleteAudit()
-          handleClose()
-        }}>Delete</MenuItem>
+        {
+          isAdmin && (
+            <MenuItem onClick={() => {
+              handleDeleteAudit()
+              handleClose()
+            }}>Delete</MenuItem>
+          )
+        }
       </Menu>
       <ManageTeamModal
         refreshAudits={refreshAudits}
