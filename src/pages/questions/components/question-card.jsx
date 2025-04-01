@@ -50,18 +50,27 @@ export default function QuestionCard({ question, sectionId, employeeId, initAnsw
     const newValue = event.target.value
     setPercentage(newValue)
     try {
+      toast.promise(
+        saveAnswer({
+          answer, comment,
+          questionId: templateAnswerId,
+          packageId: sectionId,
+          customerName: employeeId,
+          percentage: newValue
+        })
+          .then(response => {
+            if (response instanceof Error) {
+              throw new Error('error while saving answer')
+            }
+            dispatch(respondQuestion({ templateQuestionId, answer, comments, percentage: newValue }))
+          })
+        , {
+          success: 'Answer saved!',
+          loading: 'Saving answered!',
+          error: 'Error while saving the answer'
+        }
+      )
 
-      const response = await saveAnswer({
-        answer, comment,
-        questionId: templateAnswerId,
-        packageId: sectionId,
-        customerName: employeeId,
-        percentage: newValue
-      })
-      if (response instanceof Error) {
-        throw new Error('error while saving answer')
-      }
-      dispatch(respondQuestion({ templateQuestionId, answer, comments, percentage: newValue }))
     } catch (error) {
       toast.error('error saving answer. Please try it again')
 
@@ -91,18 +100,26 @@ export default function QuestionCard({ question, sectionId, employeeId, initAnsw
 
     if (newValue === '0' && comment === '') {
       try {
-        const response = await saveAnswer({
-          answer: null,
-          comment: '',
-          questionId: templateAnswerId,
-          packageId: sectionId,
-          customerName: employeeId
-        })
-        if (response instanceof Error) {
-          throw new Error('error while saving answer')
+        toast.promise(
+          saveAnswer({
+            answer: null,
+            comment: '',
+            questionId: templateAnswerId,
+            packageId: sectionId,
+            customerName: employeeId
+          }).then(response => {
+            if (response instanceof Error) {
+              throw new Error('error while saving answer')
+            }
+            setAnswer(newValue)
+            dispatch(respondQuestion({ templateQuestionId, answer: newValue, comments: '', answered: false }))
+
+          }), {
+          success: 'Answer saved!',
+          loading: 'Saving answered!',
+          error: 'Error while saving the answer'
         }
-        setAnswer(newValue)
-        dispatch(respondQuestion({ templateQuestionId, answer: newValue, comments: '', answered: false }))
+        )
       } catch (error) {
         toast.error('error saving answer. Please try it again')
       }
@@ -111,19 +128,29 @@ export default function QuestionCard({ question, sectionId, employeeId, initAnsw
 
     try {
       const percentageValue = !isKeyIndicator ? null : (checked ? 0 : percentage)
-      const response = await saveAnswer({
-        answer: newValue,
-        comment,
-        questionId: templateAnswerId,
-        packageId: sectionId,
-        customerName: employeeId,
-        percentage: percentageValue
-      })
-      if (response instanceof Error) {
-        throw new Error('error while saving answer')
-      }
-      setAnswer(newValue)
-      dispatch(respondQuestion({ templateQuestionId, answer: newValue, comments }))
+      toast.promise(
+        saveAnswer({
+          answer: newValue,
+          comment,
+          questionId: templateAnswerId,
+          packageId: sectionId,
+          customerName: employeeId,
+          percentage: percentageValue
+        }).then(response => {
+          if (response instanceof Error) {
+            throw new Error('error while saving answer')
+          }
+          setAnswer(newValue)
+          dispatch(respondQuestion({ templateQuestionId, answer: newValue, comments }))
+        })
+        ,
+        {
+          success: 'Answer saved!',
+          loading: 'Saving answer!',
+          error: 'Error while saving the answer'
+        }
+      )
+
     } catch (error) {
       toast.error('error saving answer. Please try it again')
     }
@@ -144,14 +171,23 @@ export default function QuestionCard({ question, sectionId, employeeId, initAnsw
     const newFlagState = !flagged
     const flagNumber = newFlagState ? 1 : 0
     try {
-      const response = await saveAnswer(
-        { answer, comment, questionId: templateAnswerId, packageId: sectionId, customerName: employeeId, flag: flagNumber }
+      toast.promise(
+        saveAnswer(
+          { answer, comment, questionId: templateAnswerId, packageId: sectionId, customerName: employeeId, flag: flagNumber }
+        ).then(response => {
+          if (response instanceof Error) {
+            throw new Error('error while saving answer')
+          }
+          setFlagged(newFlagState)
+          dispatch(respondQuestion({ templateQuestionId, answer, answered: answer ? true : false, comments, percentage, flag: flagNumber }))
+
+        })
+        , {
+          success: 'Answer saved!',
+          loading: 'Saving answer!',
+          error: 'Error while saving the answer'
+        }
       )
-      if (response instanceof Error) {
-        throw new Error('error while saving answer')
-      }
-      setFlagged(newFlagState)
-      dispatch(respondQuestion({ templateQuestionId, answer, answered: answer ? true : false, comments, percentage, flag: flagNumber }))
 
     } catch (error) {
       toast.error('error saving answer. Please try it again')
@@ -162,11 +198,18 @@ export default function QuestionCard({ question, sectionId, employeeId, initAnsw
     if (commentDebounced === '' && answer !== '1' && answer !== '0') return
     const saveCommentAnswer = async () => {
       try {
-        const response = await saveAnswer({ answer, comment: commentDebounced, questionId: templateAnswerId, packageId: sectionId, customerName: employeeId })
-        if (response instanceof Error) {
-          throw new Error('error while saving comment')
-        }
-        dispatch(respondQuestion({ templateQuestionId, answer, comments: commentDebounced }))
+        toast.promise(
+          saveAnswer({ answer, comment: commentDebounced, questionId: templateAnswerId, packageId: sectionId, customerName: employeeId })
+            .then(response => {
+              if (response instanceof Error) {
+                throw new Error('error while saving comment')
+              }
+              dispatch(respondQuestion({ templateQuestionId, answer, comments: commentDebounced }))
+            }), {
+          success: 'Answer saved!',
+          loading: 'Saving answer!',
+          error: 'Error while saving the answer'
+        })
       } catch (error) {
         toast.error('error saving comment. Please try it again')
       }
