@@ -310,7 +310,7 @@ export default function QuestionsPage() {
   const questionsBySubSection = groupAndSortQuestions(questions)
   const handleSubmitAnswers = async () => {
     const unAnsweredQuestions = storedQuestions.filter((question) => !question.answered)
-    if (unAnsweredQuestions.length > 0) {
+    if (unAnsweredQuestions.length > 0 && currentTool?.templateName !== 'Key Indicators') {
       toast.error('Please answer all questions before submitting')
       return
     }
