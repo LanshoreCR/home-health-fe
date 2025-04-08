@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createTools } from '../../../shared/services/api/endpoints/tools'
 import { DatePicker } from '@mui/x-date-pickers'
-import { FormControl, InputLabel, MenuItem, Select, TextField, Grid2, Box, Typography, Accordion, AccordionSummary, AccordionDetails, List, IconButton, Checkbox } from '@mui/material'
+import { FormControl, InputLabel, MenuItem, Select, TextField, Grid2, Box, Typography, Accordion, AccordionSummary, AccordionDetails, List, IconButton, Checkbox, FormHelperText } from '@mui/material'
 import { getLocations } from '../../../shared/services/api/endpoints/location'
 import { getToolTemplates } from '../../../shared/services/api/endpoints/tool-template'
 import { toast } from 'sonner'
@@ -80,6 +80,7 @@ export default function CreateToolPage() {
 
     setGroupedTools(groupedData)
     setExpandedAccordion(Object.keys(groupedData)[0])
+    toast.info('Please fill in all fields in the tools.')
   }
 
   const handleRemoveTool = (index) => {
@@ -337,12 +338,16 @@ export default function CreateToolPage() {
                         group.map((field, index) => (
                           <Grid2 container key={field.realIndex} direction={'row'} rowSpacing={2} justifyContent={'space-between'} mt={2} >
                             <FormControl >
-                              <TextField label='Client name' value={field.customerName} onChange={({ target }) => {
-                                setValue(`tools.${field.realIndex}.customerName`, target.value)
-
-                              }} />
+                              <TextField
+                                label='Client name'
+                                value={field.customerName}
+                                error={!field.customerName}
+                                helperText={!field.customerName ? 'Required field' : ''}
+                                onChange={({ target }) => {
+                                  setValue(`tools.${field.realIndex}.customerName`, target.value)
+                                }} />
                             </FormControl>
-                            <FormControl  >
+                            <FormControl error={!field.assignedAuditor}>
                               <InputLabel id={`auditor-label`}>Auditor</InputLabel>
                               <Select
                                 labelId={`auditor-label`}
@@ -357,6 +362,9 @@ export default function CreateToolPage() {
                                   <MenuItem key={option.employeeId} value={option.employeeId}>{option.name}</MenuItem>
                                 ))}
                               </Select>
+                              {!field.assignedAuditor && (
+                                <FormHelperText>Required field</FormHelperText>
+                              )}
                             </FormControl>
                             <FormControl>
                               <DatePicker
