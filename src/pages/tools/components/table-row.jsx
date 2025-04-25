@@ -4,13 +4,15 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
 import IconButton from '@mui/material/IconButton'
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import TableCell from '@mui/material/TableCell'
 import TableRow from '@mui/material/TableRow'
 import ManageAuditorModal from './manage-auditor-modal'
 import useModal from '../../../shared/hooks/useModal'
+import { STATUS } from '../../banners/components/card'
 
-export default function ToolsTableRow({ tool, refreshTools }) {
+export default function ToolsTableRow({ tool, refreshTools, currentAudit }) {
   const { templateName, templateStatus, templateScore, assignedAuditor, memberId, packageTemplateId, locationName, auditTeamId, customerName } = tool
   const location = useLocation()
   const navigate = useNavigate()
@@ -49,15 +51,26 @@ export default function ToolsTableRow({ tool, refreshTools }) {
         <TableCell align="center">{locationName}</TableCell>
         <TableCell align="center">{assignedAuditor}</TableCell>
         <TableCell align="center">
-          <IconButton aria-label="questions" onClick={handleGoToQuestions}>
-            <EditIcon />
-          </IconButton>
-          <IconButton aria-label="delete">
-            <DeleteIcon />
-          </IconButton>
-          <IconButton aria-label="more-options" onClick={handleOpenOptions}>
-            <MoreVertIcon />
-          </IconButton>
+          {
+            currentAudit.packageStatus === STATUS.COMPLETED
+              ? (
+                <IconButton aria-label="questions" onClick={handleGoToQuestions}>
+                  <VisibilityIcon />
+                </IconButton>
+              ) : (
+                <>
+                  <IconButton aria-label="questions" onClick={handleGoToQuestions}>
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton aria-label="delete">
+                    <DeleteIcon />
+                  </IconButton>
+                  <IconButton aria-label="more-options" onClick={handleOpenOptions}>
+                    <MoreVertIcon />
+                  </IconButton>
+                </>
+              )
+          }
         </TableCell>
         <Menu
           id="tool-options"

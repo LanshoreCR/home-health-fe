@@ -182,6 +182,7 @@ export default function BannerToolsPage() {
             <ToolsTable
               refreshTools={refreshTools}
               tools={filteredTools}
+              currentAudit={currentAudit}
             />
           )
           : (

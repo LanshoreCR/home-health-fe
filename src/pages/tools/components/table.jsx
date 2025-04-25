@@ -7,7 +7,7 @@ import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import ToolsTableRow from './table-row'
 
-export default function ToolsTable({ tools, addToSelectedTools, removeFromSelectedTool, selectedTools, refreshTools }) {
+export default function ToolsTable({ tools, addToSelectedTools, removeFromSelectedTool, selectedTools, refreshTools, currentAudit }) {
   return (
     <TableContainer component={Paper}>
       <Table sx={{ minWidth: 650 }} aria-label="simple table">
@@ -30,7 +30,8 @@ export default function ToolsTable({ tools, addToSelectedTools, removeFromSelect
               addToSelectedTools={addToSelectedTools}
               removeFromSelectedTools={removeFromSelectedTool}
               selectedTools={selectedTools}
-              refreshTools={refreshTools} />
+              refreshTools={refreshTools} 
+              currentAudit={currentAudit}/>
           )}
         </TableBody>
       </Table>

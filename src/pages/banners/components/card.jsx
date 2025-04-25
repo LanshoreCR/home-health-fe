@@ -27,7 +27,7 @@ const CAPA_FLAG = {
   INACTIVE: 0
 }
 
-const STATUS = {
+export const STATUS = {
   PENDING: 'Pending',
   UNDER_REVIEW: 'Under Review',
   COMPLETED: 'Approved'
@@ -54,7 +54,7 @@ export default function BannerCard({ audit, refreshAudits }) {
     packageScore, teamLead, teamLeadId, packageId, auditTeamId,
     capaFlag, sectionDesc, businessLineName, isTeam, createdOn
   } = audit
-    const { isAdmin } = useRole()
+  const { isAdmin } = useRole()
 
 
   const auditTeamLead = {
@@ -190,8 +190,10 @@ export default function BannerCard({ audit, refreshAudits }) {
           </div>
         </Grid2>
         <Grid2 container ml={'auto'}>
-          <Link to={`/${packageId}/${auditTeamId}/tools/new`}>
-            <Button variant="text">Create Tools</Button>
+          <Link to={`/${packageId}/${auditTeamId}/tools/new`} >
+            <Button
+              disabled={packageStatus === STATUS.COMPLETED}
+              variant="text">Create Tools</Button>
           </Link>
           <Link to={`/${packageId}/tools`}>
             <Button variant="text">View Tools</Button>
