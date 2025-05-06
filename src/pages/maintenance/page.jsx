@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Button, FormControl, Grid2, IconButton, InputLabel, MenuItem, Paper, Select } from '@mui/material'
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd'
-import { deleteTool, getMaintenanceBusinessLines, getMaintenanceTools, getTemplateQuestions, publishToolTemplate, updateAllQuestions } from '../../shared/services/api/endpoints/maintenance'
+import { activateQuestion, deleteQuestion, deleteTool, getMaintenanceBusinessLines, getMaintenanceTools, getTemplateQuestions, publishToolTemplate, updateAllQuestions } from '../../shared/services/api/endpoints/maintenance'
 import { toast } from 'sonner'
 import { useSelector } from 'react-redux'
 import AddToolModal from './components/add-tool-modal'
 import MaintenanceHeader from './components/header'
 import MaintenancePageSkeleton from './components/skeleton/page'
-import MaintenanceQuestionCard from './components/question-card'
+import MaintenanceQuestionCard, { QUESTION_STATUS } from './components/question-card'
 import MenuIcon from '@mui/icons-material/Menu'
 import SidebarMaintenanceRow from './components/sidebar-maintenance-row'
 import PublishModal from './components/publish-modal'
@@ -53,6 +53,7 @@ export default function MaintenancePage() {
   const [questions, setQuestions] = useState([])
   const [sections, setSections] = useState([])
   const [isLoading, setIsLoading] = useState(false)
+  const [activeInactiveQuestions, setActiveInactiveQuestions] = useState([])
 
   const user = useSelector((state) => state.user)
   const userId = user.employeeId
@@ -98,13 +99,43 @@ export default function MaintenancePage() {
   }
 
   const handlePublish = async (releaseDate) => {
-    const response = await publishToolTemplate({ releaseDate, templateId: currentTemplateId })
-    if (response instanceof Error) {
-      toast.error('Error while publishing tool template')
-      return
-    }
-    toast.success('Tool template published successfully')
-    reRenderTools()
+    toast.promise(
+      publishToolTemplate({ releaseDate, templateId: currentTemplateId })
+        .then(response => {
+          if (response instanceof Error) {
+            throw Error(response)
+          }
+          Promise.all(activeInactiveQuestions.map(async (item) => {
+            try {
+              if (item.status === QUESTION_STATUS.ACTIVE) {
+                return await activateQuestion({ questionId: item.questionId, userId })
+              } else {
+                return await deleteQuestion({ questionId: item.questionId, userId })
+              }
+            } catch (error) {
+              throw Error(error.message)
+            }
+          }))
+
+        })
+        .finally(() => {
+          toast.promise(
+            reRenderTools(),
+            {
+              loading: 'Refreshing...',
+              success: 'Tool template published successfully',
+              error: 'Error while publishing tool template',
+            }
+          )
+        }),
+      {
+        loading: 'Publishing...',
+        success: 'Tool template published successfully',
+        error: 'Error while publishing tool template'
+      }
+    )
+
+
   }
 
   const handleRemoveTool = async (templateId) => {
@@ -141,6 +172,17 @@ export default function MaintenancePage() {
     setCurrentTemplateId(groupedByTools[0].templateId)
 
     setIsLoading(false)
+  }
+
+  const handleActiveInactiveQuestion = (item) => {
+    const itemIndex = activeInactiveQuestions.findIndex((question) => question.questionId === item.questionId)
+    if (itemIndex === -1) {
+      setActiveInactiveQuestions([...activeInactiveQuestions, item])
+    } else {
+      const updatedActiveInactiveQuestions = [...activeInactiveQuestions]
+      updatedActiveInactiveQuestions[itemIndex] = item
+      setActiveInactiveQuestions(updatedActiveInactiveQuestions)
+    }
   }
 
   useEffect(() => {
@@ -340,7 +382,9 @@ export default function MaintenancePage() {
                               provided={provided}
                               tool={tool}
                               sections={sections}
-                              reRenderQuestions={reRenderQuestions} />
+                              reRenderQuestions={reRenderQuestions}
+                              handleActiveInactiveQuestion={handleActiveInactiveQuestion}
+                            />
                           )}
                         </Draggable>
                       ))}

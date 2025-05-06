@@ -10,7 +10,12 @@ const STATUS = {
   INACTIVE: 'Inactive'
 }
 
-export default function MaintenanceQuestionCard({ tool, provided, sections, reRenderQuestions }) {
+export const QUESTION_STATUS = {
+  ACTIVE: 0,
+  INACTIVE: 1
+}
+
+export default function MaintenanceQuestionCard({ tool, provided, sections, reRenderQuestions, handleActiveInactiveQuestion }) {
   const { questionSort, questionStatus, questionId, keyIndicator } = tool
   const [questionText, setQuestionText] = useState(tool.questionText)
   const [section, setSection] = useState(tool.category)
@@ -75,21 +80,13 @@ export default function MaintenanceQuestionCard({ tool, provided, sections, reRe
 
   const handleChangeStatus = async (event) => {
     const newValue = event.target.checked
-    if (newValue) { // activate question
-      const response = await activateQuestion({ questionId, userId })
-      if (response instanceof Error) {
-        toast.error('Error while activating maintenance question')
-        return
-      }
-      toast.success('Maintenance question activated successfully')
-    } else { // desactivate question
-      const response = await deleteQuestion({ questionId, userId })
-      if (response instanceof Error) {
-        toast.error('Error while deleting maintenance question')
-        return
-      }
-      toast.success('Maintenance question deleted successfully')
+
+    const newItem = {
+      questionId,
+      userId,
+      status: newValue ? QUESTION_STATUS.ACTIVE : QUESTION_STATUS.INACTIVE
     }
+    handleActiveInactiveQuestion(newItem)
     setIsActive(newValue)
     reRenderQuestions()
   }

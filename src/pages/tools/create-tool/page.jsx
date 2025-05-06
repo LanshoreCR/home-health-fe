@@ -264,7 +264,7 @@ export default function CreateToolPage() {
                   }
                 }}
                 renderValue={(value) => {
-                  return value.map((v) => toolsByLocation[prevAddToolForm.locationNumber].find(option => option.templateId === v).templateDesc).join(', ')
+                  return value.map((v) => toolsByLocation[prevAddToolForm.locationNumber]?.find(option => option.templateId === v).templateDesc).join(', ')
                 }}
                 value={prevAddToolForm.tools.map(v => v.id)}
               >
