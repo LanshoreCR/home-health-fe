@@ -85,62 +85,63 @@ export default function CreateBannerPage() {
   }, [])
 
   const handleOnSubmit = async (data) => {
-    try {
-      if (dateRange[0] == null && dateRange[1] == null) {
-        toast.error('select a valid date range')
-        return
-      }
-      if (locations.length === 0) {
-        toast.error("Executive director doesn't have locations")
-        return;
-      }
-      // const currentExecutiveDirector = locations.find((item) => item.edId != null)
-      const currentExecutiveDirector = locations.find(location => location.edId === data.executiveDirector) ?? { edId: data.executiveDirector }
-      const locationNumbers = getValues('locations')
-      const audit = {
-        ...currentExecutiveDirector,
-        locationId: locationNumbers[0],
-        dateRange,
-      }
-      const response = await createAudit({ audit, userId })
-      if (response instanceof Error) {
-        toast.error('error while creating new audit')
-        return
-      }
+    toast.promise(
+      (async () => {
+        if (dateRange[0] == null && dateRange[1] == null) {
+          throw new Error('Select a valid date range');
+        }
 
-      //save team lead
-      const teamLeadResponse = await reassignTeamLead({
-        auditTeamId: response.auditTeamID,
-        userId,
-        auditorId: singleOrTeamValue === 'single' ? userId : data.teamLeader
-      })
-      if (teamLeadResponse instanceof Error) {
-        toast.error('error while reassigning team lead')
-        return
-      }
+        if (locations.length === 0) {
+          throw new Error("Executive director doesn't have locations");
+        }
 
-      //save auditors
-      let auditorsToSave = data.auditors.map(auditor => auditors.find(a => a.employeeId === auditor))
-      if (singleOrTeamValue === 'single')
-        auditorsToSave = [auditors.find(auditor => auditor.employeeId === userId)]
-      const auditorsResponse = await manageTeamAuditors({
-        auditTeamId: response.auditTeamID,
-        auditors: auditorsToSave,
-        userId
-      })
-      if (auditorsResponse instanceof Error) {
-        toast.error('error while updating auditors')
-        return
-      }
-      toast.success('Audit created successfully!')
-      reset()
-      setTimeout(() => {
-        navigate('/')
-      }, 1000)
-    } catch (error) {
-      toast.error("error trying to create the banner")
-    }
+        const currentExecutiveDirector = locations.find(location => location.edId === data.executiveDirector) ?? { edId: data.executiveDirector };
+        const locationNumbers = getValues('locations');
+        const audit = {
+          ...currentExecutiveDirector,
+          locationId: locationNumbers[0],
+          dateRange,
+        };
 
+        const response = await createAudit({ audit, userId });
+        if (response instanceof Error) {
+          throw new Error('Error while creating new audit');
+        }
+
+        const teamLeadResponse = await reassignTeamLead({
+          auditTeamId: response.auditTeamID,
+          userId,
+          auditorId: singleOrTeamValue === 'single' ? userId : data.teamLeader
+        });
+        if (teamLeadResponse instanceof Error) {
+          throw new Error('Error while reassigning team lead');
+        }
+
+        let auditorsToSave = data.auditors.map(auditor => auditors.find(a => a.employeeId === auditor));
+        if (singleOrTeamValue === 'single') {
+          auditorsToSave = [auditors.find(auditor => auditor.employeeId === userId)];
+        }
+
+        const auditorsResponse = await manageTeamAuditors({
+          auditTeamId: response.auditTeamID,
+          auditors: auditorsToSave,
+          userId
+        });
+        if (auditorsResponse instanceof Error) {
+          throw new Error('Error while updating auditors');
+        }
+
+        reset();
+        setTimeout(() => {
+          navigate('/');
+        }, 1000);
+      })(),
+      {
+        loading: 'Creating audit...',
+        success: 'Audit created successfully!',
+        error: (err) => err.message || 'Unknown error occurred while creating audit',
+      }
+    );
   }
 
   const ifNullReturnEmpty = (param) => {
