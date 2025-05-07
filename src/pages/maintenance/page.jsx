@@ -99,43 +99,31 @@ export default function MaintenancePage() {
   }
 
   const handlePublish = async (releaseDate) => {
-    toast.promise(
-      publishToolTemplate({ releaseDate, templateId: currentTemplateId })
-        .then(response => {
-          if (response instanceof Error) {
-            throw Error(response)
-          }
-          Promise.all(activeInactiveQuestions.map(async (item) => {
-            try {
-              if (item.status === QUESTION_STATUS.ACTIVE) {
-                return await activateQuestion({ questionId: item.questionId, userId })
-              } else {
-                return await deleteQuestion({ questionId: item.questionId, userId })
-              }
-            } catch (error) {
-              throw Error(error.message)
-            }
-          }))
-
-        })
-        .finally(() => {
-          toast.promise(
-            reRenderTools(),
-            {
-              loading: 'Refreshing...',
-              success: 'Tool template published successfully',
-              error: 'Error while publishing tool template',
-            }
-          )
-        }),
-      {
-        loading: 'Publishing...',
-        success: 'Tool template published successfully',
-        error: 'Error while publishing tool template'
+    toast.promise((async () => {
+      const publishResponse = await publishToolTemplate({ releaseDate, templateId: currentTemplateId })
+      if (publishResponse instanceof Error) {
+        throw Error('Error while publishing the tool')
       }
-    )
 
+      Promise.all(activeInactiveQuestions.map(async (item) => {
+        try {
+          if (item.status === QUESTION_STATUS.ACTIVE) {
+            return await activateQuestion({ questionId: item.questionId, userId })
+          } else {
+            return await deleteQuestion({ questionId: item.questionId, userId })
+          }
+        } catch (error) {
+          throw Error(error.message)
+        }
+      }))
 
+      await reRenderTools()
+
+    })(), {
+      loading: 'Publishing...',
+      success: 'Tool template published successfully',
+      error: 'Error while publishing tool template'
+    })
   }
 
   const handleRemoveTool = async (templateId) => {
