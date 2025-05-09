@@ -133,9 +133,9 @@ export default function CreateToolPage() {
         }, 1000)
       }),
       {
-        loading: 'Creating audit',
-        success: 'Audit created successfully!',
-        error: 'Error while creating new audit'
+        loading: 'Creating tools',
+        success: 'Tools created successfully!',
+        error: 'Error while creating new tools'
       }
     )
 
