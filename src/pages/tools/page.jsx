@@ -13,6 +13,7 @@ import LoadingToolsPage from './loading'
 import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import ToolsTable from './components/table'
+import { STATUS } from '../banners/components/card'
 
 export default function BannerToolsPage() {
   const { id } = useParams()
@@ -174,7 +175,7 @@ export default function BannerToolsPage() {
           </FormControl>
           <FilterAltIcon className='mt-1 ml-3 text-gray-600' />
         </div>
-        <Button variant="contained" onClick={handleGoToCreateToolsPage}>Create tools</Button>
+        <Button variant="contained" onClick={handleGoToCreateToolsPage} disabled={currentAudit.packageStatus === STATUS.COMPLETED}>Create tools</Button>
       </div>
       <section className='mb-16'>
         {filteredTools != null

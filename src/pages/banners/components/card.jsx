@@ -190,11 +190,16 @@ export default function BannerCard({ audit, refreshAudits }) {
           </div>
         </Grid2>
         <Grid2 container ml={'auto'}>
-          <Link to={`/${packageId}/${auditTeamId}/tools/new`} >
-            <Button
-              disabled={packageStatus === STATUS.COMPLETED}
-              variant="text">Create Tools</Button>
-          </Link>
+          <Button
+            disabled={packageStatus === STATUS.COMPLETED}
+            onClick={() => {
+              if (packageStatus !== STATUS.COMPLETED) {
+                navigate(`/${packageId}/${auditTeamId}/tools/new`);
+              }
+            }}
+            variant="text">
+            Create Tools
+          </Button>
           <Link to={`/${packageId}/tools`}>
             <Button variant="text">View Tools</Button>
           </Link>
