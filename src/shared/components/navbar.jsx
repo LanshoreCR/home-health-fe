@@ -32,9 +32,9 @@ const Navbar = () => {
                         </Link>
                     </Typography>
                     <div className='flex gap-x-5'>
-                        {isAdmin && (
+                        {/* {isAdmin && ( */}
                             <Button variant='text' color='inherit' onClick={goToMaintenance}>Maintenance</Button>
-                        )}
+                        {/* )} */}
                         <Button variant='text' color='inherit' onClick={handleLogout}>Logout</Button>
                     </div>
                 </Toolbar>
