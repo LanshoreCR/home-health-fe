@@ -17,7 +17,7 @@ const Navbar = () => {
 
     const goToMaintenance = () => {
         navigate('/maintenance')
-      }
+    }
 
     return (
         <Box sx={{ flexGrow: 1 }}>
@@ -32,9 +32,9 @@ const Navbar = () => {
                         </Link>
                     </Typography>
                     <div className='flex gap-x-5'>
-                        {/* {isAdmin && ( */}
-                            <Button variant='text' color='inherit' onClick={goToMaintenance}>Maintenance</Button>
-                        {/* )} */}
+                        {isAdmin && (
+                           <Button variant='text' color='inherit' onClick={goToMaintenance}>Maintenance</Button>
+                        )}
                         <Button variant='text' color='inherit' onClick={handleLogout}>Logout</Button>
                     </div>
                 </Toolbar>
