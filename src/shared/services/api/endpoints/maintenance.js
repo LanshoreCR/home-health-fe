@@ -211,7 +211,8 @@ export const updateTool = async ({ name, templateId, userId }) => {
       TemplateTypeID: 1,
       ModifiedBy: userId,
       TemplateID: templateId,
-      Controller: 1
+      Controller: 1,
+      InactiveFlag: 0
     }
 
     const response = await axiosInstance.put(ENDPOINTS.UPDATE_TEMPLATE, body, {})
@@ -276,7 +277,8 @@ export const deleteTool = async ({ name, templateId, userId }) => {
       TemplateTypeID: 1,
       ModifiedBy: userId,
       TemplateID: templateId,
-      Controller: 0
+      Controller: 2, 
+      InactiveFlag: 1
     }
 
     const response = await axiosInstance.put(ENDPOINTS.UPDATE_TEMPLATE, body, {})
