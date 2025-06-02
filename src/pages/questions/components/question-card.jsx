@@ -159,7 +159,6 @@ export default function QuestionCard({ question, sectionId, employeeId, initAnsw
   }
 
   useEffect(() => {
-    if (commentDebounced === '' && answer !== '1' && answer !== '0') return
     const saveCommentAnswer = async () => {
       try {
         const response = await saveAnswer({ answer, comment: commentDebounced, questionId: templateAnswerId, packageId: sectionId, customerName: employeeId })
