@@ -11,6 +11,8 @@ import TableRow from '@mui/material/TableRow'
 import ManageAuditorModal from './manage-auditor-modal'
 import useModal from '../../../shared/hooks/useModal'
 import { STATUS } from '../../banners/components/card'
+import DeleteToolModal from './delete-tool-modal'
+import { deleteTool } from '../../../shared/services/api/endpoints/tools'
 
 export default function ToolsTableRow({ tool, refreshTools, currentAudit }) {
   const { templateName, templateStatus, templateScore, assignedAuditor, memberId, packageTemplateId, locationName, auditTeamId, customerName } = tool
@@ -19,6 +21,8 @@ export default function ToolsTableRow({ tool, refreshTools, currentAudit }) {
 
   const [anchorEl, setAnchorEl] = useState(null)
   const open = Boolean(anchorEl)
+  const { isOpen: isDeleteToolOpen, openModal: openDeleteToolModal, closeModal: closeDeleteToolModal } = useModal()
+
 
   const handleOpenOptions = (event) => {
     setAnchorEl(event.currentTarget)
@@ -30,6 +34,15 @@ export default function ToolsTableRow({ tool, refreshTools, currentAudit }) {
   const handleGoToQuestions = () => {
     const url = `${location.pathname}/${packageTemplateId}/questions`
     navigate(url)
+  }
+
+  const handleDeleteTool = async () => {
+    try {
+      await deleteTool({ packageTemplateId })
+      await refreshTools()
+    } catch (error) {
+      throw new Error(error)
+    }
   }
 
   const { isOpen: isManageAuditorOpen, openModal: openManageAuditorModal, closeModal: closeManageAuditorModal } = useModal()
@@ -62,7 +75,7 @@ export default function ToolsTableRow({ tool, refreshTools, currentAudit }) {
                   <IconButton aria-label="questions" onClick={handleGoToQuestions}>
                     <EditIcon />
                   </IconButton>
-                  <IconButton aria-label="delete">
+                  <IconButton aria-label="delete" onClick={openDeleteToolModal}>
                     <DeleteIcon />
                   </IconButton>
                   <IconButton aria-label="more-options" onClick={handleOpenOptions}>
@@ -93,6 +106,11 @@ export default function ToolsTableRow({ tool, refreshTools, currentAudit }) {
         packageTemplateId={packageTemplateId}
         open={isManageAuditorOpen}
         onClose={closeManageAuditorModal} />
+      <DeleteToolModal
+        open={isDeleteToolOpen}
+        onClose={closeDeleteToolModal}
+        onConfirm={handleDeleteTool}
+      />
     </>
   )
 }

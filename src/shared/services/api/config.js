@@ -8,6 +8,7 @@ export const ENDPOINTS = {
   UPDATE_BANNER_STATUS: '/api/AuditPackage/UpdateBannerStatus',
   DELETE_BANNER: '/api/AuditPackage/DeleteBanner',
   CREATE_TOOLS: '/api/Tools/CreateAuditTools',
+  DELETE_TOOL: '/api/Tools/DeleteAuditTool',
   GET_BANNER_BY_PACKAGE_ID: '/api/AuditPackage/GetBannerBasedOnPackageID',
   GET_TOOLS_BY_PACKAGE_ID: '/api/Tools/GetAuditTools',
   GET_LOCATIONS_BY_PACKAGE_ID: '/api/AuditPackage/GetBannerLocations',

@@ -80,15 +80,13 @@ export const updateToolStatus = async ({ selectedTools }) => {
   }
 }
 
-export const deleteTool = async ({ templateId }) => {
+export const deleteTool = async ({ packageTemplateId }) => {
   try {
     const axiosInstance = apiMaster.getInstance()
 
-    const body = {
-      PackageTemplateID: templateId
-    }
-
-    const response = await axiosInstance.put(ENDPOINTS.DELETE_TOOL, body, {})
+    
+    const endpoint = `${ENDPOINTS.DELETE_TOOL}/${packageTemplateId}`;
+    const response = await axiosInstance.delete(endpoint);
     if (response.status !== 200) return new Error('error deleting tool from database')
     const data = response.data
     return data
