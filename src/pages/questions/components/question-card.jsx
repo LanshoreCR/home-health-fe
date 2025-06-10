@@ -159,18 +159,21 @@ export default function QuestionCard({ question, sectionId, employeeId, initAnsw
   }
 
   useEffect(() => {
-    const saveCommentAnswer = async () => {
-      try {
-        const response = await saveAnswer({ answer, comment: commentDebounced, questionId: templateAnswerId, packageId: sectionId, customerName: employeeId })
-        if (response instanceof Error) {
-          throw new Error('error while saving comment')
+    if (answer !== null) {
+      const saveCommentAnswer = async () => {
+        try {
+          const response = await saveAnswer({ answer, comment: commentDebounced, questionId: templateAnswerId, packageId: sectionId, customerName: employeeId })
+          if (response instanceof Error) {
+            throw new Error('error while saving comment')
+          }
+          dispatch(respondQuestion({ templateQuestionId, answer, comments: commentDebounced }))
+        } catch (error) {
+          toast.error('error saving comment. Please try it again')
         }
-        dispatch(respondQuestion({ templateQuestionId, answer, comments: commentDebounced }))
-      } catch (error) {
-        toast.error('error saving comment. Please try it again')
       }
+      saveCommentAnswer()
     }
-    saveCommentAnswer()
+
   }, [commentDebounced])
 
   useEffect(() => {
