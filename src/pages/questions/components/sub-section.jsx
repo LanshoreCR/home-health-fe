@@ -20,7 +20,7 @@ export default function SubSection({ subSection, questions, sectionId, ref, refs
         </div>
       </Divider>
       {
-        questions.map((question) => (
+        questions.map((question, index) => (
           <div key={question.standard}>
             <div ref={(el) => (refs.current[question.templateQuestionId] = el)}></div>
             <div ref={(el) => (refs.current[question.standard] = el)}></div>
@@ -30,7 +30,7 @@ export default function SubSection({ subSection, questions, sectionId, ref, refs
               sectionId={sectionId}
               initAnswer={storeQuestions.find((q) => q.templateQuestionId === question.templateQuestionId)?.answers}
               initPercentage={storeQuestions.find((q) => q.templateQuestionId === question.templateQuestionId)?.percentages}
-
+              index={index + 1}
               isApproved={isApproved}
               currentTool={currentTool}
             />
