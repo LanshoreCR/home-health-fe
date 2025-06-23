@@ -184,11 +184,6 @@ export default function QuestionsPage() {
     goBack()
   }
 
-  const goToCapa = () => {
-    const url = `/${id}/tools/${currentIdTool}/capa`
-    navigate(url)
-  }
-
   const goToEditTools = () => {
     const url = `/${id}/tools/${currentIdTool}`
     navigate(url)
@@ -332,23 +327,16 @@ export default function QuestionsPage() {
     dispatch(storeQuestions(newQuestions))
   }
 
+  if ( storedQuestions.length === 0 && questions.length === 0 && !loading) {
+    return null
+  }
+
 
   if (loading) {
     return (
       <LoadingQuestionPage />
     )
   }
-
-
-  if ( storedQuestions.length === 0 && questions.length === 0 && !loading) {
-    return (
-      <div className='flex flex-col w-full justify-center items-center mt-10'>
-        <span className='font-bold'>No questions to show.</span>
-        <Button variant="contained" onClick={goToEditTools} disabled={isApproved}>Add tools</Button>
-      </div>
-    )
-  }
-
 
 
   return (
