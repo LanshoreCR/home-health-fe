@@ -179,11 +179,6 @@ export default function QuestionsPage() {
     }
   }, [currentTool])
 
-  useEffect(() => {
-    console.log(questions, loading, storedQuestions)
-  }, [questions, loading, storedQuestions])
-  
-
 
   const goToToolsPage = () => {
     goBack()
