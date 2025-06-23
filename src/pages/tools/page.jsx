@@ -129,10 +129,7 @@ export default function BannerToolsPage() {
 
   if (currentAudit == null) {
     return (
-      <div className='flex justify-center items-center w-full flex-col gap-y-5'>
-        <span>Audit not found</span>
-        <Button variant="contained" onClick={handleGoToCreateToolsPage}>Create tools</Button>
-      </div>
+      <></>
     )
   }
 
