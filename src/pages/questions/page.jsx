@@ -158,8 +158,9 @@ export default function QuestionsPage() {
           const generalComment = data[0].generalComments || ''
           setGeneralComments(generalComment)
         }
-        dispatch(storeQuestions(sortedQuestions))
         setQuestions(sortedQuestions)
+
+        dispatch(storeQuestions(sortedQuestions))
       })
       .catch(() => {
         toast.error('error getting questions')
@@ -177,6 +178,11 @@ export default function QuestionsPage() {
       })
     }
   }, [currentTool])
+
+  useEffect(() => {
+    console.log(questions, loading, storedQuestions)
+  }, [questions, loading, storedQuestions])
+  
 
 
   const goToToolsPage = () => {
@@ -292,20 +298,7 @@ export default function QuestionsPage() {
     return true
   })
 
-  if (questions.length === 0 && !loading) {
-    return (
-      <div className='flex flex-col w-full justify-center items-center mt-10'>
-        <span className='font-bold'>No questions to show.</span>
-        <Button variant="contained" onClick={goToEditTools} disabled={isApproved}>Add tools</Button>
-      </div>
-    )
-  }
 
-  if (loading) {
-    return (
-      <LoadingQuestionPage />
-    )
-  }
 
   const questionsBySubSection = groupAndSortQuestions(questions)
   const handleSubmitAnswers = async () => {
@@ -342,6 +335,23 @@ export default function QuestionsPage() {
       return question
     })
     dispatch(storeQuestions(newQuestions))
+  }
+
+
+  if (loading) {
+    return (
+      <LoadingQuestionPage />
+    )
+  }
+
+
+  if ( storedQuestions.length === 0 && questions.length === 0 && !loading) {
+    return (
+      <div className='flex flex-col w-full justify-center items-center mt-10'>
+        <span className='font-bold'>No questions to show.</span>
+        <Button variant="contained" onClick={goToEditTools} disabled={isApproved}>Add tools</Button>
+      </div>
+    )
   }
 
 
