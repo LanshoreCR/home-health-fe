@@ -327,7 +327,7 @@ export default function QuestionsPage() {
     dispatch(storeQuestions(newQuestions))
   }
 
-  if ( storedQuestions.length === 0 && questions.length === 0 && !loading) {
+  if (storedQuestions.length === 0 && questions.length === 0 && !loading) {
     return null
   }
 
@@ -508,10 +508,14 @@ export default function QuestionsPage() {
             </Paper>
           </div>
         }
-        <div className='flex items-center w-full justify-between flex-col relative h-[80vh] overflow-y-auto'>
-          <section className='flex flex-col w-full gap-y-5'>
+        
+        <Grid2
+          container
+          flex={1}
+        >
+
             {currentTool != null &&
-              <Grid2 container direction={'column'} spacing={3} alignItems={'center'} mt={2}>
+              <Grid2 container direction={'column'} spacing={3} alignItems={'center'} mt={2} mx={2} width={'100%'}>
                 <Grid2 container alignItems={'center'} width={'100%'}>
                   <TextField
                     variant='outlined'
@@ -549,10 +553,9 @@ export default function QuestionsPage() {
               </Grid2>
 
             }
-            <div className={`w-full flex flex-col gap-y-5 overflow-y-auto 
-              ${openSidebar ? 'h-screen' : 'xl:h-[calc(100vh-330px)] md:h-[calc(100vh-350px)]'}
-               mb-2`}>
-              {
+
+            <Grid2 maxHeight={'70vh'} overflow={`auto`}>
+ {
                 questionsBySubSection.map((subSection, index) => (
                   <div key={index}>
                     <div ref={(el) => (subSectionsRefs.current[subSection[0]] = el)}></div>
@@ -567,13 +570,14 @@ export default function QuestionsPage() {
                   </div>
                 ))
               }
-            </div>
-            <footer className={`flex items-center justify-between w-full ${openSidebar ? 'pb-10' : 'pb-5'}`}>
+            </Grid2>
+
+            <Grid2  container justifyContent={'space-between'} flex={1} p={1}>
               <Button variant="text" onClick={goToToolsPage}>Cancel</Button>
               <Button variant="contained" type='button' onClick={handleSubmitAnswers} disabled={isApproved}>Submit</Button>
-            </footer>
-          </section>
-        </div>
+            </Grid2>
+
+        </Grid2>
       </div>
     </Grid2 >
   )
