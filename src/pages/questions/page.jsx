@@ -508,55 +508,56 @@ export default function QuestionsPage() {
             </Paper>
           </div>
         }
-        
+
         <Grid2
           container
           flex={1}
         >
 
-            {currentTool != null &&
-              <Grid2 container direction={'column'} spacing={3} alignItems={'center'} mt={2} mx={2} width={'100%'}>
-                <Grid2 container alignItems={'center'} width={'100%'}>
-                  <TextField
-                    variant='outlined'
-                    required
-                    sx={{ flexGrow: 1 }}
-                    id="standard"
-                    label='Client Name'
-                    value={toolForm.customerName}
-                    onChange={({ target }) => {
-                      setToolForm(prev => ({ ...prev, customerName: target.value }))
-                    }}
-                  />
-                  <DatePicker
-                    label='Audit Date'
-                    value={toolForm.auditDate}
-                    onChange={(date) => {
-                      setToolForm(prev => ({ ...prev, auditDate: date }))
-                    }}
-                  />
-                </Grid2>
-
+          {currentTool != null &&
+            <Grid2 container direction={'column'} spacing={3} alignItems={'center'} mt={2} mx={2} width={'100%'}>
+              <Grid2 container alignItems={'center'} width={'100%'}>
                 <TextField
-                  variant='standard'
+                  variant='outlined'
                   required
-                  fullWidth
-                  multiline
-                  maxRows={3}
-                  id="outlined-multiline-static"
-                  placeholder="General Comments"
-                  value={generalComments}
-                  onChange={handleChangeGeneralComments}
-                  disabled={isApproved}
+                  sx={{ flexGrow: 1 }}
+                  id="standard"
+                  label='Client Name'
+                  value={toolForm.customerName}
+                  onChange={({ target }) => {
+                    setToolForm(prev => ({ ...prev, customerName: target.value }))
+                  }}
                 />
-
+                <DatePicker
+                  label='Audit Date'
+                  value={toolForm.auditDate}
+                  onChange={(date) => {
+                    setToolForm(prev => ({ ...prev, auditDate: date }))
+                  }}
+                />
               </Grid2>
 
-            }
+              <TextField
+                variant='standard'
+                required
+                fullWidth
+                multiline
+                maxRows={3}
+                id="outlined-multiline-static"
+                placeholder="General Comments"
+                value={generalComments}
+                onChange={handleChangeGeneralComments}
+                disabled={isApproved}
+              />
 
-            <Grid2 maxHeight={'70vh'} overflow={`auto`}>
- {
-                questionsBySubSection.map((subSection, index) => (
+            </Grid2>
+
+          }
+
+          <Grid2 maxHeight={'60vh'} overflow={'auto'}>
+            {
+              ...[
+                ...questionsBySubSection.map((subSection, index) => (
                   <div key={index}>
                     <div ref={(el) => (subSectionsRefs.current[subSection[0]] = el)}></div>
                     <SubSection
@@ -568,15 +569,14 @@ export default function QuestionsPage() {
                       refs={questionRefs}
                       isApproved={isApproved} />
                   </div>
-                ))
-              }
-            </Grid2>
-
-            <Grid2  container justifyContent={'space-between'} flex={1} p={1}>
-              <Button variant="text" onClick={goToToolsPage}>Cancel</Button>
-              <Button variant="contained" type='button' onClick={handleSubmitAnswers} disabled={isApproved}>Submit</Button>
-            </Grid2>
-
+                )),
+                <Grid2 key={'footer-buttons'} container justifyContent={'space-between'} flex={1} p={1} mt={2}>
+                  <Button variant="text" onClick={goToToolsPage}>Cancel</Button>
+                  <Button variant="contained" type='button' onClick={handleSubmitAnswers} disabled={isApproved}>Submit</Button>
+                </Grid2>
+              ]
+            }
+          </Grid2>
         </Grid2>
       </div>
     </Grid2 >
