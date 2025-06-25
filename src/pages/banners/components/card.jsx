@@ -52,7 +52,7 @@ export default function BannerCard({ audit, refreshAudits }) {
   const {
     packageName, packageStatus, packageStartDate, quarter,
     packageScore, teamLead, teamLeadId, packageId, auditTeamId,
-    capaFlag, sectionDesc, businessLineName, isTeam, createdOn
+    capaFlag, sectionDesc, businessLineName, templateTypeId,isTeam, createdOn
   } = audit
   const { isAdmin } = useRole()
 
@@ -112,7 +112,7 @@ export default function BannerCard({ audit, refreshAudits }) {
   }
 
   const handleOpenReport = () => {
-    const url = getReportUrl(packageId)
+    const url = getReportUrl(packageId, templateTypeId)
     window.open(url, '_blank')
     handleClose()
   }
