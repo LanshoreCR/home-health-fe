@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Button, FormControl, Grid2, IconButton, InputLabel, MenuItem, Paper, Select } from '@mui/material'
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd'
-import { activateQuestion, deleteQuestion, deleteTool, getMaintenanceBusinessLines, getMaintenanceTools, getTemplateQuestions, publishToolTemplate, updateAllQuestions } from '../../shared/services/api/endpoints/maintenance'
+import { activateQuestion, deleteQuestion, activeOrInactiveTool, getMaintenanceBusinessLines, getMaintenanceTools, getTemplateQuestions, publishToolTemplate, updateAllQuestions } from '../../shared/services/api/endpoints/maintenance'
 import { toast } from 'sonner'
 import { useSelector } from 'react-redux'
 import AddToolModal from './components/add-tool-modal'
@@ -22,7 +22,8 @@ const groupByTool = (tools) => {
         templateId: tool.templateId,
         name: tool.templateDesc,
         releaseDate: tool.releaseDate,
-        subsections: []
+        subsections: [],
+        inactiveFlag: tool.inactiveFlag
       }
     }
     groupedByTemplateId[key].subsections.push(tool)
@@ -126,13 +127,13 @@ export default function MaintenancePage() {
     })
   }
 
-  const handleRemoveTool = async (templateId) => {
-    const response = await deleteTool({ name: currentTemplate.name, templateId, userId })
+  const handleActiveInactiveTool = async (templateId, currentInactiveFlag) => {
+    const response = await activeOrInactiveTool({ name: currentTemplate.name, templateId, userId, currentInactiveFlag })
     if (response instanceof Error) {
-      toast.error('Error while deleting tool')
+      toast.error('Error while updating tool')
       return
     }
-    toast.success('Tool deleted successfully')
+    toast.success('Tool updated successfully')
     reRenderTools()
   }
 
@@ -249,7 +250,7 @@ export default function MaintenancePage() {
   }
 
   return (
-    <div className='w-full mx-auto overflow-hidden'>
+    <div className='w-full mx-auto overflow-hidden  h-[85vh]'>
       <header className='flex w-full justify-between items-center mb-2'>
         <div className='flex items-center gap-x-3'>
           <IconButton onClick={handleOpenSidebar}>
@@ -261,8 +262,8 @@ export default function MaintenancePage() {
       </header>
       <div className='flex w-full justify-between gap-x-5 flex-col sm:flex-row'>
         {openSidebar &&
-          <div className='flex min-w-80 max-w-80 overflow-y-auto'>
-            <Paper className='w-full p-3 h-full'>
+          <div className='flex min-w-80 max-w-80 overflow-y-auto '>
+            <Paper className='w-full p-3 h-full '>
               <header className='flex items-center w-full justify-between mb-3 '>
                 <h3 className='font-semibold text-lg'>Tools</h3>
                 <Grid2 container flexGrow={1} justifyContent={'flex-end'} spacing={2}>
@@ -324,22 +325,42 @@ export default function MaintenancePage() {
 
                 </Grid2>
               </header>
-              <ul className='flex flex-col gap-y-2 overflow-auto'>
-                {maintenanceTools.map((tool) => (
-                  <SidebarMaintenanceRow
-                    key={tool.templateId}
-                    item={tool}
-                    isActive={tool.templateId === currentTemplateId}
-                    sections={sections}
-                    onChange={() => handleChangeTool(tool.templateId)}
-                    handleRemoveTool={() => handleRemoveTool(tool.templateId)}
-                    reRenderTools={reRenderTools} />
-                ))}
+              <ul className='flex flex-col gap-y-2 overflow-auto xl:h-[calc(100vh-380px)] md:h-[calc(100vh-250px)]'>
+                {
+                  ...[
+                    <h3 key={'active-title'} className='font-semibold text-lg'>Active tools</h3>,
+                    ...maintenanceTools
+                      .filter(tool => tool.inactiveFlag === 0)
+                      .map((tool) => (
+                        <SidebarMaintenanceRow
+                          key={tool.templateId}
+                          item={tool}
+                          isActive={tool.templateId === currentTemplateId}
+                          sections={sections}
+                          onChange={() => handleChangeTool(tool.templateId)}
+                          handleActiveInactiveTool={() => handleActiveInactiveTool(tool.templateId, tool.inactiveFlag)}
+                          reRenderTools={reRenderTools} />
+                      )),
+                    <h3 key={'inactive-title'} className='font-semibold text-lg'>Inactive tools</h3>,
+                    ...maintenanceTools
+                      .filter(tool => tool.inactiveFlag === 1)
+                      .map((tool) => (
+                        <SidebarMaintenanceRow
+                          key={tool.templateId}
+                          item={tool}
+                          isActive={tool.templateId === currentTemplateId}
+                          sections={sections}
+                          onChange={() => handleChangeTool(tool.templateId)}
+                          handleActiveInactiveTool={() => handleActiveInactiveTool(tool.templateId, tool.inactiveFlag)}
+                          reRenderTools={reRenderTools} />
+                      ))
+                  ]
+                }
               </ul>
             </Paper>
           </div>
         }
-        <div className='flex items-center w-full justify-between flex-col relative'>
+        <div className='flex items-center w-full justify-between flex-col relative '>
           <section className='flex flex-col w-full gap-y-5'>
             {currentTemplate != null &&
               <MaintenanceHeader
@@ -354,7 +375,7 @@ export default function MaintenancePage() {
             }
             <DragDropContext onDragEnd={handleDragEnd}>
               <div className={`w-full flex flex-col gap-y-5 overflow-y-auto no-scrollbar
-              ${openSidebar ? 'xl:h-[calc(100vh-380px)] md:h-[calc(100vh-350px)]' : 'xl:h-[calc(100vh-380px)] md:h-[calc(100vh-350px)]'}
+              ${openSidebar ? 'xl:h-[calc(100vh-380px)] md:h-[calc(100vh-300px)]' : 'xl:h-[calc(100vh-380px)] md:h-[calc(100vh-350px)]'}
               mb-2`}>
                 <Droppable droppableId="maintenance-questions">
                   {(provided) => (
@@ -362,29 +383,34 @@ export default function MaintenancePage() {
                       ref={provided.innerRef}
                       {...provided.droppableProps}
                     >
-                      {questions.map((tool, index) => (
-                        <Draggable key={tool.questionId} draggableId={String(tool.questionId)} index={index}>
-                          {(provided) => (
-                            <MaintenanceQuestionCard
-                              key={tool.questionId}
-                              provided={provided}
-                              tool={tool}
-                              sections={sections}
-                              reRenderQuestions={reRenderQuestions}
-                              handleActiveInactiveQuestion={handleActiveInactiveQuestion}
-                            />
-                          )}
-                        </Draggable>
-                      ))}
+                      {
+                        ...[
+                          ...questions.map((tool, index) => (
+                            <Draggable key={tool.questionId} draggableId={String(tool.questionId)} index={index}>
+                              {(provided) => (
+                                <MaintenanceQuestionCard
+                                  key={tool.questionId}
+                                  provided={provided}
+                                  tool={tool}
+                                  sections={sections}
+                                  reRenderQuestions={reRenderQuestions}
+                                  handleActiveInactiveQuestion={handleActiveInactiveQuestion}
+                                />
+                              )}
+                            </Draggable>
+                          )),
+                          <footer key={'footer-buttons'} className={`flex items-center justify-between w-full pt-5`}>
+                            <Button variant="text">Cancel</Button>
+                            <PublishModal handlePublish={handlePublish} />
+                          </footer>
+                        ]
+                      }
                     </ul>
                   )}
                 </Droppable>
               </div>
             </DragDropContext>
-            <footer className={`flex items-center justify-between w-full ${openSidebar ? 'pb-10' : 'pb-5'}`}>
-              <Button variant="text">Cancel</Button>
-              <PublishModal handlePublish={handlePublish} />
-            </footer>
+
           </section>
         </div>
       </div>
