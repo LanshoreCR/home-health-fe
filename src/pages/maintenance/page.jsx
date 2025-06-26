@@ -250,20 +250,47 @@ export default function MaintenancePage() {
   }
 
   return (
-    <div className='w-full mx-auto overflow-hidden  h-[85vh]'>
-      <header className='flex w-full justify-between items-center mb-2'>
-        <div className='flex items-center gap-x-3'>
-          <IconButton onClick={handleOpenSidebar}>
-            <MenuIcon />
-          </IconButton>
+    <Grid2
+      container
+      width={'100%'}
+      direction={'column'}
+      height={'100%'} 
+      >
+      <Grid2 container width={'100%'} alignItems={'center'} mb={2}>
+        <IconButton onClick={handleOpenSidebar}>
+          <MenuIcon />
+        </IconButton>
+        <Grid2
+          ml={2}
+          container
+          justifyContent={'space-between'}
+          flexGrow={1}
+          alignItems={'center'} >
           <h2 className='font-semibold text-xl text-primary'>Maintenance</h2>
-        </div>
-        <AddToolModal reRender={reRenderTools} selectedState={selectedState} />
-      </header>
-      <div className='flex w-full justify-between gap-x-5 flex-col sm:flex-row'>
+          <AddToolModal reRender={reRenderTools} selectedState={selectedState} />
+
+        </Grid2>
+
+      </Grid2>
+
+      <Grid2
+        container
+        direction="row"
+        flex={1}
+        minHeight={0}
+        width="100%"
+        gap={2}
+      >
         {openSidebar &&
-          <div className='flex min-w-80 max-w-80 overflow-y-auto '>
-            <Paper className='w-full p-3 h-full '>
+          <div className='flex min-w-80 max-w-80 overflow-y-auto'>
+            <Paper
+              className="w-full p-3"
+              elevation={0}
+              
+              sx={{
+                maxHeight: 'calc(100vh - 200px)',
+                overflowY: 'auto',
+              }}>
               <header className='flex items-center w-full justify-between mb-3 '>
                 <h3 className='font-semibold text-lg'>Tools</h3>
                 <Grid2 container flexGrow={1} justifyContent={'flex-end'} spacing={2}>
@@ -297,11 +324,10 @@ export default function MaintenancePage() {
                   </FormControl>
                   {
                     selectedBusinessLine !== '08012' && (
-                      <FormControl>
-                        <InputLabel id="state-label">State</InputLabel>
+                      <FormControl size='small' sx={{minWidth: 80}}>
+                        <InputLabel  id="state-label">State</InputLabel>
                         <Select
                           label="State"
-                          size='small'
                           labelId='state-label'
                           value={selectedState.state}
                           onChange={({ target }) => {
@@ -325,7 +351,7 @@ export default function MaintenancePage() {
 
                 </Grid2>
               </header>
-              <ul className='flex flex-col gap-y-2 overflow-auto xl:h-[calc(100vh-380px)] md:h-[calc(100vh-250px)]'>
+              <ul className='flex flex-col gap-y-2 overflow-auto xl:h-[calc(100vh-280px)] md:h-[calc(100vh-250px)]'>
                 {
                   ...[
                     <h3 key={'active-title'} className='font-semibold text-lg'>Active tools</h3>,
@@ -360,9 +386,9 @@ export default function MaintenancePage() {
             </Paper>
           </div>
         }
-        <div className='flex items-center w-full justify-between flex-col relative '>
-          <section className='flex flex-col w-full gap-y-5'>
-            {currentTemplate != null &&
+        <Grid2 container flex={1} direction="column" minHeight={0}>
+          {currentTemplate != null &&
+            (
               <MaintenanceHeader
                 templateName={currentTemplate.name}
                 templateId={currentTemplateId}
@@ -372,10 +398,19 @@ export default function MaintenancePage() {
                 reRenderTools={reRenderTools}
                 reRenderQuestions={reRenderQuestions}
               />
-            }
+            )
+          }
+
+          <Grid2
+            container
+            sx={{
+              overflowY: 'auto',
+              overflowX: 'hidden',
+            }}
+          >
             <DragDropContext onDragEnd={handleDragEnd}>
               <div className={`w-full flex flex-col gap-y-5 overflow-y-auto no-scrollbar
-              ${openSidebar ? 'xl:h-[calc(100vh-380px)] md:h-[calc(100vh-300px)]' : 'xl:h-[calc(100vh-380px)] md:h-[calc(100vh-350px)]'}
+              ${openSidebar ? 'xl:h-[calc(100vh-280px)] md:h-[calc(100vh-300px)]' : 'xl:h-[calc(100vh-380px)] md:h-[calc(100vh-350px)]'}
               mb-2`}>
                 <Droppable droppableId="maintenance-questions">
                   {(provided) => (
@@ -410,10 +445,10 @@ export default function MaintenancePage() {
                 </Droppable>
               </div>
             </DragDropContext>
+          </Grid2>
 
-          </section>
-        </div>
-      </div>
-    </div>
+        </Grid2>
+      </Grid2>
+    </Grid2>
   )
 }

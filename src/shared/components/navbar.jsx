@@ -21,13 +21,13 @@ const Navbar = () => {
     }
 
     return (
-        <Box sx={{ flexGrow: 1 }}>
+        <Box width={'100%'} >
             <AppBar position="static">
                 <Toolbar>
                     {location.pathname !== '/' && (
                         <BackButton />
                     )}
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                    <Typography variant="h6" component="div" width={'100%'}>
                         <Link to='/'>
                             <Logo/>
                         </Link>

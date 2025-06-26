@@ -340,7 +340,12 @@ export default function QuestionsPage() {
 
 
   return (
-    <Grid2 container width={'100%'} direction={'column'}>
+    <Grid2
+      container
+      width={'100%'}
+      direction={'column'}
+      height={'100%'}
+      sx={{ overflowX: 'hidden' }} >
       <Grid2 container width={'100%'} alignItems={'center'} mb={2}>
         <IconButton onClick={handleOpenSidebar}>
           <MenuIcon />
@@ -360,10 +365,24 @@ export default function QuestionsPage() {
           </Grid2>
         )}
       </Grid2>
-      <div className=' w-full justify-between gap-x-5 flex flex-col sm:flex-row'>
+      <Grid2
+        container
+        direction="row"
+        flex={1}
+        minHeight={0}
+        width="100%"
+        gap={2}
+      >
         {openSidebar &&
           <div className='flex min-w-80 max-w-80 overflow-y-auto '>
-            <Paper className='w-full p-3 h-full'>
+            <Paper
+              className="w-full p-3"
+              sx={{
+                maxHeight: 'calc(100vh - 200px)',
+                overflowY: 'auto',
+              }}
+              elevation={0}
+            >
               <header className='flex items-center justify-between mb-3'>
                 <h3 className='font-semibold text-lg'>Tools</h3>
                 <FilterModal
@@ -509,36 +528,39 @@ export default function QuestionsPage() {
           </div>
         }
 
-        <Grid2
-          container
-          flex={1}
-        >
-
-          {currentTool != null &&
-            <Grid2 container direction={'column'} spacing={3} alignItems={'center'} mt={2} mx={2} width={'100%'}>
-              <Grid2 container alignItems={'center'} width={'100%'}>
+        <Grid2 container flex={1} direction="column" minHeight={0}>
+          {currentTool != null && (
+            <Grid2
+              container
+              direction="column"
+              spacing={3}
+              alignItems="center"
+              mt={2}
+              width="100%"
+            >
+              <Grid2 container alignItems="center" width="100%">
                 <TextField
-                  variant='outlined'
+                  variant="outlined"
                   required
                   sx={{ flexGrow: 1 }}
                   id="standard"
-                  label='Client Name'
+                  label="Client Name"
                   value={toolForm.customerName}
-                  onChange={({ target }) => {
-                    setToolForm(prev => ({ ...prev, customerName: target.value }))
-                  }}
+                  onChange={({ target }) =>
+                    setToolForm((prev) => ({ ...prev, customerName: target.value }))
+                  }
                 />
                 <DatePicker
-                  label='Audit Date'
+                  label="Audit Date"
                   value={toolForm.auditDate}
                   onChange={(date) => {
-                    setToolForm(prev => ({ ...prev, auditDate: date }))
+                    setToolForm((prev) => ({ ...prev, auditDate: date }))
                   }}
                 />
               </Grid2>
 
               <TextField
-                variant='standard'
+                variant="standard"
                 required
                 fullWidth
                 multiline
@@ -549,14 +571,20 @@ export default function QuestionsPage() {
                 onChange={handleChangeGeneralComments}
                 disabled={isApproved}
               />
-
             </Grid2>
+          )}
 
-          }
-
-          <Grid2 maxHeight={'60vh'} overflow={'auto'}>
+          <Grid2
+            container
+            sx={{
+              height: 'calc(100vh - 300px)',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+            }}
+          >
             {
               ...[
+
                 ...questionsBySubSection.map((subSection, index) => (
                   <div key={index}>
                     <div ref={(el) => (subSectionsRefs.current[subSection[0]] = el)}></div>
@@ -570,15 +598,24 @@ export default function QuestionsPage() {
                       isApproved={isApproved} />
                   </div>
                 )),
-                <Grid2 key={'footer-buttons'} container justifyContent={'space-between'} flex={1} p={1} mt={2}>
+                <Grid2
+                  key="footer-buttons"
+                  container
+                  justifyContent="space-between"
+                  p={1}
+                  mt={2}
+                  sx={{ width: '100%' }}
+                >
                   <Button variant="text" onClick={goToToolsPage}>Cancel</Button>
                   <Button variant="contained" type='button' onClick={handleSubmitAnswers} disabled={isApproved}>Submit</Button>
-                </Grid2>
+                </Grid2>,
               ]
             }
+
+
           </Grid2>
         </Grid2>
-      </div>
+      </Grid2>
     </Grid2 >
   )
 }
