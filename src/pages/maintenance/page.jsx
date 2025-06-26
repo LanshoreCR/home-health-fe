@@ -46,7 +46,10 @@ export default function MaintenancePage() {
   const [openSidebar, setOpenSidebar] = useState(true)
   const [businessLines, setBusinessLines] = useState([])
   const [states, setStates] = useState([]);
-  const [selectedBusinessLine, setSelectedBusinessLine] = useState('')
+  const [selectedBusinessLine, setSelectedBusinessLine] = useState({
+    id: '',
+    name: ''
+  })
   const [selectedState, setSelectedState] = useState({ state: '' })
   const [maintenanceTools, setMaintenanceTools] = useState([])
   const [currentTemplate, setCurrentTemplate] = useState(null)
@@ -181,40 +184,54 @@ export default function MaintenancePage() {
         if (data instanceof Error) {
           throw data
         }
-        const respBusinessLines = [...new Set(data.map(item => item.businessLine))]
+        let respBusinessLines = [...new Set(data.map(item => item.businessLine))]
+        respBusinessLines = respBusinessLines.map(bl => {
+          const businessLine = data.find((d) => d.businessLine === bl)
+          return {
+            id: bl,
+            name: businessLine.templateTypeDesc
+          }
+        })
+
         const firstBL = respBusinessLines[0]
         setBusinessLines(respBusinessLines)
         setSelectedBusinessLine(firstBL)
         setStates(data)
 
-        const firstState = data.find(item => item.businessLine === firstBL)
+        const firstState = data.find(item => item.businessLine === firstBL.id)
         setSelectedState({ ...firstState, state: firstState.state ? firstState.state : '' })
       })
       .catch((error) => {
+        console.error(error)
         toast.error('error getting maintenance bussiness lines')
       })
   }, [])
 
 
   useEffect(() => {
-    setIsLoading(true)
-    if (selectedBusinessLine !== '' && selectedState.templateTypeId)
-      getMaintenanceTools(selectedState?.templateTypeId, selectedState?.state ?? '')
-        .then((data) => {
-          if (data instanceof Error) {
-            throw data
-          }
+    if (selectedBusinessLine.id !== '' && selectedState.templateTypeId)
+      setIsLoading(true)
+
+    getMaintenanceTools(selectedState?.templateTypeId, selectedState?.state ?? '')
+      .then((data) => {
+        if (data instanceof Error) {
+          throw data
+        }
+        if (data.length > 0) {
           const groupedByTools = groupByTool(data)
           setMaintenanceTools(groupedByTools)
           setCurrentTemplate(groupedByTools[0])
           setCurrentTemplateId(groupedByTools[0].templateId)
-        })
-        .catch(() => {
-          toast.error('error getting maintenance tools')
-        })
-        .finally(() => {
-          setIsLoading(false)
-        })
+        }
+
+      })
+      .catch((error) => {
+        console.error(error)
+        toast.error('error getting maintenance tools')
+      })
+      .finally(() => {
+        setIsLoading(false)
+      })
   }, [selectedBusinessLine, selectedState])
 
   useEffect(() => {
@@ -254,8 +271,8 @@ export default function MaintenancePage() {
       container
       width={'100%'}
       direction={'column'}
-      height={'100%'} 
-      >
+      height={'100%'}
+    >
       <Grid2 container width={'100%'} alignItems={'center'} mb={2}>
         <IconButton onClick={handleOpenSidebar}>
           <MenuIcon />
@@ -286,15 +303,15 @@ export default function MaintenancePage() {
             <Paper
               className="w-full p-3"
               elevation={0}
-              
+
               sx={{
-                maxHeight: 'calc(100vh - 200px)',
+                maxHeight: 'calc(100vh - 120px)',
                 overflowY: 'auto',
               }}>
-              <header className='flex items-center w-full justify-between mb-3 '>
-                <h3 className='font-semibold text-lg'>Tools</h3>
-                <Grid2 container flexGrow={1} justifyContent={'flex-end'} spacing={2}>
-                  <FormControl sx={{ flexGrow: 1, ml: 2 }}>
+              <header className='flex flex-col w-full justify-between mb-3 '>
+                <h3 className='font-semibold text-lg mb-2'>Tools</h3>
+                <Grid2 container width={'100%'}  spacing={2}>
+                  <FormControl sx={{ flexGrow: 1 }}>
                     <InputLabel id="business-line-label">Business Line</InputLabel>
                     <Select
                       size='small'
@@ -303,19 +320,19 @@ export default function MaintenancePage() {
                       value={selectedBusinessLine}
                       onChange={({ target }) => {
                         setSelectedBusinessLine(target.value)
-                        if (target.value === '08012') {
+                        if (target.value.id === '08012') {
                           setSelectedState({ state: '' })
                         } else {
-                          const newState = states.find(state => state.businessLine === target.value)
+                          const newState = states.find(state => state.businessLine === target.value.id)
                           setSelectedState(newState)
                         }
                       }}
                     >
                       {
                         businessLines.map(bl => (
-                          <MenuItem value={bl} key={bl}>
+                          <MenuItem value={bl} key={bl.id}>
                             {
-                              bl
+                              bl.name
                             }
                           </MenuItem>
                         ))
@@ -323,20 +340,20 @@ export default function MaintenancePage() {
                     </Select>
                   </FormControl>
                   {
-                    selectedBusinessLine !== '08012' && (
-                      <FormControl size='small' sx={{minWidth: 80}}>
-                        <InputLabel  id="state-label">State</InputLabel>
+                    selectedBusinessLine.id !== '08012' && (
+                      <FormControl size='small' sx={{ width: 80 }}>
+                        <InputLabel id="state-label">State</InputLabel>
                         <Select
                           label="State"
                           labelId='state-label'
                           value={selectedState.state}
                           onChange={({ target }) => {
-                            const newState = states.find(state => state.state === target.value && state.businessLine === selectedBusinessLine)
+                            const newState = states.find(state => state.state === target.value && state.businessLine === selectedBusinessLine.id)
                             setSelectedState(newState)
                           }}
                         >
                           {
-                            states.filter(state => state.businessLine === selectedBusinessLine).map(state => (
+                            states.filter(state => state.businessLine === selectedBusinessLine.id).map(state => (
                               <MenuItem value={state.state} key={state.state}>
                                 {
                                   state.state
