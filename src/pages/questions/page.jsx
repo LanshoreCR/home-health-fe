@@ -358,7 +358,7 @@ export default function QuestionsPage() {
               variant='outlined'
               required
               id="standard"
-              placeholder={`${currentTool.templateId}.1`}
+              placeholder={'Question Search'}
               value={standard}
               onChange={handleChangeStandard}
             />
