@@ -261,7 +261,7 @@ export default function MaintenancePage() {
     setCurrentTemplate(currentTool)
   }, [currentTemplateId, maintenanceTools])
 
-  if (isLoading) {
+  if (isLoading || !currentTemplate) {
     return (
       <MaintenancePageSkeleton />
     )
@@ -370,51 +370,51 @@ export default function MaintenancePage() {
                 </Grid2>
               </header>
               <ul className='flex flex-col  overflow-auto xl:h-[calc(100vh-280px)] md:h-[calc(100vh-280px)]'>
-                
-                  <Accordion defaultExpanded elevation={0}>
-                      <AccordionSummary
-                      expandIcon={<ExpandMoreIcon />}
-                      >
-                        <h3 key={'active-title'} className='font-semibold text-lg'>Active tools</h3>
-                      </AccordionSummary>
 
-                        <AccordionDetails>
-                          {...maintenanceTools
-                            .filter(tool => tool.inactiveFlag === 0)
-                            .map((tool) => (
-                              <SidebarMaintenanceRow
-                                key={tool.templateId}
-                                item={tool}
-                                isActive={tool.templateId === currentTemplateId}
-                                sections={sections}
-                                onChange={() => handleChangeTool(tool.templateId)}
-                                handleActiveInactiveTool={() => handleActiveInactiveTool(tool.templateId, tool.inactiveFlag)}
-                                reRenderTools={reRenderTools} />
-                            ))}
-                        </AccordionDetails>
-                    </Accordion>
-                    <Accordion elevation={0}>
-                      <AccordionSummary
-                      expandIcon={<ExpandMoreIcon />}
-                      >
-                      <h3 key={'inactive-title'} className='font-semibold text-lg'>Inactive tools</h3>
-                      </AccordionSummary>
+                <Accordion defaultExpanded elevation={0}>
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                  >
+                    <h3 key={'active-title'} className='font-semibold text-lg'>Active tools</h3>
+                  </AccordionSummary>
 
-                        <AccordionDetails>
-                          {...maintenanceTools
-                            .filter(tool => tool.inactiveFlag === 1)
-                            .map((tool) => (
-                              <SidebarMaintenanceRow
-                                key={tool.templateId}
-                                item={tool}
-                                isActive={tool.templateId === currentTemplateId}
-                                sections={sections}
-                                onChange={() => handleChangeTool(tool.templateId)}
-                                handleActiveInactiveTool={() => handleActiveInactiveTool(tool.templateId, tool.inactiveFlag)}
-                                reRenderTools={reRenderTools} />
-                            ))}
-                        </AccordionDetails>
-                    </Accordion>
+                  <AccordionDetails>
+                    {...maintenanceTools
+                      .filter(tool => tool.inactiveFlag === 0)
+                      .map((tool) => (
+                        <SidebarMaintenanceRow
+                          key={tool.templateId}
+                          item={tool}
+                          isActive={tool.templateId === currentTemplateId}
+                          sections={sections}
+                          onChange={() => handleChangeTool(tool.templateId)}
+                          handleActiveInactiveTool={() => handleActiveInactiveTool(tool.templateId, tool.inactiveFlag)}
+                          reRenderTools={reRenderTools} />
+                      ))}
+                  </AccordionDetails>
+                </Accordion>
+                <Accordion elevation={0} defaultExpanded={currentTemplate.inactiveFlag === 1}>
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                  >
+                    <h3 key={'inactive-title'} className='font-semibold text-lg'>Inactive tools</h3>
+                  </AccordionSummary>
+
+                  <AccordionDetails>
+                    {...maintenanceTools
+                      .filter(tool => tool.inactiveFlag === 1)
+                      .map((tool) => (
+                        <SidebarMaintenanceRow
+                          key={tool.templateId}
+                          item={tool}
+                          isActive={tool.templateId === currentTemplateId}
+                          sections={sections}
+                          onChange={() => handleChangeTool(tool.templateId)}
+                          handleActiveInactiveTool={() => handleActiveInactiveTool(tool.templateId, tool.inactiveFlag)}
+                          reRenderTools={reRenderTools} />
+                      ))}
+                  </AccordionDetails>
+                </Accordion>
 
               </ul>
             </Paper>
