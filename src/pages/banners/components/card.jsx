@@ -50,9 +50,9 @@ const STATUS_LABEL_COLORS = {
 
 export default function BannerCard({ audit, refreshAudits }) {
   const {
-    packageName, packageStatus, packageStartDate, quarter,
+    packageName, packageStatus, quarter,
     packageScore, teamLead, teamLeadId, packageId, auditTeamId,
-    capaFlag, sectionDesc, businessLineName, templateTypeId,isTeam, createdOn
+     sectionDesc, businessLineName, templateTypeId,isTeam, createdOn, rangeDate
   } = audit
   const { isAdmin } = useRole()
 
@@ -157,7 +157,7 @@ export default function BannerCard({ audit, refreshAudits }) {
         </Typography>
         <Divider orientation='vertical' flexItem />
         <Typography>
-          {createdOn.split('T')[0]}
+          {rangeDate}
         </Typography>
         <Divider orientation='vertical' flexItem />
         <Chip label={packageStatus}
@@ -174,7 +174,7 @@ export default function BannerCard({ audit, refreshAudits }) {
         <Grid2 container spacing={2}>
           <div className='flex items-center'>
             <DateRangeIcon className='text-primary/80' />
-            <span>{packageStartDate?.split('T')[0]}</span>
+            <span>{createdOn.split('T')[0]}</span>
           </div>
           <div className='flex items-center'>
             <PieChartOutlineOutlinedIcon className='text-primary/80' />

@@ -70,7 +70,8 @@ export const getAudits = async ({ userId, isAdmin }) => {
       edName: item.edName,
       capaFlag: item.capaFlag,
       businessLineName: item.businessLineName,
-      sectionDesc: item.sectionDesc
+      sectionDesc: item.sectionDesc,
+      rangeDate: item.rangeDate
     }))
 
     return audits
