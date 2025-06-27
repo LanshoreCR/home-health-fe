@@ -10,8 +10,8 @@ export const getQuestions = async ({ packageTemplateId }) => {
 
     const response = await axiosInstance.get(ENDPOINTS.GET_QUESTIONS_BY_PACKAGE_TEMPLATE_ID, { params })
     const data = response.data
-
-    const questions = data.map((item) => ({
+    
+    const questions = data.map((item, index) => ({
       templateQuestionId: item.templateQuestionID,
       questionText: item.questionText,
       answers: item.answers,
@@ -23,7 +23,8 @@ export const getQuestions = async ({ packageTemplateId }) => {
       subSection: item.categ,
       standard: item.standard,
       percentages: item.percentages,
-      flag: item.flag
+      flag: item.flag,
+      index
     }))
 
     return questions

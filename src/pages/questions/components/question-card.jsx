@@ -30,8 +30,8 @@ const AVAILABLE_OPTIONS = [
   }
 ]
 
-export default function QuestionCard({ question, sectionId, employeeId, initAnswer, initPercentage, isApproved, currentTool, index }) {
-  const { questionText, templateAnswerId, templateQuestionId, comments, flag } = question
+export default function QuestionCard({ question, sectionId, employeeId, initAnswer, initPercentage, isApproved, currentTool }) {
+  const { questionText, templateAnswerId, templateQuestionId, comments, flag, index } = question
 
   const dispatch = useDispatch()
 
@@ -44,7 +44,7 @@ export default function QuestionCard({ question, sectionId, employeeId, initAnsw
   const [flagged, setFlagged] = useState(flag === 1)
 
   const isKeyIndicator = currentTool?.templateName === 'Key Indicators'
-  let questionName = `${index}. ${questionText.replace(/^\s*\d+\.\s*/, '')}`
+  let questionName = `${index + 1}. ${questionText.replace(/^\s*\d+\.\s*/, '')}`
  
 
   const handleChangePercentage = async (event) => {
