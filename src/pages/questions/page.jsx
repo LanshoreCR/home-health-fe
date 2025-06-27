@@ -577,7 +577,7 @@ export default function QuestionsPage() {
           <Grid2
             container
             sx={{
-              height: 'calc(100vh - 300px)',
+              maxHeight: 'calc(100vh - 300px)',
               overflowY: 'auto',
               overflowX: 'hidden',
             }}
@@ -604,7 +604,7 @@ export default function QuestionsPage() {
                   justifyContent="space-between"
                   p={1}
                   mt={2}
-                  sx={{ width: '100%' }}
+                  sx={{ width: '100%', height: 50 }}
                 >
                   <Button variant="text" onClick={goToToolsPage}>Cancel</Button>
                   <Button variant="contained" type='button' onClick={handleSubmitAnswers} disabled={isApproved}>Submit</Button>
