@@ -325,7 +325,7 @@ export default function MaintenancePage() {
                         if (target.value.id === '08012') {
                           setSelectedState({ state: '', templateTypeId: 1 })
                         } else {
-                          const newState = states.find(state => state.businessLine === target.value.id)
+                          const newState = states.filter(state=>state.businessLine === target.value.id && state.state)[0]
                           setSelectedState(newState)
                         }
                       }}
