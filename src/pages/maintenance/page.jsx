@@ -210,8 +210,8 @@ export default function MaintenancePage() {
 
 
   useEffect(() => {
-    if (selectedBusinessLine.id !== '' && selectedState.templateTypeId)
-      setIsLoading(true)
+    if (selectedBusinessLine.id !== '' && selectedState.templateTypeId) {
+    setIsLoading(true)
 
     getMaintenanceTools(selectedState?.templateTypeId, selectedState?.state ?? '')
       .then((data) => {
@@ -233,6 +233,7 @@ export default function MaintenancePage() {
       .finally(() => {
         setIsLoading(false)
       })
+    }
   }, [selectedBusinessLine, selectedState])
 
   useEffect(() => {
@@ -322,7 +323,7 @@ export default function MaintenancePage() {
                       onChange={({ target }) => {
                         setSelectedBusinessLine(target.value)
                         if (target.value.id === '08012') {
-                          setSelectedState({ state: '' })
+                          setSelectedState({ state: '', templateTypeId: 1 })
                         } else {
                           const newState = states.find(state => state.businessLine === target.value.id)
                           setSelectedState(newState)
