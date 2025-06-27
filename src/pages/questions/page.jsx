@@ -586,7 +586,7 @@ export default function QuestionsPage() {
               ...[
 
                 ...questionsBySubSection.map((subSection, index) => (
-                  <div key={index}>
+                  <Grid2 key={index} width={'100%'}>
                     <div ref={(el) => (subSectionsRefs.current[subSection[0]] = el)}></div>
                     <SubSection
                       key={index}
@@ -596,7 +596,7 @@ export default function QuestionsPage() {
                       handleSetSubSectionAnswers={handleSetSubSectionAnswers}
                       refs={questionRefs}
                       isApproved={isApproved} />
-                  </div>
+                  </Grid2>
                 )),
                 <Grid2
                   key="footer-buttons"
