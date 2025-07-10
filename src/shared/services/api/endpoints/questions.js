@@ -78,7 +78,7 @@ export const saveGeneralComment = async ({ generalComment, questionId, packageId
   }
 }
 
-export const saveCustomerNameOrAuditDate = async ({ auditDate, customerName, packageId }) => {
+export const saveCustomerNameOrAuditDateOrStartOfCareDate = async ({ auditDate, startOfCareDate, customerName, packageId }) => {
   try {
     const axiosInstance = apiMaster.getInstance()
     const body = {
@@ -87,6 +87,7 @@ export const saveCustomerNameOrAuditDate = async ({ auditDate, customerName, pac
       CustomerName: customerName,
       GeneralComments: null,
       AuditDate: auditDate,
+      StartOfCareDate: startOfCareDate,
       TemplateAnswerID: null,
       PackageTemplateID: parseInt(packageId),
       Flag: null

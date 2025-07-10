@@ -14,7 +14,7 @@ import LoadingQuestionPage from './loading'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getTools } from '../../shared/services/api/endpoints/tools'
 import { toast } from 'sonner'
-import { getQuestions, saveCustomerNameOrAuditDate, saveGeneralComment, submitAnswers } from '../../shared/services/api/endpoints/questions'
+import { getQuestions, saveCustomerNameOrAuditDateOrStartOfCareDate, saveGeneralComment, submitAnswers } from '../../shared/services/api/endpoints/questions'
 import { Grid2, TextField, Typography } from '@mui/material'
 import { useDebounce } from 'use-debounce'
 import SubSection from './components/sub-section'
@@ -72,7 +72,8 @@ export default function QuestionsPage() {
   const [generalComments, setGeneralComments] = useState('')
   const [toolForm, setToolForm] = useState({
     customerName: '',
-    auditDate: null
+    auditDate: null,
+    startOfCareDate: null
   })
   const [generalCommentsDebounced] = useDebounce(generalComments, 1000)
   const [toolFormDebounced] = useDebounce(toolForm, 1000);
@@ -174,6 +175,7 @@ export default function QuestionsPage() {
     if (currentTool) {
       setToolForm({
         auditDate: currentTool.auditDate ? new Date(currentTool.auditDate) : null,
+        startOfCareDate: currentTool.startOfCareDate ? new Date(currentTool.startOfCareDate) : null,
         customerName: currentTool.customerName
       })
     }
@@ -257,9 +259,10 @@ export default function QuestionsPage() {
   useEffect(() => {
     const handleSaveCustomerNameOrAuditDate = async () => {
       try {
-        const response = await saveCustomerNameOrAuditDate({
+        const response = await saveCustomerNameOrAuditDateOrStartOfCareDate({
           customerName: toolFormDebounced.customerName,
           auditDate: toolFormDebounced.auditDate ? toolFormDebounced.auditDate.toISOString().slice(0, 19) : null,
+          startOfCareDate: toolFormDebounced.startOfCareDate ? toolFormDebounced.startOfCareDate.toISOString().slice(0, 19) : null,
           packageId: currentIdTool
         })
         if (response instanceof Error) {
@@ -555,6 +558,13 @@ export default function QuestionsPage() {
                   value={toolForm.auditDate}
                   onChange={(date) => {
                     setToolForm((prev) => ({ ...prev, auditDate: date }))
+                  }}
+                />
+                  <DatePicker
+                  label="Start of Care Date"
+                  value={toolForm.startOfCareDate}
+                  onChange={(date) => {
+                    setToolForm((prev) => ({ ...prev, startOfCareDate: date }))
                   }}
                 />
               </Grid2>

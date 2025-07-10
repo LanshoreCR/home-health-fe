@@ -336,12 +336,13 @@ export default function CreateToolPage() {
                     <List>
                       {
                         group.map((field, index) => (
-                          <Grid2 container key={field.realIndex} direction={'row'} rowSpacing={2} justifyContent={'space-between'} mt={2} >
+                          <Grid2 container key={field.realIndex} direction={'row'} rowSpacing={2} alignItems={'center'} justifyContent={'space-between'} mt={2}>
                             <FormControl >
                               <TextField
                                 label='Client name'
                                 value={field.customerName}
                                 error={!field.customerName}
+                                sx={{minWidth: 300}}
                                 helperText={!field.customerName ? 'Required field' : ''}
                                 onChange={({ target }) => {
                                   setValue(`tools.${field.realIndex}.customerName`, target.value)
@@ -356,7 +357,7 @@ export default function CreateToolPage() {
                                   setValue(`tools.${field.realIndex}.assignedAuditor`, target.value)
                                 }}
                                 value={field.assignedAuditor}
-                                sx={{ minWidth: 200 }}
+                                sx={{ minWidth: 300 }}
                               >
                                 {auditors.map((option) => (
                                   <MenuItem key={option.employeeId} value={option.employeeId}>{option.name}</MenuItem>
@@ -365,14 +366,6 @@ export default function CreateToolPage() {
                               {!field.assignedAuditor && (
                                 <FormHelperText>Required field</FormHelperText>
                               )}
-                            </FormControl>
-                            <FormControl>
-                              <DatePicker
-                                label="Start of Care Date"
-                                renderInput={(props) => <TextField {...props} />}
-                                value={field.startOfCareDate}
-                                onChange={(date) => setValue(`tools.${field.realIndex}.startOfCareDate`, date)}
-                              />
                             </FormControl>
                             <IconButton
                               color='primary'
