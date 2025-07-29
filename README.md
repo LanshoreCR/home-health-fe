@@ -2,6 +2,9 @@
 
 ## Getting Started
 
+### Requirements
+  - Install Node v22
+
 Follow these steps to set up and run the project locally.
 
 ### 1. Clone the repository
