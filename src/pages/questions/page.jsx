@@ -85,7 +85,7 @@ export default function QuestionsPage() {
   const storedQuestions = useSelector((state) => state.questions)
   const completedQuestions = storedQuestions.filter((question) => question.answered)
   const incompletedQuestions = storedQuestions.filter((question) => !question.answered)
-  const missingComments = storedQuestions.filter(question => !question.comments)
+  const missingComments = storedQuestions.filter(question => question.answers === 0 && !question.comments)
   const flaggedQuestions = storedQuestions.filter(question => question.flag === 1)
   const totalQuestions = storedQuestions.length
 
