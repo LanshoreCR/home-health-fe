@@ -218,9 +218,7 @@ export default function CreateToolPage() {
                 }}
                 value={prevAddToolForm.locationNumber}
               >
-                {locations.map((option) => (
-                  <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
-                ))}
+                {locations.map((option) => <MenuItem key={option.id} value={option.id}>{option.id} - {option.name}</MenuItem>)}
               </Select>
             </FormControl>
             <FormControl sx={{ width: 350 }} >
