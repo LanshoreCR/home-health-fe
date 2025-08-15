@@ -26,7 +26,7 @@ export const uploadAttachment = async ({ packageId, folderId, file, userId }) =>
   }
 }
 
-export const getAttachments = async ({ packageId, userId }) => {
+export const getAttachments = async ({ packageId }) => {
   try {
     const axiosInstance = apiMaster.getInstance()
 
