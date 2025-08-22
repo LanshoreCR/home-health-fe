@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Button, FormControl, Grid2, IconButton, InputLabel, MenuItem, Paper, Select } from '@mui/material'
+import { Accordion, AccordionDetails, AccordionSummary, Button, FormControl, Grid2, IconButton, InputLabel, MenuItem, Paper, Select } from '@mui/material'
 import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd'
-import { activateQuestion, deleteQuestion, deleteTool, getMaintenanceBusinessLines, getMaintenanceTools, getTemplateQuestions, publishToolTemplate, updateAllQuestions } from '../../shared/services/api/endpoints/maintenance'
+import { activateQuestion, deleteQuestion, activeOrInactiveTool, getMaintenanceBusinessLines, getMaintenanceTools, getTemplateQuestions, publishToolTemplate, updateAllQuestions } from '../../shared/services/api/endpoints/maintenance'
 import { toast } from 'sonner'
 import { useSelector } from 'react-redux'
 import AddToolModal from './components/add-tool-modal'
@@ -11,6 +11,7 @@ import MaintenanceQuestionCard, { QUESTION_STATUS } from './components/question-
 import MenuIcon from '@mui/icons-material/Menu'
 import SidebarMaintenanceRow from './components/sidebar-maintenance-row'
 import PublishModal from './components/publish-modal'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 const groupByTool = (tools) => {
   const groupedByTemplateId = {}
@@ -22,7 +23,8 @@ const groupByTool = (tools) => {
         templateId: tool.templateId,
         name: tool.templateDesc,
         releaseDate: tool.releaseDate,
-        subsections: []
+        subsections: [],
+        inactiveFlag: tool.inactiveFlag
       }
     }
     groupedByTemplateId[key].subsections.push(tool)
@@ -45,7 +47,10 @@ export default function MaintenancePage() {
   const [openSidebar, setOpenSidebar] = useState(true)
   const [businessLines, setBusinessLines] = useState([])
   const [states, setStates] = useState([]);
-  const [selectedBusinessLine, setSelectedBusinessLine] = useState('')
+  const [selectedBusinessLine, setSelectedBusinessLine] = useState({
+    id: '',
+    name: ''
+  })
   const [selectedState, setSelectedState] = useState({ state: '' })
   const [maintenanceTools, setMaintenanceTools] = useState([])
   const [currentTemplate, setCurrentTemplate] = useState(null)
@@ -126,13 +131,13 @@ export default function MaintenancePage() {
     })
   }
 
-  const handleRemoveTool = async (templateId) => {
-    const response = await deleteTool({ name: currentTemplate.name, templateId, userId })
+  const handleActiveInactiveTool = async (templateId, currentInactiveFlag) => {
+    const response = await activeOrInactiveTool({ name: currentTemplate.name, templateId, userId, currentInactiveFlag })
     if (response instanceof Error) {
-      toast.error('Error while deleting tool')
+      toast.error('Error while updating tool')
       return
     }
-    toast.success('Tool deleted successfully')
+    toast.success('Tool updated successfully')
     reRenderTools()
   }
 
@@ -180,40 +185,55 @@ export default function MaintenancePage() {
         if (data instanceof Error) {
           throw data
         }
-        const respBusinessLines = [...new Set(data.map(item => item.businessLine))]
+        let respBusinessLines = [...new Set(data.map(item => item.businessLine))]
+        respBusinessLines = respBusinessLines.map(bl => {
+          const businessLine = data.find((d) => d.businessLine === bl)
+          return {
+            id: bl,
+            name: businessLine.templateTypeDesc
+          }
+        })
+
         const firstBL = respBusinessLines[0]
         setBusinessLines(respBusinessLines)
         setSelectedBusinessLine(firstBL)
         setStates(data)
 
-        const firstState = data.find(item => item.businessLine === firstBL)
+        const firstState = data.find(item => item.businessLine === firstBL.id)
         setSelectedState({ ...firstState, state: firstState.state ? firstState.state : '' })
       })
       .catch((error) => {
+        console.error(error)
         toast.error('error getting maintenance bussiness lines')
       })
   }, [])
 
 
   useEffect(() => {
+    if (selectedBusinessLine.id !== '' && selectedState.templateTypeId) {
     setIsLoading(true)
-    if (selectedBusinessLine !== '' && selectedState.templateTypeId)
-      getMaintenanceTools(selectedState?.templateTypeId, selectedState?.state ?? '')
-        .then((data) => {
-          if (data instanceof Error) {
-            throw data
-          }
+
+    getMaintenanceTools(selectedState?.templateTypeId, selectedState?.state ?? '')
+      .then((data) => {
+        if (data instanceof Error) {
+          throw data
+        }
+        if (data.length > 0) {
           const groupedByTools = groupByTool(data)
           setMaintenanceTools(groupedByTools)
           setCurrentTemplate(groupedByTools[0])
           setCurrentTemplateId(groupedByTools[0].templateId)
-        })
-        .catch(() => {
-          toast.error('error getting maintenance tools')
-        })
-        .finally(() => {
-          setIsLoading(false)
-        })
+        }
+
+      })
+      .catch((error) => {
+        console.error(error)
+        toast.error('error getting maintenance tools')
+      })
+      .finally(() => {
+        setIsLoading(false)
+      })
+    }
   }, [selectedBusinessLine, selectedState])
 
   useEffect(() => {
@@ -242,31 +262,58 @@ export default function MaintenancePage() {
     setCurrentTemplate(currentTool)
   }, [currentTemplateId, maintenanceTools])
 
-  if (isLoading) {
+  if (isLoading || !currentTemplate) {
     return (
       <MaintenancePageSkeleton />
     )
   }
 
   return (
-    <div className='w-full mx-auto overflow-hidden'>
-      <header className='flex w-full justify-between items-center mb-2'>
-        <div className='flex items-center gap-x-3'>
-          <IconButton onClick={handleOpenSidebar}>
-            <MenuIcon />
-          </IconButton>
+    <Grid2
+      container
+      width={'100%'}
+      direction={'column'}
+      height={'100%'}
+    >
+      <Grid2 container width={'100%'} alignItems={'center'} mb={2}>
+        <IconButton onClick={handleOpenSidebar}>
+          <MenuIcon />
+        </IconButton>
+        <Grid2
+          ml={2}
+          container
+          justifyContent={'space-between'}
+          flexGrow={1}
+          alignItems={'center'} >
           <h2 className='font-semibold text-xl text-primary'>Maintenance</h2>
-        </div>
-        <AddToolModal reRender={reRenderTools} selectedState={selectedState} />
-      </header>
-      <div className='flex w-full justify-between gap-x-5 flex-col sm:flex-row'>
+          <AddToolModal reRender={reRenderTools} selectedState={selectedState} />
+
+        </Grid2>
+
+      </Grid2>
+
+      <Grid2
+        container
+        direction="row"
+        flex={1}
+        minHeight={0}
+        width="100%"
+        gap={2}
+      >
         {openSidebar &&
           <div className='flex min-w-80 max-w-80 overflow-y-auto'>
-            <Paper className='w-full p-3 h-full'>
-              <header className='flex items-center w-full justify-between mb-3 '>
-                <h3 className='font-semibold text-lg'>Tools</h3>
-                <Grid2 container flexGrow={1} justifyContent={'flex-end'} spacing={2}>
-                  <FormControl sx={{ flexGrow: 1, ml: 2 }}>
+            <Paper
+              className="w-full p-3"
+              elevation={0}
+
+              sx={{
+                maxHeight: 'calc(100vh - 120px)',
+                overflowY: 'auto',
+              }}>
+              <header className='flex flex-col w-full justify-between mb-3 '>
+                <h3 className='font-semibold text-lg mb-2'>Tools</h3>
+                <Grid2 container width={'100%'} spacing={2}>
+                  <FormControl sx={{ flexGrow: 1 }}>
                     <InputLabel id="business-line-label">Business Line</InputLabel>
                     <Select
                       size='small'
@@ -275,19 +322,19 @@ export default function MaintenancePage() {
                       value={selectedBusinessLine}
                       onChange={({ target }) => {
                         setSelectedBusinessLine(target.value)
-                        if (target.value === '08012') {
-                          setSelectedState({ state: '' })
+                        if (target.value.id === '08012') {
+                          setSelectedState({ state: '', templateTypeId: 1 })
                         } else {
-                          const newState = states.find(state => state.businessLine === target.value)
+                          const newState = states.filter(state=>state.businessLine === target.value.id && state.state)[0]
                           setSelectedState(newState)
                         }
                       }}
                     >
                       {
                         businessLines.map(bl => (
-                          <MenuItem value={bl} key={bl}>
+                          <MenuItem value={bl} key={bl.id}>
                             {
-                              bl
+                              bl.name
                             }
                           </MenuItem>
                         ))
@@ -295,21 +342,20 @@ export default function MaintenancePage() {
                     </Select>
                   </FormControl>
                   {
-                    selectedBusinessLine !== '08012' && (
-                      <FormControl>
+                    selectedBusinessLine.id !== '08012' && (
+                      <FormControl size='small' sx={{ width: 80 }}>
                         <InputLabel id="state-label">State</InputLabel>
                         <Select
                           label="State"
-                          size='small'
                           labelId='state-label'
                           value={selectedState.state}
                           onChange={({ target }) => {
-                            const newState = states.find(state => state.state === target.value && state.businessLine === selectedBusinessLine)
+                            const newState = states.find(state => state.state === target.value && state.businessLine === selectedBusinessLine.id)
                             setSelectedState(newState)
                           }}
                         >
                           {
-                            states.filter(state => state.businessLine === selectedBusinessLine).map(state => (
+                            states.filter(state => state.businessLine === selectedBusinessLine.id).map(state => (
                               <MenuItem value={state.state} key={state.state}>
                                 {
                                   state.state
@@ -324,24 +370,60 @@ export default function MaintenancePage() {
 
                 </Grid2>
               </header>
-              <ul className='flex flex-col gap-y-2 overflow-auto'>
-                {maintenanceTools.map((tool) => (
-                  <SidebarMaintenanceRow
-                    key={tool.templateId}
-                    item={tool}
-                    isActive={tool.templateId === currentTemplateId}
-                    sections={sections}
-                    onChange={() => handleChangeTool(tool.templateId)}
-                    handleRemoveTool={() => handleRemoveTool(tool.templateId)}
-                    reRenderTools={reRenderTools} />
-                ))}
+              <ul className='flex flex-col  overflow-auto xl:h-[calc(100vh-280px)] md:h-[calc(100vh-280px)]'>
+
+                <Accordion defaultExpanded elevation={0}>
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                  >
+                    <h3 key={'active-title'} className='font-semibold text-lg'>Active tools</h3>
+                  </AccordionSummary>
+
+                  <AccordionDetails>
+                    {...maintenanceTools
+                      .filter(tool => tool.inactiveFlag === 0)
+                      .map((tool) => (
+                        <SidebarMaintenanceRow
+                          key={tool.templateId}
+                          item={tool}
+                          isActive={tool.templateId === currentTemplateId}
+                          sections={sections}
+                          onChange={() => handleChangeTool(tool.templateId)}
+                          handleActiveInactiveTool={() => handleActiveInactiveTool(tool.templateId, tool.inactiveFlag)}
+                          reRenderTools={reRenderTools} />
+                      ))}
+                  </AccordionDetails>
+                </Accordion>
+                <Accordion elevation={0} defaultExpanded={currentTemplate.inactiveFlag === 1}>
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                  >
+                    <h3 key={'inactive-title'} className='font-semibold text-lg'>Inactive tools</h3>
+                  </AccordionSummary>
+
+                  <AccordionDetails>
+                    {...maintenanceTools
+                      .filter(tool => tool.inactiveFlag === 1)
+                      .map((tool) => (
+                        <SidebarMaintenanceRow
+                          key={tool.templateId}
+                          item={tool}
+                          isActive={tool.templateId === currentTemplateId}
+                          sections={sections}
+                          onChange={() => handleChangeTool(tool.templateId)}
+                          handleActiveInactiveTool={() => handleActiveInactiveTool(tool.templateId, tool.inactiveFlag)}
+                          reRenderTools={reRenderTools} />
+                      ))}
+                  </AccordionDetails>
+                </Accordion>
+
               </ul>
             </Paper>
           </div>
         }
-        <div className='flex items-center w-full justify-between flex-col relative'>
-          <section className='flex flex-col w-full gap-y-5'>
-            {currentTemplate != null &&
+        <Grid2 container flex={1} direction="column" minHeight={0}>
+          {currentTemplate != null &&
+            (
               <MaintenanceHeader
                 templateName={currentTemplate.name}
                 templateId={currentTemplateId}
@@ -351,10 +433,19 @@ export default function MaintenancePage() {
                 reRenderTools={reRenderTools}
                 reRenderQuestions={reRenderQuestions}
               />
-            }
+            )
+          }
+
+          <Grid2
+            container
+            sx={{
+              overflowY: 'auto',
+              overflowX: 'hidden',
+            }}
+          >
             <DragDropContext onDragEnd={handleDragEnd}>
               <div className={`w-full flex flex-col gap-y-5 overflow-y-auto no-scrollbar
-              ${openSidebar ? 'xl:h-[calc(100vh-380px)] md:h-[calc(100vh-350px)]' : 'xl:h-[calc(100vh-380px)] md:h-[calc(100vh-350px)]'}
+              ${openSidebar ? 'xl:h-[calc(100vh-280px)] md:h-[calc(100vh-300px)]' : 'xl:h-[calc(100vh-380px)] md:h-[calc(100vh-350px)]'}
               mb-2`}>
                 <Droppable droppableId="maintenance-questions">
                   {(provided) => (
@@ -362,32 +453,37 @@ export default function MaintenancePage() {
                       ref={provided.innerRef}
                       {...provided.droppableProps}
                     >
-                      {questions.map((tool, index) => (
-                        <Draggable key={tool.questionId} draggableId={String(tool.questionId)} index={index}>
-                          {(provided) => (
-                            <MaintenanceQuestionCard
-                              key={tool.questionId}
-                              provided={provided}
-                              tool={tool}
-                              sections={sections}
-                              reRenderQuestions={reRenderQuestions}
-                              handleActiveInactiveQuestion={handleActiveInactiveQuestion}
-                            />
-                          )}
-                        </Draggable>
-                      ))}
+                      {
+                        ...[
+                          ...questions.map((tool, index) => (
+                            <Draggable key={tool.questionId} draggableId={String(tool.questionId)} index={index}>
+                              {(provided) => (
+                                <MaintenanceQuestionCard
+                                  key={tool.questionId}
+                                  provided={provided}
+                                  tool={tool}
+                                  sections={sections}
+                                  reRenderQuestions={reRenderQuestions}
+                                  handleActiveInactiveQuestion={handleActiveInactiveQuestion}
+                                />
+                              )}
+                            </Draggable>
+                          )),
+                          <footer key={'footer-buttons'} className={`flex items-center justify-between w-full pt-5`}>
+                            <Button variant="text">Cancel</Button>
+                            <PublishModal handlePublish={handlePublish} />
+                          </footer>
+                        ]
+                      }
                     </ul>
                   )}
                 </Droppable>
               </div>
             </DragDropContext>
-            <footer className={`flex items-center justify-between w-full ${openSidebar ? 'pb-10' : 'pb-5'}`}>
-              <Button variant="text">Cancel</Button>
-              <PublishModal handlePublish={handlePublish} />
-            </footer>
-          </section>
-        </div>
-      </div>
-    </div>
+          </Grid2>
+
+        </Grid2>
+      </Grid2>
+    </Grid2>
   )
 }

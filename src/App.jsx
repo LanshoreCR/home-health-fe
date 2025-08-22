@@ -7,27 +7,28 @@ import { LocalizationProvider } from '@mui/x-date-pickers'
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3'
 import QualityAuditThemeProvider from './shared/components/providers/theme-provider'
 import { Toaster } from 'sonner'
+import { Grid2 } from '@mui/material'
 
 function App() {
 
   return (
     <OktaProvider>
       <QualityAuditThemeProvider>
-        <div className='w-full h-full'>
-          <header>
-            <Navbar />
-          </header>
-          <main className='max-w-7xl px-5 mx-auto h-full '>
+        <Grid2 container flexDirection={'column'} alignItems={'center'} height={'100%'}>
+          <Navbar />
+          <Grid2
+            className='max-w-7xl px-5 w-full'
+            mt={3}
+            flex={1}
+            minHeight={0}  >
             <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <section className='h-full w-full mt-5'>
-                <Routes>
-                  <Route path='/login/callback' element={<LoginCallback />} />
-                  <Route path='/*' exact element={<AppRouter />} />
-                </Routes>
-              </section>
+              <Routes>
+                <Route path='/login/callback' element={<LoginCallback />} />
+                <Route path='/*' exact element={<AppRouter />} />
+              </Routes>
             </LocalizationProvider>
-          </main>
-        </div>
+          </Grid2>
+        </Grid2>
         <Toaster position="top-center" richColors />
       </QualityAuditThemeProvider>
     </OktaProvider>

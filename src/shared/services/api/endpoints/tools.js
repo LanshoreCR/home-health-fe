@@ -25,6 +25,7 @@ export const getTools = async ({ packageId }) => {
       auditTeamId: tool.auditTeamID,
       customerName: tool.customerName,
       auditDate: tool.auditDate,
+      startOfCareDate: tool.startOfCareDate,
       allQuestionsAnswered: tool.allQuestionsAnswered
     }))
     return tools
@@ -43,7 +44,6 @@ export const createTools = async ({ tools, packageId, userId }) => {
       AssignedAuditor: tool.assignedAuditor,
       LocationNumber: tool.locationNumber,
       CustomerName: tool.customerName,
-      StartOfCareDate: tool.startOfCareDate
     }))
     const body = {
       PackageID: packageId,

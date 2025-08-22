@@ -3,13 +3,14 @@ import IconButton from '@mui/material/IconButton'
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp'
 import DeleteIcon from '@mui/icons-material/Delete'
+import SettingsBackupRestoreIcon from '@mui/icons-material/SettingsBackupRestore';
 import EditSubsectionModal from './edit-subsection-modal'
 import { deleteSubsection } from '../../../shared/services/api/endpoints/maintenance'
 import { toast } from 'sonner'
 import { useSelector } from 'react-redux'
 
-export default function SidebarMaintenanceRow({ item, isActive, onChange, handleRemoveTool, sections, reRenderTools }) {
-  const { name } = item
+export default function SidebarMaintenanceRow({ item, isActive, onChange, handleActiveInactiveTool, sections, reRenderTools }) {
+  const { name, inactiveFlag } = item
 
   const user = useSelector((state) => state.user)
   const userId = user.employeeId
@@ -38,8 +39,8 @@ export default function SidebarMaintenanceRow({ item, isActive, onChange, handle
             <IconButton size='small' onClick={handleHideShowSubSections}>
               {showSubSections ? <ArrowDropUpIcon /> : <ArrowDropDownIcon />}
             </IconButton>
-            <IconButton type='button' size='small' onClick={handleRemoveTool}>
-              <DeleteIcon />
+            <IconButton type='button' size='small' onClick={handleActiveInactiveTool}>
+              {inactiveFlag === 0 ? <DeleteIcon /> : <SettingsBackupRestoreIcon />}
             </IconButton>
           </footer>
         </header>

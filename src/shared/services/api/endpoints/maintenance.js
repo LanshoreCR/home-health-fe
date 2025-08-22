@@ -35,13 +35,13 @@ export const getMaintenanceTools = async (templateTypeID, state) => {
     })
     if (response.status !== 200) throw new Error('error while getting maintenance tools')
     const data = response.data
-
     const tools = data.map((tool) => ({
       templateId: tool.templateID,
       templateDesc: tool.templateDesc,
       templateTypeId: tool.templateTypeID,
       releaseDate: tool.releaseDate,
       templateModifiedOn: tool.templateModifiedOn,
+      inactiveFlag: tool.inactiveFlag
     }))
 
     return tools
@@ -269,7 +269,7 @@ export const publishToolTemplate = async ({ releaseDate, templateId }) => {
   }
 }
 
-export const deleteTool = async ({ name, templateId, userId }) => {
+export const activeOrInactiveTool = async ({ name, templateId, userId, currentInactiveFlag }) => {
   try {
     const axiosInstance = apiMaster.getInstance()
     const body = {
@@ -278,7 +278,7 @@ export const deleteTool = async ({ name, templateId, userId }) => {
       ModifiedBy: userId,
       TemplateID: templateId,
       Controller: 2, 
-      InactiveFlag: 1
+      InactiveFlag: currentInactiveFlag === 1 ? 0 : 1
     }
 
     const response = await axiosInstance.put(ENDPOINTS.UPDATE_TEMPLATE, body, {})

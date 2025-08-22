@@ -14,7 +14,7 @@ import LoadingQuestionPage from './loading'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getTools } from '../../shared/services/api/endpoints/tools'
 import { toast } from 'sonner'
-import { getQuestions, saveCustomerNameOrAuditDate, saveGeneralComment, submitAnswers } from '../../shared/services/api/endpoints/questions'
+import { getQuestions, saveCustomerNameOrAuditDateOrStartOfCareDate, saveGeneralComment, submitAnswers } from '../../shared/services/api/endpoints/questions'
 import { Grid2, TextField, Typography } from '@mui/material'
 import { useDebounce } from 'use-debounce'
 import SubSection from './components/sub-section'
@@ -72,7 +72,8 @@ export default function QuestionsPage() {
   const [generalComments, setGeneralComments] = useState('')
   const [toolForm, setToolForm] = useState({
     customerName: '',
-    auditDate: null
+    auditDate: null,
+    startOfCareDate: null
   })
   const [generalCommentsDebounced] = useDebounce(generalComments, 1000)
   const [toolFormDebounced] = useDebounce(toolForm, 1000);
@@ -84,7 +85,7 @@ export default function QuestionsPage() {
   const storedQuestions = useSelector((state) => state.questions)
   const completedQuestions = storedQuestions.filter((question) => question.answered)
   const incompletedQuestions = storedQuestions.filter((question) => !question.answered)
-  const missingComments = storedQuestions.filter(question => !question.comments)
+  const missingComments = storedQuestions.filter(question => question.answers === 0 && !question.comments)
   const flaggedQuestions = storedQuestions.filter(question => question.flag === 1)
   const totalQuestions = storedQuestions.length
 
@@ -158,8 +159,9 @@ export default function QuestionsPage() {
           const generalComment = data[0].generalComments || ''
           setGeneralComments(generalComment)
         }
-        dispatch(storeQuestions(sortedQuestions))
         setQuestions(sortedQuestions)
+
+        dispatch(storeQuestions(sortedQuestions))
       })
       .catch(() => {
         toast.error('error getting questions')
@@ -173,6 +175,7 @@ export default function QuestionsPage() {
     if (currentTool) {
       setToolForm({
         auditDate: currentTool.auditDate ? new Date(currentTool.auditDate) : null,
+        startOfCareDate: currentTool.startOfCareDate ? new Date(currentTool.startOfCareDate) : null,
         customerName: currentTool.customerName
       })
     }
@@ -181,11 +184,6 @@ export default function QuestionsPage() {
 
   const goToToolsPage = () => {
     goBack()
-  }
-
-  const goToCapa = () => {
-    const url = `/${id}/tools/${currentIdTool}/capa`
-    navigate(url)
   }
 
   const goToEditTools = () => {
@@ -261,9 +259,10 @@ export default function QuestionsPage() {
   useEffect(() => {
     const handleSaveCustomerNameOrAuditDate = async () => {
       try {
-        const response = await saveCustomerNameOrAuditDate({
+        const response = await saveCustomerNameOrAuditDateOrStartOfCareDate({
           customerName: toolFormDebounced.customerName,
           auditDate: toolFormDebounced.auditDate ? toolFormDebounced.auditDate.toISOString().slice(0, 19) : null,
+          startOfCareDate: toolFormDebounced.startOfCareDate ? toolFormDebounced.startOfCareDate.toISOString().slice(0, 19) : null,
           packageId: currentIdTool
         })
         if (response instanceof Error) {
@@ -292,20 +291,7 @@ export default function QuestionsPage() {
     return true
   })
 
-  if (questions.length === 0 && !loading) {
-    return (
-      <div className='flex flex-col w-full justify-center items-center mt-10'>
-        <span className='font-bold'>No questions to show.</span>
-        <Button variant="contained" onClick={goToEditTools} disabled={isApproved}>Add tools</Button>
-      </div>
-    )
-  }
 
-  if (loading) {
-    return (
-      <LoadingQuestionPage />
-    )
-  }
 
   const questionsBySubSection = groupAndSortQuestions(questions)
   const handleSubmitAnswers = async () => {
@@ -344,10 +330,25 @@ export default function QuestionsPage() {
     dispatch(storeQuestions(newQuestions))
   }
 
+  if (storedQuestions.length === 0 && questions.length === 0 && !loading) {
+    return null
+  }
+
+
+  if (loading) {
+    return (
+      <LoadingQuestionPage />
+    )
+  }
 
 
   return (
-    <Grid2 container width={'100%'} direction={'column'}>
+    <Grid2
+      container
+      width={'100%'}
+      direction={'column'}
+      height={'100%'}
+      sx={{ overflowX: 'hidden' }} >
       <Grid2 container width={'100%'} alignItems={'center'} mb={2}>
         <IconButton onClick={handleOpenSidebar}>
           <MenuIcon />
@@ -360,17 +361,31 @@ export default function QuestionsPage() {
               variant='outlined'
               required
               id="standard"
-              placeholder={`${currentTool.templateId}.1`}
+              placeholder={'Question Search'}
               value={standard}
               onChange={handleChangeStandard}
             />
           </Grid2>
         )}
       </Grid2>
-      <div className=' w-full justify-between gap-x-5 flex flex-col sm:flex-row'>
+      <Grid2
+        container
+        direction="row"
+        flex={1}
+        minHeight={0}
+        width="100%"
+        gap={2}
+      >
         {openSidebar &&
           <div className='flex min-w-80 max-w-80 overflow-y-auto '>
-            <Paper className='w-full p-3 h-full'>
+            <Paper
+              className="w-full p-3"
+              sx={{
+                maxHeight: 'calc(100vh - 200px)',
+                overflowY: 'auto',
+              }}
+              elevation={0}
+            >
               <header className='flex items-center justify-between mb-3'>
                 <h3 className='font-semibold text-lg'>Tools</h3>
                 <FilterModal
@@ -515,53 +530,73 @@ export default function QuestionsPage() {
             </Paper>
           </div>
         }
-        <div className='flex items-center w-full justify-between flex-col relative h-[80vh] overflow-y-auto'>
-          <section className='flex flex-col w-full gap-y-5'>
-            {currentTool != null &&
-              <Grid2 container direction={'column'} spacing={3} alignItems={'center'} mt={2}>
-                <Grid2 container alignItems={'center'} width={'100%'}>
-                  <TextField
-                    variant='outlined'
-                    required
-                    sx={{ flexGrow: 1 }}
-                    id="standard"
-                    label='Client Name'
-                    value={toolForm.customerName}
-                    onChange={({ target }) => {
-                      setToolForm(prev => ({ ...prev, customerName: target.value }))
-                    }}
-                  />
-                  <DatePicker
-                    label='Audit Date'
-                    value={toolForm.auditDate}
-                    onChange={(date) => {
-                      setToolForm(prev => ({ ...prev, auditDate: date }))
-                    }}
-                  />
-                </Grid2>
 
+        <Grid2 container flex={1} direction="column" minHeight={0}>
+          {currentTool != null && (
+            <Grid2
+              container
+              direction="column"
+              spacing={3}
+              alignItems="center"
+              mt={2}
+              width="100%"
+            >
+              <Grid2 container alignItems="center" width="100%">
                 <TextField
-                  variant='standard'
+                  variant="outlined"
                   required
-                  fullWidth
-                  multiline
-                  maxRows={3}
-                  id="outlined-multiline-static"
-                  placeholder="General Comments"
-                  value={generalComments}
-                  onChange={handleChangeGeneralComments}
-                  disabled={isApproved}
+                  sx={{ flexGrow: 1 }}
+                  id="standard"
+                  label="Client Name"
+                  value={toolForm.customerName}
+                  onChange={({ target }) =>
+                    setToolForm((prev) => ({ ...prev, customerName: target.value }))
+                  }
                 />
-
+                <DatePicker
+                  label="Audit Date"
+                  value={toolForm.auditDate}
+                  onChange={(date) => {
+                    setToolForm((prev) => ({ ...prev, auditDate: date }))
+                  }}
+                />
+                  <DatePicker
+                  label="Start of Care Date"
+                  value={toolForm.startOfCareDate}
+                  onChange={(date) => {
+                    setToolForm((prev) => ({ ...prev, startOfCareDate: date }))
+                  }}
+                />
               </Grid2>
 
-            }
-            <div className={`w-full flex flex-col gap-y-5 overflow-y-auto 
-              ${openSidebar ? 'h-screen' : 'xl:h-[calc(100vh-330px)] md:h-[calc(100vh-350px)]'}
-               mb-2`}>
-              {
-                questionsBySubSection.map((subSection, index) => (
-                  <div key={index}>
+              <TextField
+                variant="standard"
+                required
+                fullWidth
+                multiline
+                maxRows={3}
+                id="outlined-multiline-static"
+                placeholder="General Comments"
+                value={generalComments}
+                onChange={handleChangeGeneralComments}
+                disabled={isApproved}
+              />
+            </Grid2>
+          )}
+
+          <Grid2
+            container
+            sx={{
+              maxHeight: 'calc(100vh - 300px)',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+            }}
+          >
+            {
+              ...[
+
+                ...questionsBySubSection.map((subSection, index) => (
+                  <Grid2 key={index} width={'100%'}>
                     <div ref={(el) => (subSectionsRefs.current[subSection[0]] = el)}></div>
                     <SubSection
                       key={index}
@@ -571,17 +606,26 @@ export default function QuestionsPage() {
                       handleSetSubSectionAnswers={handleSetSubSectionAnswers}
                       refs={questionRefs}
                       isApproved={isApproved} />
-                  </div>
-                ))
-              }
-            </div>
-            <footer className={`flex items-center justify-between w-full ${openSidebar ? 'pb-10' : 'pb-5'}`}>
-              <Button variant="text" onClick={goToToolsPage}>Cancel</Button>
-              <Button variant="contained" type='button' onClick={handleSubmitAnswers} disabled={isApproved}>Submit</Button>
-            </footer>
-          </section>
-        </div>
-      </div>
+                  </Grid2>
+                )),
+                <Grid2
+                  key="footer-buttons"
+                  container
+                  justifyContent="space-between"
+                  p={1}
+                  mt={2}
+                  sx={{ width: '100%', height: 50 }}
+                >
+                  <Button variant="text" onClick={goToToolsPage}>Cancel</Button>
+                  <Button variant="contained" type='button' onClick={handleSubmitAnswers} disabled={isApproved}>Submit</Button>
+                </Grid2>,
+              ]
+            }
+
+
+          </Grid2>
+        </Grid2>
+      </Grid2>
     </Grid2 >
   )
 }

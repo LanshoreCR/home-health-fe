@@ -47,7 +47,6 @@ export const getAudits = async ({ userId, isAdmin }) => {
     const response = await axiosInstance.get(ENDPOINTS.GET_ALL_BANNERS, { params })
     if (response.status !== 200) return new Error('error getting audits from the database')
     const data = response.data
-
     const audits = data.map((item) => ({
       packageId: item.packageID,
       packageName: item.packageName,
@@ -59,6 +58,7 @@ export const getAudits = async ({ userId, isAdmin }) => {
       packageScore: item.packageScore,
       teamLead: item.teamLead,
       teamLeadId: item.teamLeadID,
+      templateTypeId: item.templateTypeID,
       auditTeamId: item.auditTeamID,
       folderId: item.folderID,
       businessLineId: item.businessLineID,
@@ -70,7 +70,8 @@ export const getAudits = async ({ userId, isAdmin }) => {
       edName: item.edName,
       capaFlag: item.capaFlag,
       businessLineName: item.businessLineName,
-      sectionDesc: item.sectionDesc
+      sectionDesc: item.sectionDesc,
+      rangeDate: item.rangeDate
     }))
 
     return audits

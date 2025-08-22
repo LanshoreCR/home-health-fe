@@ -1,11 +1,10 @@
-import { Button, Chip, CircularProgress, FormControl, Grid, IconButton, ImageListItem, Modal, Paper, TextField } from '@mui/material'
+import { Button, CircularProgress, Grid, IconButton, ImageListItem, Modal, Paper } from '@mui/material'
 import { deleteAttachment, downloadAttachment, getAttachments, uploadAttachment } from '../../shared/services/api/endpoints/attachments'
 import { getAudit } from '../../shared/services/api/endpoints/audit'
 import { toast } from 'sonner'
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import {  useParams } from 'react-router-dom'
 import { useSelector } from 'react-redux'
-import CameraAltIcon from '@mui/icons-material/CameraAlt'
 import UploadFileIcon from '@mui/icons-material/UploadFile'
 import FileDownloadIcon from '@mui/icons-material/FileDownload'
 import DeleteIcon from '@mui/icons-material/Delete'
@@ -20,30 +19,13 @@ export default function AttachmentsPage() {
 
   const [modalIsOpen, setModalIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
 
   const [tags, setTags] = useState([])
-  const [inputValue, setInputValue] = useState('')
   const [comments, setComments] = useState('')
   const [currentFile, setCurrentFile] = useState([])
 
-  const handleKeyDown = (event) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault()
-      const newTag = inputValue.trim()
-      if (newTag && !tags.includes(newTag)) {
-        setTags([...tags, newTag])
-      }
-      setInputValue('')
-    }
-  }
 
-  const handleChangeComments = (event) => {
-    setComments(event.target.value)
-  }
-
-  const handleDelete = (tagToDelete) => () => {
-    setTags((tags) => tags.filter((tag) => tag !== tagToDelete))
-  }
 
   const handleChangeModal = () => {
     if (modalIsOpen === true) {
@@ -52,7 +34,6 @@ export default function AttachmentsPage() {
     setModalIsOpen(!modalIsOpen)
   }
 
-  const navigate = useNavigate()
 
   const handleUpload = (event) => {
     event.preventDefault()
@@ -90,14 +71,9 @@ export default function AttachmentsPage() {
     }
   }
 
-  const goToCamera = () => {
-    const url = `/${id}/camera`
-    navigate(url, { replace: true })
-  }
-
   const handleSave = async () => {
     if (currentFile == null) return
-    setIsLoading(true)
+    setIsUploading(true)
     const filesToUpload = currentFile.map((file) => ({
       ...file,
       tags,
@@ -108,7 +84,7 @@ export default function AttachmentsPage() {
       toast.error('error while uploading attachment')
       return
     }
-    setIsLoading(false)
+
     toast.success('attachment uploaded successfully')
     setCurrentFile(null)
     setTags([])
@@ -120,6 +96,7 @@ export default function AttachmentsPage() {
       return
     }
     setAttachments(newAttachmentsList)
+    setIsUploading(false)
   }
 
   const handleDownload = (attachmentId) => async () => {
@@ -153,16 +130,17 @@ export default function AttachmentsPage() {
   }
 
   useEffect(() => {
-    getAudit({ id })
-      .then((data) => {
-        if (data == null) {
-          throw new Error('cannot getting audit tools')
-        }
-        setCurrentAudit(data)
-      })
-  }, [id])
+      getAudit({ id })
+        .then((data) => {
+          if (data == null) {
+            throw new Error('cannot getting audit tools')
+          }
+          setCurrentAudit(data)
+        })
+  }, [])
 
   useEffect(() => {
+    setIsLoading(true)
     getAttachments({ packageId: id, userId: user.employeeId })
       .then((data) => {
         if (data instanceof Error) {
@@ -173,7 +151,10 @@ export default function AttachmentsPage() {
       .catch(() => {
         toast.error('error getting audit tools')
       })
+      .finally(() => setIsLoading(false))
   }, [id, user.employeeId])
+
+  if (isLoading) return null
 
   return (
     <section className="flex flex-col items-center justify-center p-4">
@@ -193,8 +174,8 @@ export default function AttachmentsPage() {
                 <input type='file' className='hidden' multiple onChange={handleUpload} />
               </Button>
             </Grid>
-            {attachments.map((file) => (
-              <Grid item xs={12} sm={6} md={4} lg={3} xl={3} key={file.fileId}>
+            {attachments.map((file, index) => (
+              <Grid item xs={12} sm={6} md={4} lg={3} xl={3} key={`${file.fileId} - ${index}`}>
                 <ImageListItem className='flex flex-col'>
                   {file.src
                     ? (
@@ -220,15 +201,6 @@ export default function AttachmentsPage() {
                         </div>
                       </div>
                     )}
-
-                  {/* <div className='flex flex-wrap justify-center mt-2 gap-1'>
-                    {file.tags != null && file.tags.map((tag) => (
-                      <Chip size='small'
-                        key={tag}
-                        label={tag}
-                      />
-                    ))}
-                  </div> */}
                 </ImageListItem>
               </Grid>
             ))}
@@ -277,56 +249,25 @@ export default function AttachmentsPage() {
                     </Grid>
                   ))}
                 </Grid>
-                {isLoading && <footer className='flex justify-center items-center my-4 w-full flex-col gap-y-2'>
+                {isUploading && <footer className='flex justify-center items-center my-4 w-full flex-col gap-y-2'>
                   <CircularProgress />
                   <span className='text-center text-blue-600'>uploading...</span>
                 </footer>}
                 <div className='flex flex-col gap-y-2 w-full'>
-                  {/* <div className='flex gap-y-2 flex-col mb-3'>
-                    <FormControl fullWidth>
-                      <TextField variant='outlined' label='Comment' disabled={isLoading}
-                        value={comments}
-                        onChange={handleChangeComments}
-                        placeholder='Add a comment' size='small' multiline minRows={2} maxRows={3} />
-                    </FormControl>
-                  </div> */}
-                  {/* <div className='flex flex-col w-full'>
-                    <TextField
-                      size='small'
-                      variant="outlined"
-                      placeholder="Add a tag"
-                      label="Tags"
-                      value={inputValue}
-                      onChange={(e) => setInputValue(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      fullWidth
-                      disabled={isLoading}
-                    />
-                    <div className='flex flex-col mt-2 gap-y-2'>
-                      {tags.map((tag, index) => (
-                        <Chip
-                          size='small'
-                          key={index}
-                          label={tag}
-                          onDelete={handleDelete(tag)}
-                        />
-                      ))}
-                    </div>
-                  </div> */}
                 </div>
               </div>
-              <div className='flex flex-col gap-y-2 w-full mt-4'>
-                <Button variant='contained' color='primary' disabled={isLoading} onClick={handleSave}>Save</Button>
-              </div>
+              {
+                !isUploading && (
+                  <div className='flex flex-col gap-y-2 w-full mt-4'>
+                    <Button variant='contained' color='primary' disabled={isLoading} onClick={handleSave}>Save</Button>
+                  </div>
+                )
+              }
+
             </>
           )}
         </Paper>
       </Modal>
-      <section className='mt-4 fixed bottom-0 left-0 right-0 mb-5 flex justify-center items-center'>
-        <button onClick={goToCamera} className='bg-primary text-white px-4 py-2 rounded-full w-16 h-16 flex items-center justify-center'>
-          <CameraAltIcon />
-        </button>
-      </section>
     </section>
   )
 }

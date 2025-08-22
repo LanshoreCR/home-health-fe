@@ -4,6 +4,7 @@ import { useOktaAuth } from '@okta/okta-react'
 import { Box, AppBar, Toolbar, Typography, Button } from '@mui/material'
 import BackButton from './back-button'
 import useRole from '../hooks/useRole'
+import Logo from './logo'
 const Navbar = () => {
     const location = useLocation()
     const navigate = useNavigate()
@@ -20,15 +21,15 @@ const Navbar = () => {
     }
 
     return (
-        <Box sx={{ flexGrow: 1 }}>
+        <Box width={'100%'} >
             <AppBar position="static">
                 <Toolbar>
                     {location.pathname !== '/' && (
                         <BackButton />
                     )}
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                    <Typography variant="h6" component="div" width={'100%'}>
                         <Link to='/'>
-                            Quality Audit
+                            <Logo/>
                         </Link>
                     </Typography>
                     <div className='flex gap-x-5'>

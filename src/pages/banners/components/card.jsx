@@ -13,7 +13,7 @@ import PersonIcon from '@mui/icons-material/Person'
 import PieChartOutlineOutlinedIcon from '@mui/icons-material/PieChartOutlineOutlined'
 import { Link, useNavigate } from 'react-router-dom'
 import AttachFileIcon from '@mui/icons-material/AttachFile'
-import { Divider, FormControl, Grid2, InputLabel, Select, Typography } from '@mui/material'
+import { Divider, FormControl, Grid2, InputLabel, Select, Typography, Badge } from '@mui/material'
 import { changeAuditStatus, deleteAudit } from '../../../shared/services/api/endpoints/audit'
 import { toast } from 'sonner'
 import useModal from '../../../shared/hooks/useModal'
@@ -50,9 +50,10 @@ const STATUS_LABEL_COLORS = {
 
 export default function BannerCard({ audit, refreshAudits }) {
   const {
-    packageName, packageStatus, packageStartDate, quarter,
+    packageName, packageStatus, quarter,
     packageScore, teamLead, teamLeadId, packageId, auditTeamId,
-    capaFlag, sectionDesc, businessLineName, isTeam, createdOn
+     sectionDesc, businessLineName, templateTypeId,isTeam, createdOn, rangeDate,
+     attachments
   } = audit
   const { isAdmin } = useRole()
 
@@ -112,7 +113,7 @@ export default function BannerCard({ audit, refreshAudits }) {
   }
 
   const handleOpenReport = () => {
-    const url = getReportUrl(packageId)
+    const url = getReportUrl(packageId, templateTypeId)
     window.open(url, '_blank')
     handleClose()
   }
@@ -136,7 +137,10 @@ export default function BannerCard({ audit, refreshAudits }) {
             </Select>
           </FormControl>
           <IconButton onClick={goToAttachments}>
-            <AttachFileIcon />
+            <div className='flex items-center justify-center'>
+              <AttachFileIcon />
+              {attachments > 0 && <span className='text-xs'>{attachments}</span>}
+            </div>
           </IconButton>
           <IconButton aria-label="more-options" onClick={handleOpenOptions}>
             <MoreVertIcon />
@@ -157,7 +161,7 @@ export default function BannerCard({ audit, refreshAudits }) {
         </Typography>
         <Divider orientation='vertical' flexItem />
         <Typography>
-          {createdOn.split('T')[0]}
+          {rangeDate}
         </Typography>
         <Divider orientation='vertical' flexItem />
         <Chip label={packageStatus}
@@ -174,7 +178,7 @@ export default function BannerCard({ audit, refreshAudits }) {
         <Grid2 container spacing={2}>
           <div className='flex items-center'>
             <DateRangeIcon className='text-primary/80' />
-            <span>{packageStartDate?.split('T')[0]}</span>
+            <span>{createdOn.split('T')[0]}</span>
           </div>
           <div className='flex items-center'>
             <PieChartOutlineOutlinedIcon className='text-primary/80' />
