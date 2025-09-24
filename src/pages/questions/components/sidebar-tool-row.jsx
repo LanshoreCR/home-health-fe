@@ -12,7 +12,7 @@ const getStatsBySubsection = (questions, subSection) => {
 }
 
 export default function SidebarToolRow({ item, onChange, isActive, subSections, refs }) {
-  const { templateName, templateStatus } = item
+  const { templateName, templateStatus, customerName } = item
 
   const [showSubSections, setShowSubSections] = useState(false)
   const handleHideShowSubSections = () => {
@@ -25,7 +25,10 @@ export default function SidebarToolRow({ item, onChange, isActive, subSections, 
     return (
       <li className='rounded-lg p-3 bg-primary/90 flex justify-between items-center cursor-pointer flex-col' onClick={onChange}>
         <header className='flex items-center justify-between gap-x-3'>
-          <span className=''>{templateName}</span>
+          <div className='flex flex-col gap-y-1'>
+            <span className='text-lg'>{templateName}</span>
+            <span className='text-xs'>{customerName}</span>
+          </div>
           <Chip label={templateStatus} size="small" />
           <IconButton size='small' onClick={handleHideShowSubSections}>
             {showSubSections ? <ArrowDropUpIcon /> : <ArrowDropDownIcon />}
@@ -53,7 +56,10 @@ export default function SidebarToolRow({ item, onChange, isActive, subSections, 
 
   return (
     <li className='rounded-lg p-3 flex justify-between items-center hover:bg-blue-50 cursor-pointer' onClick={onChange}>
-      <span>{templateName}</span>
+      <div className='flex flex-col gap-y-1'>
+        <span className='text-lg'>{templateName}</span>
+        <span className='text-xs'>{customerName}</span>
+      </div>
       <Chip label={templateStatus} size="small" />
     </li>
   )
