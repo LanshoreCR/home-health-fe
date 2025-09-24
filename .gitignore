@@ -24,3 +24,7 @@ dist-ssr
 *.sw?
 
 .env
+
+# Builds
+dist.zip
+dist-*.zip
