@@ -50,24 +50,26 @@ export default function QuestionCard({ question, sectionId, employeeId, initAnsw
   const handleChangePercentage = async (event) => {
     const newValue = event.target.value
     setPercentage(newValue)
+  }
+
+  const handleChangePercentageCommitted = async () => {
     try {
       const response = await saveAnswer({
         answer, comment,
         questionId: templateAnswerId,
         packageId: sectionId,
         customerName: employeeId,
-        percentage: newValue
+        percentage: percentage
       })
 
       if (response instanceof Error) {
         throw new Error('error while saving answer')
       }
-      dispatch(respondQuestion({ templateQuestionId, answer, comments, percentage: newValue }))
+      dispatch(respondQuestion({ templateQuestionId, answer, comments, percentage: percentage }))
 
     } catch (error) {
       toast.error('error saving answer. Please try it again')
     }
-
   }
 
 
@@ -214,6 +216,7 @@ export default function QuestionCard({ question, sectionId, employeeId, initAnsw
                   return `${value}%`
                 }}
                 onChange={handleChangePercentage}
+                onChangeCommitted={handleChangePercentageCommitted}
                 disabled={checkedNA}
               />
               <FormControlLabel
