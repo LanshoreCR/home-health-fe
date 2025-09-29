@@ -14,7 +14,6 @@ import Select from '@mui/material/Select'
 import { useDebounce } from 'use-debounce'
 import { Grid2, InputAdornment, OutlinedInput } from '@mui/material'
 import ClearIcon from '@mui/icons-material/Clear'
-import { getAttachments } from '../../shared/services/api/endpoints/attachments'
 
 const filterAudits = (audits, filters) => {
   const { currentAuditor, currentQuarter, currentLocation, searchByName } = filters
@@ -145,11 +144,6 @@ export default function BannersPage() {
       if (response instanceof Error) {
         toast.error('error getting audits')
         return
-      }
-
-      for (const audit of response) {
-        const attachments = await getAttachments({ packageId: audit.packageId })
-        audit.attachments = attachments.length
       }
       setAudits(response)
       setLoading(false)
