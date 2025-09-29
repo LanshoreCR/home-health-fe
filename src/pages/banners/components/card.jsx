@@ -53,7 +53,7 @@ export default function BannerCard({ audit, refreshAudits }) {
     packageName, packageStatus, quarter,
     packageScore, teamLead, teamLeadId, packageId, auditTeamId,
      sectionDesc, businessLineName, templateTypeId,isTeam, createdOn, rangeDate,
-     attachments
+     attachmentsCount
   } = audit
   const { isAdmin } = useRole()
 
@@ -139,7 +139,7 @@ export default function BannerCard({ audit, refreshAudits }) {
           <IconButton onClick={goToAttachments}>
             <div className='flex items-center justify-center'>
               <AttachFileIcon />
-              {attachments > 0 && <span className='text-xs'>{attachments}</span>}
+              {attachmentsCount > 0 && <span className='text-xs'>{attachmentsCount}</span>}
             </div>
           </IconButton>
           <IconButton aria-label="more-options" onClick={handleOpenOptions}>
