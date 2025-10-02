@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Menu, MenuItem } from '@mui/material'
+import { Menu, MenuItem, Checkbox } from '@mui/material'
 import { useLocation, useNavigate } from 'react-router-dom'
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
@@ -14,8 +14,8 @@ import { STATUS } from '../../banners/components/card'
 import DeleteToolModal from './delete-tool-modal'
 import { deleteTool } from '../../../shared/services/api/endpoints/tools'
 
-export default function ToolsTableRow({ tool, refreshTools, currentAudit }) {
-  const { templateName, templateStatus, templateScore, assignedAuditor, memberId, packageTemplateId, locationName, auditTeamId, customerName } = tool
+export default function ToolsTableRow({ tool, refreshTools, currentAudit, addToSelectedTools, removeFromSelectedTools, selectedTools }) {
+  const { templateName, templateStatus, templateScore, assignedAuditor, memberId, packageTemplateId, locationName, auditTeamId, customerName, allQuestionsAnswered } = tool
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -52,11 +52,29 @@ export default function ToolsTableRow({ tool, refreshTools, currentAudit }) {
     name: assignedAuditor
   }
 
+  const isSelected = selectedTools.some(selectedTool => selectedTool.packageTemplateId === packageTemplateId)
+  const isSelectable = allQuestionsAnswered === 1 && (templateStatus === 'Pending' || templateStatus === 'Under Review')
+
+  const handleCheckboxChange = (event) => {
+    if (event.target.checked) {
+      addToSelectedTools(tool)
+    } else {
+      removeFromSelectedTools(tool)
+    }
+  }
+
   return (
     <>
       <TableRow
         sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
       >
+        <TableCell padding="checkbox">
+          <Checkbox
+            checked={isSelected}
+            onChange={handleCheckboxChange}
+            disabled={!isSelectable}
+          />
+        </TableCell>
         <TableCell component="th" scope="row" align="left">{templateName}</TableCell>
         <TableCell align="center">{customerName}</TableCell>
         <TableCell align="center">{templateStatus}</TableCell>
