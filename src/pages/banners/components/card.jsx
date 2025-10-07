@@ -30,7 +30,8 @@ const CAPA_FLAG = {
 export const STATUS = {
   PENDING: 'Pending',
   UNDER_REVIEW: 'Under Review',
-  COMPLETED: 'Approved'
+  COMPLETED: 'Approved',
+  READY_TO_REVIEW: 'Ready to Review'
 }
 
 const STATUS_COLORS = {
@@ -130,7 +131,7 @@ export default function BannerCard({ audit, refreshAudits }) {
               id="demo-simple-select"
               label="Change Status"
               onChange={handleChangeStatus}
-              disabled={packageStatus !== STATUS.UNDER_REVIEW}
+              disabled={packageStatus !== STATUS.READY_TO_REVIEW}
             >
               <MenuItem value={'2'}>Approve</MenuItem>
               <MenuItem value={'3'}>Reject</MenuItem>
