@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Menu, MenuItem, Checkbox } from '@mui/material'
+import { Menu, MenuItem, Checkbox, Box } from '@mui/material'
 import { useLocation, useNavigate } from 'react-router-dom'
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
@@ -81,25 +81,25 @@ export default function ToolsTableRow({ tool, refreshTools, currentAudit, addToS
         <TableCell align="center">{templateScore}</TableCell>
         <TableCell align="center">{locationName}</TableCell>
         <TableCell align="center">{assignedAuditor}</TableCell>
-        <TableCell align="center">
+        <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
           {
             currentAudit.packageStatus === STATUS.COMPLETED
               ? (
-                <IconButton aria-label="questions" onClick={handleGoToQuestions}>
+                <IconButton aria-label="questions" onClick={handleGoToQuestions} size="small">
                   <VisibilityIcon />
                 </IconButton>
               ) : (
-                <>
-                  <IconButton aria-label="questions" onClick={handleGoToQuestions}>
+                <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+                  <IconButton aria-label="questions" onClick={handleGoToQuestions} size="small">
                     <EditIcon />
                   </IconButton>
-                  <IconButton aria-label="delete" onClick={openDeleteToolModal}>
+                  <IconButton aria-label="delete" onClick={openDeleteToolModal} size="small">
                     <DeleteIcon />
                   </IconButton>
-                  <IconButton aria-label="more-options" onClick={handleOpenOptions}>
+                  <IconButton aria-label="more-options" onClick={handleOpenOptions} size="small">
                     <MoreVertIcon />
                   </IconButton>
-                </>
+                </Box>
               )
           }
         </TableCell>

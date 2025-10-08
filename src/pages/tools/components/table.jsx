@@ -17,11 +17,22 @@ export default function ToolsTable({ tools, addToSelectedTools, removeFromSelect
   const isIndeterminate = selectedTools.length > 0 && selectedTools.length < selectableTools.length
 
   return (
-    <TableContainer component={Paper}>
+    <TableContainer 
+      component={Paper} 
+      sx={{ 
+        maxHeight: '70vh',
+        '& .MuiTableHead-root': {
+          position: 'sticky',
+          top: 0,
+          zIndex: 1,
+          backgroundColor: 'background.paper'
+        }
+      }}
+    >
       <Table sx={{ minWidth: 650 }} aria-label="simple table">
         <TableHead>
           <TableRow>
-            <TableCell padding="checkbox">
+            <TableCell padding="checkbox" sx={{ width: '48px' }}>
               <Checkbox
                 checked={isAllSelected}
                 indeterminate={isIndeterminate}
@@ -29,13 +40,13 @@ export default function ToolsTable({ tools, addToSelectedTools, removeFromSelect
                 disabled={selectableTools.length === 0}
               />
             </TableCell>
-            <TableCell>Name</TableCell>
-            <TableCell align='center'>Client</TableCell>
-            <TableCell align="center">Status</TableCell>
-            <TableCell align="center">Percent&nbsp;(%)</TableCell>
-            <TableCell align="center">Location</TableCell>
-            <TableCell align="center">Assigned</TableCell>
-            <TableCell align="center">Actions</TableCell>
+            <TableCell sx={{ minWidth: '200px' }}>Name</TableCell>
+            <TableCell align='center' sx={{ minWidth: '120px' }}>Client</TableCell>
+            <TableCell align="center" sx={{ minWidth: '100px' }}>Status</TableCell>
+            <TableCell align="center" sx={{ minWidth: '80px' }}>Percent&nbsp;(%)</TableCell>
+            <TableCell align="center" sx={{ minWidth: '150px' }}>Location</TableCell>
+            <TableCell align="center" sx={{ minWidth: '120px' }}>Assigned</TableCell>
+            <TableCell align="center" sx={{ width: '120px', whiteSpace: 'nowrap' }}>Actions</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
