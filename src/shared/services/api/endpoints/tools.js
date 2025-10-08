@@ -61,22 +61,22 @@ export const createTools = async ({ tools, packageId, userId }) => {
   }
 }
 
-export const updateToolStatus = async ({ selectedTools }) => {
+export const updateToolStatus = async ({ packageTemplateId, templateStatusId }) => {
   try {
     const axiosInstance = apiMaster.getInstance()
 
-    const body = selectedTools.map((tool) => ({
-      TemplateStatusID: 3,
-      PackageTemplateID: tool.packageTemplateId
-    }))
+    const body = {
+      TemplateStatusID: templateStatusId,
+      PackageTemplateID: packageTemplateId
+    }
 
-    const response = await axiosInstance.put(ENDPOINTS.UPDATE_TOOL_STATUS, body, {})
-    if (response.status !== 200) return new Error('error getting banner status from database')
+    const response = await axiosInstance.post(ENDPOINTS.UPDATE_TOOL_STATUS, body, {})
+    if (response.status !== 200) return new Error('error updating tool status')
     const data = response.data
     return data
   } catch (error) {
     console.error(error)
-    return new Error('cannot update audit status')
+    return new Error('cannot update tool status')
   }
 }
 

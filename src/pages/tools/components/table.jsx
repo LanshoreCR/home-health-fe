@@ -5,14 +5,30 @@ import TableCell from '@mui/material/TableCell'
 import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
+import Checkbox from '@mui/material/Checkbox'
 import ToolsTableRow from './table-row'
 
-export default function ToolsTable({ tools, addToSelectedTools, removeFromSelectedTool, selectedTools, refreshTools, currentAudit }) {
+export default function ToolsTable({ tools, addToSelectedTools, removeFromSelectedTools, selectedTools, refreshTools, currentAudit, handleSelectAll }) {
+  const selectableTools = tools.filter(tool => 
+    tool.allQuestionsAnswered === 1 && 
+    (tool.templateStatus === 'Pending' || tool.templateStatus === 'Under Review')
+  )
+  const isAllSelected = selectableTools.length > 0 && selectedTools.length === selectableTools.length
+  const isIndeterminate = selectedTools.length > 0 && selectedTools.length < selectableTools.length
+
   return (
     <TableContainer component={Paper}>
       <Table sx={{ minWidth: 650 }} aria-label="simple table">
         <TableHead>
           <TableRow>
+            <TableCell padding="checkbox">
+              <Checkbox
+                checked={isAllSelected}
+                indeterminate={isIndeterminate}
+                onChange={handleSelectAll}
+                disabled={selectableTools.length === 0}
+              />
+            </TableCell>
             <TableCell>Name</TableCell>
             <TableCell align='center'>Client</TableCell>
             <TableCell align="center">Status</TableCell>
@@ -28,7 +44,7 @@ export default function ToolsTable({ tools, addToSelectedTools, removeFromSelect
               key={index}
               tool={tool}
               addToSelectedTools={addToSelectedTools}
-              removeFromSelectedTools={removeFromSelectedTool}
+              removeFromSelectedTools={removeFromSelectedTools}
               selectedTools={selectedTools}
               refreshTools={refreshTools} 
               currentAudit={currentAudit}/>
