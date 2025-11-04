@@ -36,7 +36,7 @@ export default function QuestionCard({ question, sectionId, employeeId, initAnsw
   const dispatch = useDispatch()
 
   const [answer, setAnswer] = useState(initAnswer)
-  const [percentage, setPercentage] = useState(initPercentage);
+  const [percentage, setPercentage] = useState(initPercentage != null ? Math.round(initPercentage) : 0);
   const [checkedNA, setCheckedNA] = useState(initAnswer === 2)
   const [comment, setComment] = useState(comments || '')
   const [commentError, setCommentError] = useState(false)
@@ -48,7 +48,7 @@ export default function QuestionCard({ question, sectionId, employeeId, initAnsw
  
 
   const handleChangePercentage = async (event) => {
-    const newValue = event.target.value
+    const newValue = Math.round(event.target.value)
     setPercentage(newValue)
   }
 
@@ -184,6 +184,12 @@ export default function QuestionCard({ question, sectionId, employeeId, initAnsw
   }, [initAnswer])
 
   useEffect(() => {
+    if (initPercentage != null) {
+      setPercentage(Math.round(initPercentage))
+    }
+  }, [initPercentage])
+
+  useEffect(() => {
     if (answer === 0 && comment === '') {
       setCommentError(true)
       dispatch(respondQuestion({ templateQuestionId, answer, comments: '', answered: false }))
@@ -211,6 +217,9 @@ export default function QuestionCard({ question, sectionId, employeeId, initAnsw
                 defaultValue={0}
                 value={percentage}
                 valueLabelDisplay="on"
+                step={1}
+                min={0}
+                max={100}
                 sx={{ width: 300, marginLeft: 3 }}
                 valueLabelFormat={(value) => {
                   return `${value}%`

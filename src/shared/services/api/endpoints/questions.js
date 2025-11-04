@@ -46,7 +46,7 @@ export const saveAnswer = async ({ answer, comment, questionId, packageId, flag 
       TemplateAnswerID: parseInt(questionId),
       PackageTemplateID: parseInt(packageId),
       Flag: flag,
-      Percentages: parseInt(percentage)
+      Percentages: percentage != null ? Math.round(percentage) : null
     }
 
     await axiosInstance.post(ENDPOINTS.SAVE_ANSWER, body, {})
