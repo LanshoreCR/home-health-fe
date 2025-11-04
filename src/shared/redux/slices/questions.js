@@ -34,7 +34,7 @@ export const questionsSlice = createSlice({
         answers: parseInt(answer),
         comments,
         answered,
-        percentages: parseInt(percentage),
+        percentages: percentage != null ? Math.round(percentage) : null,
         flag: flag
       }
 
