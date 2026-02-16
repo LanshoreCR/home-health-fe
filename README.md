@@ -1,4 +1,4 @@
-# Quality Audit App Frontend
+# Home Health App Frontend
 
 ## Getting Started
 
@@ -15,7 +15,7 @@ Follow these steps to set up and run the project locally.
   - Prod -> ProdBranch
 
 ```sh
-git clone https://github.com/LanshoreCR/QualityAuditAppFE.git
+git clone https://github.com/LanshoreCR/home-health-fe.git
 ```
 
 ### 2. Install dependencies
@@ -44,7 +44,6 @@ npm start
 
 ## Azure App Service
 
-- [Dev Environment](BHS_DEV_DigitialOps_QualityAudit_RG -> dev-qualityauditappfrontend)
-- [QA Environment](BHS_QA_DigitialOps_QualityAudit_RG -> qa-qualityauditappfrontend)
-- [Prod Environment](BHS_PRD_DigitialOps_QualityAudit_RG -> prd-qualityauditappfrontend)
-
+- [Dev Environment](BHS_DEV_DigitialOps_HomeHealth_RG -> dev-homehealthappfrontend)
+- [QA Environment](BHS_QA_DigitialOps_HomeHealth_RG -> qa-homehealthappfrontend)
+- [Prod Environment](BHS_PRD_DigitialOps_HomeHealth_RG -> prd-homehealthappfrontend)

@@ -18,7 +18,7 @@ const theme = createTheme({
   }
 })
 
-export default function QualityAuditThemeProvider({ children }) {
+export default function HomeHealthThemeProvider({ children }) {
   return (
     <ThemeProvider theme={theme}>
       {children}

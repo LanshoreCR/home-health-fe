@@ -5,7 +5,7 @@ import { Route, Routes } from 'react-router-dom'
 import { LoginCallback } from '@okta/okta-react'
 import { LocalizationProvider } from '@mui/x-date-pickers'
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3'
-import QualityAuditThemeProvider from './shared/components/providers/theme-provider'
+import HomeHealthThemeProvider from './shared/components/providers/theme-provider'
 import { Toaster } from 'sonner'
 import { Grid2 } from '@mui/material'
 
@@ -13,7 +13,7 @@ function App() {
 
   return (
     <OktaProvider>
-      <QualityAuditThemeProvider>
+      <HomeHealthThemeProvider>
         <Grid2 container flexDirection={'column'} alignItems={'center'} height={'100%'}>
           <Navbar />
           <Grid2
@@ -30,7 +30,7 @@ function App() {
           </Grid2>
         </Grid2>
         <Toaster position="top-center" richColors />
-      </QualityAuditThemeProvider>
+      </HomeHealthThemeProvider>
     </OktaProvider>
   )
 }
