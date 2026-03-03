@@ -1,19 +1,35 @@
 import { useState, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Search, ClipboardList } from 'lucide-react'
+import { ArrowLeft, Search, ClipboardList, Plus } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ToolListItem } from '@/components/tool-list-item'
+import { CreateToolModal } from '@/components/create-tool-modal'
 import { getToolStatus } from '@shared/utils/tool-status'
 import { getStatusBadgeClass } from '@shared/utils/status-config'
 import { auditToolsMap } from '@/mocks'
+import type { ToolMetadata } from '@/shared/types'
 
 type FilterStatus = 'all' | 'not-started' | 'in-progress' | 'complete'
+
+const MOCK_LOCATIONS = [
+  { id: 'loc1', name: 'Consolidated Homecare Services' },
+  { id: 'loc2', name: 'Pacific Health Partners' },
+  { id: 'loc3', name: 'Golden State Home Health' },
+  { id: 'loc4', name: 'Lone Star Care Services' }
+]
 
 export default function AuditToolsPage () {
   const { id } = useParams<{ id: string }>()
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all')
+  const [createToolModalOpen, setCreateToolModalOpen] = useState(false)
+
+  const handleCreateTool = (data: ToolMetadata) => {
+    // TODO: call createTools API when packageId/userId available; optionally refetch or add tool to list
+    console.log('Create tool:', data)
+  }
 
   if (id === undefined) {
     return (
@@ -86,15 +102,32 @@ export default function AuditToolsPage () {
       </header>
 
       <main className='mx-auto max-w-3xl px-4 sm:px-6 py-6'>
-        <div className='flex items-center gap-3 mb-5'>
-          <ClipboardList className='size-5 text-primary' />
-          <h2 className='text-lg font-semibold text-card-foreground'>
-            Tools
-          </h2>
-          <span className='text-sm text-muted-foreground'>
-            {totalComplete} of {audit.tools.length} complete
-          </span>
+        <div className='flex items-center justify-between gap-3 mb-5'>
+          <div className='flex items-center gap-3'>
+            <ClipboardList className='size-5 text-primary' />
+            <h2 className='text-lg font-semibold text-card-foreground'>
+              Tools
+            </h2>
+            <span className='text-sm text-muted-foreground'>
+              {totalComplete} of {audit.tools.length} complete
+            </span>
+          </div>
+          <Button
+            size='sm'
+            onClick={() => setCreateToolModalOpen(true)}
+            className='shrink-0'
+          >
+            <Plus className='size-4 mr-1.5' />
+            Create Tool
+          </Button>
         </div>
+
+        <CreateToolModal
+          open={createToolModalOpen}
+          onOpenChange={setCreateToolModalOpen}
+          locations={MOCK_LOCATIONS}
+          onSubmit={handleCreateTool}
+        />
 
         <div className='flex flex-col sm:flex-row gap-3 mb-5'>
           <div className='relative flex-1'>

@@ -1,15 +1,18 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 import { AuditSection } from '@/components/audit-section'
 import { AuditProgressPanel } from '@/components/audit-progress-panel'
-import type { ToolInfo, SectionData, QuestionFilter, QuestionData, AuditFormContext } from '@/shared/types'
+import type { ToolInfo, SectionData, QuestionFilter, QuestionData, AuditFormContext, ToolMetadata } from '@/shared/types'
 import { useToolNavigation } from '@/hooks/useToolNavigation'
 import { useFilteredSections } from '@/hooks/useFilteredSections'
 import { useAuditProgress } from '@/hooks/useAuditProgress'
 import { AuditFormHeader } from './audit-form-header'
 import { ToolNavigationBar } from './tool-navigation-bar'
 import { ToolDropdown } from './tool-dropdown'
+import { ToolMetadataPanel } from './tool-metadata-panel'
 
 interface AuditFormProps {
   audit: AuditFormContext
@@ -17,6 +20,11 @@ interface AuditFormProps {
   allTools: ToolInfo[]
   sections: SectionData[]
 }
+
+const defaultToolMetadata = (locationName: string): ToolMetadata => ({
+  locationId: '',
+  locationName
+})
 
 export function AuditForm ({
   audit,
@@ -29,6 +37,8 @@ export function AuditForm ({
   const [activeFilter, setActiveFilter] = useState<QuestionFilter>(null)
   const [toolDropdownOpen, setToolDropdownOpen] = useState(false)
   const [toolSearch, setToolSearch] = useState('')
+  const [toolMetadata, setToolMetadata] = useState<ToolMetadata>(() => defaultToolMetadata(audit.location))
+  const [generalComments, setGeneralComments] = useState('')
   const dropdownRef = useRef<HTMLDivElement>(null)
   const toolSearchInputRef = useRef<HTMLInputElement>(null)
 
@@ -116,6 +126,10 @@ export function AuditForm ({
       </header>
 
       <div className='mx-auto max-w-7xl px-4 sm:px-6 py-6'>
+        <ToolMetadataPanel
+          metadata={toolMetadata}
+          onMetadataChange={setToolMetadata}
+        />
         <div className='flex gap-6'>
           <aside className='hidden lg:block w-64 shrink-0'>
             <AuditProgressPanel
@@ -133,6 +147,19 @@ export function AuditForm ({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder='Search questions...'
                 className='pl-9 h-10 bg-card'
+              />
+            </div>
+
+            <div className='mb-5'>
+              <Label htmlFor='general-comments' className='text-sm font-medium text-card-foreground'>
+                General comments
+              </Label>
+              <Textarea
+                id='general-comments'
+                value={generalComments}
+                onChange={(e) => setGeneralComments(e.target.value)}
+                placeholder='Add general comments...'
+                className='mt-1.5 min-h-[80px] resize-none bg-card text-sm'
               />
             </div>
 

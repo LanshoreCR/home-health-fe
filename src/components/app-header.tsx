@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { ClipboardCheck, Plus, Search, X } from 'lucide-react'
+import { CreateAuditModal } from '@/components/create-audit-modal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -30,6 +32,8 @@ export function AppHeader ({
   onClearFilters,
   hasActiveFilters
 }: AppHeaderProps) {
+  const [createModalOpen, setCreateModalOpen] = useState(false)
+
   return (
     <header className='border-b border-border bg-card'>
       <div className='mx-auto max-w-5xl px-4 sm:px-6'>
@@ -43,11 +47,20 @@ export function AppHeader ({
               Home Health
             </span>
           </div>
-          <Button size='sm' className='h-8 text-xs'>
+          <Button
+            size='sm'
+            className='h-8 text-xs'
+            onClick={() => setCreateModalOpen(true)}
+          >
             <Plus className='size-3.5 mr-1.5' />
             New Audit
           </Button>
         </div>
+
+        <CreateAuditModal
+          open={createModalOpen}
+          onOpenChange={setCreateModalOpen}
+        />
 
         {/* Filter row */}
         <div className='flex flex-wrap items-center gap-2.5 pb-3'>

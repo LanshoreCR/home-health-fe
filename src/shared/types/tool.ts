@@ -6,3 +6,16 @@ export interface ToolInfo {
   completed: number
   total: number
 }
+
+export interface ToolMetadata {
+  locationId: string
+  locationName: string
+  auditDate?: string
+  payor?: string
+  disciplines?: string
+  patientNumber?: string
+  socDate?: string
+  activeOrDischarge?: 'active' | 'discharge'
+  reviewDates?: string
+  servicesBilledForReviewDates?: 'yes' | 'no'
+}
