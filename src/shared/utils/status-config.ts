@@ -19,6 +19,13 @@ export const STATUS_CONFIG: Record<AuditStatus, { label: string, className: stri
   }
 }
 
+export const PACKAGE_STATUS_MAP: Record<number, { label: string, className: string }> = {
+  1: { label: 'Pending', className: 'bg-amber-50 text-amber-700 border-amber-200' },
+  2: { label: 'In Progress', className: 'bg-primary/10 text-primary border-primary/30' },
+  3: { label: 'Completed', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  4: { label: 'Rejected', className: 'bg-red-50 text-red-700 border-red-200' }
+}
+
 /** Display status strings (e.g. from API) to Tailwind class */
 export const DISPLAY_STATUS_CLASS: Record<string, string> = {
   Pending: 'bg-amber-50 text-amber-700 border-amber-200',

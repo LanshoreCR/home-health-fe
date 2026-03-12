@@ -1,39 +1,52 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { AppHeader } from '@/components/app-header'
 import { AuditCard } from '@/components/audit-card'
-import { audits, auditorMap, quarterMap, defaultFilters } from '@/mocks'
+import { getAudits } from '@shared/services/api/endpoints/audit-packages'
+import { PACKAGE_STATUS_MAP } from '@shared/utils/status-config'
+import type { Audit } from '@shared/types'
+
+const defaultFilters = {
+  search: '',
+  status: 'all'
+}
 
 export default function AuditsPage () {
+  const [audits, setAudits] = useState<Audit[]>([])
   const [filters, setFilters] = useState(defaultFilters)
 
-  const hasActiveFilters =
-    filters.search !== '' ||
-    filters.location !== 'all' ||
-    filters.quarter !== 'all' ||
-    filters.status !== 'all' ||
-    filters.auditor !== 'all'
+  useEffect(() => {
+    const fetchAudits = async () => {
+      try {
+        const data = await getAudits()
+        setAudits(data)
+      } catch {
+        // error already handled via toast in the service
+      }
+    }
+
+    void fetchAudits()
+  }, [])
+
+  const hasActiveFilters = filters.search !== '' || filters.status !== 'all'
 
   const filteredAudits = useMemo(() => {
     return audits.filter((audit) => {
       if (
         filters.search &&
-        !audit.title.toLowerCase().includes(filters.search.toLowerCase()) &&
-        !audit.location.toLowerCase().includes(filters.search.toLowerCase())
+        !audit.packageName.toLowerCase().includes(filters.search.toLowerCase()) &&
+        !audit.edNumber.toLowerCase().includes(filters.search.toLowerCase())
       ) {
         return false
       }
-      if (filters.status !== 'all' && audit.status !== filters.status) {
-        return false
-      }
-      if (filters.quarter !== 'all' && audit.quarter !== quarterMap[filters.quarter]) {
-        return false
-      }
-      if (filters.auditor !== 'all' && audit.auditor !== auditorMap[filters.auditor]) {
-        return false
+      if (filters.status !== 'all') {
+        const statusLabel = PACKAGE_STATUS_MAP[audit.packageStatus]?.label
+          ?.toLowerCase()
+          .replace(/\s+/g, '-')
+        if (statusLabel !== filters.status) return false
       }
       return true
     })
-  }, [filters])
+  }, [audits, filters])
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }))
@@ -55,7 +68,7 @@ export default function AuditsPage () {
       <main className='mx-auto max-w-5xl px-4 sm:px-6 py-6'>
         <div className='flex flex-col gap-3'>
           {filteredAudits.map((audit) => (
-            <AuditCard key={audit.id} {...audit} />
+            <AuditCard key={audit.packageID} {...audit} />
           ))}
 
           {filteredAudits.length === 0 && (
@@ -63,12 +76,14 @@ export default function AuditsPage () {
               <p className='text-sm text-muted-foreground'>
                 No audits match your filters.
               </p>
-              <button
-                onClick={handleClearFilters}
-                className='mt-2 text-sm text-primary hover:underline'
-              >
-                Clear all filters
-              </button>
+              {hasActiveFilters && (
+                <button
+                  onClick={handleClearFilters}
+                  className='mt-2 text-sm text-primary hover:underline'
+                >
+                  Clear all filters
+                </button>
+              )}
             </div>
           )}
         </div>

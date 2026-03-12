@@ -15,10 +15,7 @@ interface AppHeaderProps {
   auditCount: number
   filters: {
     search: string
-    location: string
-    quarter: string
     status: string
-    auditor: string
   }
   onFilterChange: (key: string, value: string) => void
   onClearFilters: () => void
@@ -75,39 +72,10 @@ export function AppHeader ({
           </div>
 
           <Select
-            value={filters.location}
-            onValueChange={(v) => onFilterChange('location', v)}
-          >
-            <SelectTrigger className='w-[140px] h-8 text-xs bg-background'>
-              <SelectValue placeholder='Location' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='all'>All Locations</SelectItem>
-              <SelectItem value='wa-south'>WA South King County</SelectItem>
-              <SelectItem value='ca-north'>CA North Region</SelectItem>
-              <SelectItem value='tx-central'>TX Central</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={filters.quarter}
-            onValueChange={(v) => onFilterChange('quarter', v)}
-          >
-            <SelectTrigger className='w-[110px] h-8 text-xs bg-background'>
-              <SelectValue placeholder='Quarter' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='all'>All Quarters</SelectItem>
-              <SelectItem value='q1-2026'>Q1 2026</SelectItem>
-              <SelectItem value='q4-2025'>Q4 2025</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select
             value={filters.status}
             onValueChange={(v) => onFilterChange('status', v)}
           >
-            <SelectTrigger className='w-[120px] h-8 text-xs bg-background'>
+            <SelectTrigger className='w-[130px] h-8 text-xs bg-background'>
               <SelectValue placeholder='Status' />
             </SelectTrigger>
             <SelectContent>
@@ -116,23 +84,6 @@ export function AppHeader ({
               <SelectItem value='in-progress'>In Progress</SelectItem>
               <SelectItem value='completed'>Completed</SelectItem>
               <SelectItem value='rejected'>Rejected</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={filters.auditor}
-            onValueChange={(v) => onFilterChange('auditor', v)}
-          >
-            <SelectTrigger className='w-[140px] h-8 text-xs bg-background'>
-              <SelectValue placeholder='Auditor' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='all'>All Auditors</SelectItem>
-              <SelectItem value='rojas'>Rojas Guzman, Jose R</SelectItem>
-              <SelectItem value='chen'>Chen, Michelle L</SelectItem>
-              <SelectItem value='williams'>Williams, Sarah K</SelectItem>
-              <SelectItem value='martinez'>Martinez, Carlos D</SelectItem>
-              <SelectItem value='nguyen'>Nguyen, Thi P</SelectItem>
             </SelectContent>
           </Select>
 
