@@ -2,8 +2,9 @@ export const API_URL = import.meta.env.VITE_API_URL ?? ''
 
 export const ENDPOINTS = {
   GET_USER_INFO: '/api/User/GetUserInfo',
-  GET_LOCATION_HIERARCHY: '/api/Auxiliary/GetLocationHierarchy',
+  GET_LOCATION_HIERARCHY: '/api/Locations/hierarchy',
   GET_AUDITS_PACKAGES: '/api/Audits',
+  POST_AUDIT: '/api/Audits',
   GET_ALL_BANNERS: '/api/AuditPackage/RetrieveAllBanners',
   CREATE_BANNER: '/api/AuditPackage/CreateBanner',
   UPDATE_BANNER_STATUS: '/api/AuditPackage/UpdateBannerStatus',

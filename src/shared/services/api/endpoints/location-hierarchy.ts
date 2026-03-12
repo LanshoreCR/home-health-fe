@@ -1,36 +1,28 @@
 import { axiosInstance } from '../api-master'
 import { ENDPOINTS } from '../config'
+import { toast } from 'sonner'
 
-export const getLocationHierarchy = async ({ BusinessLineID, RegionID, RegionalDirectorID, ExecutiveDirectorID, Controller } = {
-  BusinessLineID: '0', RegionID: '0', RegionalDirectorID: '0', ExecutiveDirectorID: '0', Controller: 0
-}) => {
+export interface LocationHierarchyItem {
+  region: { id: string, name: string }
+  regionalDirector: { id: string, name: string } | null
+  executiveDirector: { id: string, name: string } | null
+  location: { id: string, name: string }
+}
+
+export const getLocationHierarchy = async (params?: { rdId?: string }): Promise<LocationHierarchyItem[]> => {
   try {
-    const resp = await axiosInstance.get(ENDPOINTS.GET_LOCATION_HIERARCHY, {
-      params: {
-        BusinessLineID,
-        RegionID,
-        RegionalDirectorID,
-        ExecutiveDirectorID,
-        Controller
-      }
-    })
-    const data = resp.data as Array<Record<string, unknown>>
-
-    const elements = data.map((item) => ({
-      businessLineId: item.businessLine_ID,
-      businessLine: item.businessLine,
-      regionId: item.region_ID,
-      regionName: item.regionName,
-      rdIda: item.rD_IDa,
-      rdName: item.rdName,
-      edId: item.eD_ID,
-      edName: item.edName,
-      locationId: item.locationID,
-      locationName: item.locationName
-    }))
-    return elements
+    const response = await axiosInstance.get<LocationHierarchyItem[]>(
+      ENDPOINTS.GET_LOCATION_HIERARCHY,
+      { params: params ?? {} }
+    )
+    if (response.status !== 200) {
+      toast.error('Failed to fetch location hierarchy')
+      throw new Error('error getting location hierarchy')
+    }
+    return response.data
   } catch (error) {
-    console.error('Error fetching user info:', error)
-    throw error
+    console.error(error)
+    toast.error('Failed to fetch location hierarchy')
+    throw new Error('cannot get location hierarchy')
   }
 }
