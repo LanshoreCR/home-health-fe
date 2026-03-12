@@ -1,15 +1,14 @@
 export type AuditStatus = 'pending' | 'in-progress' | 'completed' | 'rejected'
 
 export interface Audit {
-  id: string
-  title: string
-  location: string
-  quarter: string
-  auditor: string
-  status: AuditStatus
-  attachments: number
-  toolsComplete: number
-  toolsTotal: number
+  packageID: number
+  packageName: string
+  packageStatus: number
+  edNumber: string
+  startDate: string
+  endDate: string
+  folderID: number | null
+  packageScore: string
 }
 
 /** Context object for the audit form (title, location, status, auditId). */
