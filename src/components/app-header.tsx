@@ -20,6 +20,7 @@ interface AppHeaderProps {
   onFilterChange: (key: string, value: string) => void
   onClearFilters: () => void
   hasActiveFilters: boolean
+  onAuditCreated?: () => void
 }
 
 export function AppHeader ({
@@ -27,7 +28,8 @@ export function AppHeader ({
   filters,
   onFilterChange,
   onClearFilters,
-  hasActiveFilters
+  hasActiveFilters,
+  onAuditCreated
 }: AppHeaderProps) {
   const [createModalOpen, setCreateModalOpen] = useState(false)
 
@@ -57,6 +59,7 @@ export function AppHeader ({
         <CreateAuditModal
           open={createModalOpen}
           onOpenChange={setCreateModalOpen}
+          onAuditCreated={onAuditCreated}
         />
 
         {/* Filter row */}

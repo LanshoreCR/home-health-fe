@@ -14,16 +14,16 @@ export default function AuditsPage () {
   const [audits, setAudits] = useState<Audit[]>([])
   const [filters, setFilters] = useState(defaultFilters)
 
-  useEffect(() => {
-    const fetchAudits = async () => {
-      try {
-        const data = await getAudits()
-        setAudits(data)
-      } catch {
-        // error already handled via toast in the service
-      }
+  const fetchAudits = async () => {
+    try {
+      const data = await getAudits()
+      setAudits(data)
+    } catch {
+      // error already handled via toast in the service
     }
+  }
 
+  useEffect(() => {
     void fetchAudits()
   }, [])
 
@@ -64,6 +64,7 @@ export default function AuditsPage () {
         onFilterChange={handleFilterChange}
         onClearFilters={handleClearFilters}
         hasActiveFilters={hasActiveFilters}
+        onAuditCreated={fetchAudits}
       />
       <main className='mx-auto max-w-5xl px-4 sm:px-6 py-6'>
         <div className='flex flex-col gap-3'>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -17,69 +17,112 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import { getLocationHierarchy } from '@shared/services/api/endpoints/location-hierarchy'
+import { createAudit } from '@shared/services/api/endpoints/audit-packages'
 
 interface CreateAuditModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onAuditCreated?: () => void
 }
 
-const MOCK_EXECUTIVE_DIRECTORS = [
-  { id: 'ed1', name: 'Jane Smith' },
-  { id: 'ed2', name: 'John Doe' },
-  { id: 'ed3', name: 'Maria Garcia' }
-]
-
-const MOCK_RD_BY_ED: Record<string, { id: string, name: string }[]> = {
-  ed1: [
-    { id: 'rd1', name: 'Region West' },
-    { id: 'rd2', name: 'Region East' }
-  ],
-  ed2: [
-    { id: 'rd3', name: 'Region North' },
-    { id: 'rd4', name: 'Region South' }
-  ],
-  ed3: [
-    { id: 'rd5', name: 'Region Central' }
-  ]
+function toISOStartOfDay (dateStr: string): string {
+  if (!dateStr) return ''
+  return `${dateStr}T00:00:00.000Z`
 }
 
-const MOCK_ALL_RDS = Object.entries(MOCK_RD_BY_ED).flatMap(([edId, rds]) =>
-  rds.map((rd) => ({ ...rd, edId }))
-)
-const RD_TO_ED: Record<string, string> = Object.fromEntries(
-  MOCK_ALL_RDS.map((rd) => [rd.id, rd.edId])
-)
-
-export function CreateAuditModal ({ open, onOpenChange }: CreateAuditModalProps) {
-  const [selectedEd, setSelectedEd] = useState('')
+export function CreateAuditModal ({ open, onOpenChange, onAuditCreated }: CreateAuditModalProps) {
   const [selectedRd, setSelectedRd] = useState('')
+  const [selectedEd, setSelectedEd] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [hierarchyAll, setHierarchyAll] = useState<Awaited<ReturnType<typeof getLocationHierarchy>>>([])
+  const [hierarchyByRd, setHierarchyByRd] = useState<Awaited<ReturnType<typeof getLocationHierarchy>>>([])
+  const [loadingHierarchy, setLoadingHierarchy] = useState(false)
+  const [loadingEd, setLoadingEd] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
-  const executiveDirectorsForRd = selectedRd
-    ? MOCK_EXECUTIVE_DIRECTORS.filter((ed) => ed.id === RD_TO_ED[selectedRd])
-    : []
+  const regionalDirectors = useMemo(() => {
+    const seen = new Set<string>()
+    return hierarchyAll
+      .filter((item) => item.regionalDirector != null)
+      .filter((item) => {
+        const id = item.regionalDirector!.id
+        if (seen.has(id)) return false
+        seen.add(id)
+        return true
+      })
+      .map((item) => ({ id: item.regionalDirector!.id, name: item.regionalDirector!.name }))
+  }, [hierarchyAll])
+
+  const executiveDirectors = useMemo(() => {
+    const seen = new Set<string>()
+    return hierarchyByRd
+      .filter((item) => item.executiveDirector != null)
+      .map((item) => ({ id: item.executiveDirector!.id, name: item.executiveDirector!.name }))
+      .filter((ed) => {
+        if (seen.has(ed.id)) return false
+        seen.add(ed.id)
+        return true
+      })
+  }, [hierarchyByRd])
 
   const isFormComplete =
-    selectedEd !== '' &&
     selectedRd !== '' &&
+    selectedEd !== '' &&
     startDate !== '' &&
     endDate !== ''
 
   const resetForm = () => {
-    setSelectedEd('')
     setSelectedRd('')
+    setSelectedEd('')
     setStartDate('')
     setEndDate('')
+    setHierarchyByRd([])
   }
 
   useEffect(() => {
-    if (!open) resetForm()
+    if (!open) {
+      resetForm()
+      return
+    }
+    const fetchHierarchy = async () => {
+      setLoadingHierarchy(true)
+      try {
+        const data = await getLocationHierarchy()
+        setHierarchyAll(data)
+      } catch {
+        // error already toasted in the service
+      } finally {
+        setLoadingHierarchy(false)
+      }
+    }
+    void fetchHierarchy()
   }, [open])
+
+  useEffect(() => {
+    if (!open || !selectedRd) {
+      setHierarchyByRd([])
+      return
+    }
+    setSelectedEd('')
+    const fetchByRd = async () => {
+      setLoadingEd(true)
+      try {
+        const data = await getLocationHierarchy({ rdId: selectedRd })
+        setHierarchyByRd(data)
+      } catch {
+        // error already toasted in the service
+      } finally {
+        setLoadingEd(false)
+      }
+    }
+    void fetchByRd()
+  }, [open, selectedRd])
 
   const handleRdChange = (value: string) => {
     setSelectedRd(value)
-    setSelectedEd(RD_TO_ED[value] ?? '')
+    setSelectedEd('')
   }
 
   const handleCancel = () => {
@@ -87,9 +130,23 @@ export function CreateAuditModal ({ open, onOpenChange }: CreateAuditModalProps)
     onOpenChange(false)
   }
 
-  const handleCreate = () => {
-    onOpenChange(false)
-    resetForm()
+  const handleCreate = async () => {
+    if (!isFormComplete) return
+    setSubmitting(true)
+    try {
+      await createAudit({
+        edId: selectedEd,
+        startDate: toISOStartOfDay(startDate),
+        endDate: toISOStartOfDay(endDate)
+      })
+      onAuditCreated?.()
+      onOpenChange(false)
+      resetForm()
+    } catch {
+      // error already toasted in the service
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -104,13 +161,17 @@ export function CreateAuditModal ({ open, onOpenChange }: CreateAuditModalProps)
 
         <div className='grid gap-4 py-2'>
           <div className='grid gap-2'>
-            <Label htmlFor='region-director'>Region Director</Label>
-            <Select value={selectedRd || undefined} onValueChange={handleRdChange}>
+            <Label htmlFor='region-director'>Regional Director</Label>
+            <Select
+              value={selectedRd || undefined}
+              onValueChange={handleRdChange}
+              disabled={loadingHierarchy}
+            >
               <SelectTrigger id='region-director' className='w-full h-9 text-sm bg-background'>
-                <SelectValue placeholder='Select Region Director...' />
+                <SelectValue placeholder={loadingHierarchy ? 'Loading...' : 'Select Regional Director...'} />
               </SelectTrigger>
               <SelectContent>
-                {MOCK_ALL_RDS.map((rd) => (
+                {regionalDirectors.map((rd) => (
                   <SelectItem key={rd.id} value={rd.id}>
                     {rd.name}
                   </SelectItem>
@@ -124,13 +185,13 @@ export function CreateAuditModal ({ open, onOpenChange }: CreateAuditModalProps)
             <Select
               value={selectedEd || undefined}
               onValueChange={setSelectedEd}
-              disabled={!selectedRd}
+              disabled={!selectedRd || loadingEd}
             >
               <SelectTrigger id='executive-director' className='w-full h-9 text-sm bg-background'>
-                <SelectValue placeholder='Select Executive Director...' />
+                <SelectValue placeholder={loadingEd ? 'Loading...' : 'Select Executive Director...'} />
               </SelectTrigger>
               <SelectContent>
-                {executiveDirectorsForRd.map((ed) => (
+                {executiveDirectors.map((ed) => (
                   <SelectItem key={ed.id} value={ed.id}>
                     {ed.name}
                   </SelectItem>
@@ -163,11 +224,11 @@ export function CreateAuditModal ({ open, onOpenChange }: CreateAuditModalProps)
         </div>
 
         <DialogFooter className='gap-3'>
-          <Button type='button' variant='outline' onClick={handleCancel}>
+          <Button type='button' variant='outline' onClick={handleCancel} disabled={submitting}>
             Cancel
           </Button>
-          <Button type='button' onClick={handleCreate} disabled={!isFormComplete}>
-            Create Audit
+          <Button type='button' onClick={handleCreate} disabled={!isFormComplete || submitting}>
+            {submitting ? 'Creating...' : 'Create Audit'}
           </Button>
         </DialogFooter>
       </DialogContent>
