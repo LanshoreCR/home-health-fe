@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Search, ClipboardList, Plus } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -6,29 +6,117 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ToolListItem } from '@/components/tool-list-item'
 import { CreateToolModal } from '@/components/create-tool-modal'
+import { Skeleton } from '@/components/ui/skeleton'
 import { getToolStatus } from '@shared/utils/tool-status'
-import { getStatusBadgeClass } from '@shared/utils/status-config'
-import { auditToolsMap } from '@/mocks'
-import type { ToolMetadata } from '@/shared/types'
+import { PACKAGE_STATUS_MAP } from '@shared/utils/status-config'
+import { getAuditById } from '@shared/services/api/endpoints/audit-packages'
+import { getToolsByAuditPackageId, createAuditTool } from '@shared/services/api/endpoints/tools'
+import type { ToolMetadata, ToolInfo } from '@/shared/types'
+import type { Audit } from '@shared/types'
 
 type FilterStatus = 'all' | 'not-started' | 'in-progress' | 'complete'
 
-const MOCK_LOCATIONS = [
-  { id: 'loc1', name: 'Consolidated Homecare Services' },
-  { id: 'loc2', name: 'Pacific Health Partners' },
-  { id: 'loc3', name: 'Golden State Home Health' },
-  { id: 'loc4', name: 'Lone Star Care Services' }
-]
+function formatDate (isoString: string): string {
+  return isoString.slice(0, 10)
+}
 
 export default function AuditToolsPage () {
   const { id } = useParams<{ id: string }>()
+  const [audit, setAudit] = useState<Audit | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [tools, setTools] = useState<ToolInfo[]>([])
+  const [toolsLoading, setToolsLoading] = useState(false)
+  const [toolsError, setToolsError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all')
   const [createToolModalOpen, setCreateToolModalOpen] = useState(false)
+  const [creatingTool, setCreatingTool] = useState(false)
+  const prevCreateToolModalOpen = useRef(createToolModalOpen)
 
-  const handleCreateTool = (data: ToolMetadata) => {
-    // TODO: call createTools API when packageId/userId available; optionally refetch or add tool to list
-    console.log('Create tool:', data)
+  useEffect(() => {
+    if (id === undefined) return
+    setLoading(true)
+    setError(null)
+    getAuditById(id)
+      .then(setAudit)
+      .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load audit'))
+      .finally(() => setLoading(false))
+  }, [id])
+
+  useEffect(() => {
+    if (id === undefined) return
+    setToolsLoading(true)
+    setToolsError(null)
+    getToolsByAuditPackageId(id)
+      .then(setTools)
+      .catch((err) => setToolsError(err instanceof Error ? err.message : 'Failed to load tools'))
+      .finally(() => setToolsLoading(false))
+  }, [id])
+
+  useEffect(() => {
+    const wasOpen = prevCreateToolModalOpen.current
+    prevCreateToolModalOpen.current = createToolModalOpen
+    if (!wasOpen || createToolModalOpen) return
+    if (id === undefined) return
+    setToolsLoading(true)
+    setToolsError(null)
+    getToolsByAuditPackageId(id)
+      .then(setTools)
+      .catch((err) => setToolsError(err instanceof Error ? err.message : 'Failed to load tools'))
+      .finally(() => setToolsLoading(false))
+  }, [createToolModalOpen, id])
+
+  const filteredTools = useMemo(() => {
+    return tools
+      .filter((t) => {
+        if (searchQuery && !t.name.toLowerCase().includes(searchQuery.toLowerCase())) return false
+        if (statusFilter !== 'all' && getToolStatus(t.completed, t.total) !== statusFilter) return false
+        return true
+      })
+      .sort((a, b) => {
+        const order: Record<string, number> = { 'not-started': 0, 'in-progress': 1, complete: 2 }
+        return order[getToolStatus(a.completed, a.total)] - order[getToolStatus(b.completed, b.total)]
+      })
+  }, [tools, searchQuery, statusFilter])
+
+  const totalComplete = useMemo(() => tools.filter((t) => getToolStatus(t.completed, t.total) === 'complete').length, [tools])
+  const totalInProgress = useMemo(() => tools.filter((t) => getToolStatus(t.completed, t.total) === 'in-progress').length, [tools])
+  const totalNotStarted = useMemo(() => tools.filter((t) => getToolStatus(t.completed, t.total) === 'not-started').length, [tools])
+
+  const statusFilters: Array<{ key: FilterStatus, label: string, count: number }> = [
+    { key: 'all', label: 'All', count: tools.length },
+    { key: 'not-started', label: 'Not started', count: totalNotStarted },
+    { key: 'in-progress', label: 'In progress', count: totalInProgress },
+    { key: 'complete', label: 'Complete', count: totalComplete }
+  ]
+
+  const handleCreateTool = async (data: ToolMetadata) => {
+    if (id === undefined || audit === null) return
+    setCreatingTool(true)
+    try {
+      await createAuditTool({
+        packageID: audit.packageID,
+        templateID: 1,
+        assignedAuditor: '0765647',
+        locationNumber: data.locationId,
+        ...(data.patientNumber && { patientNumber: data.patientNumber }),
+        ...(data.auditDate && { auditDate: data.auditDate }),
+        ...(data.activeOrDischarge && { activeOrDischarged: data.activeOrDischarge }),
+        ...(data.disciplines && { disciplines: data.disciplines }),
+        ...(data.payor && { payor: data.payor }),
+        ...(data.reviewDates && { reviewDate: data.reviewDates }),
+        ...(data.servicesBilledForReviewDates && {
+          servicesBilled: data.servicesBilledForReviewDates === 'yes' ? 'Y' : 'N'
+        }),
+        ...(data.socDate && { socDate: data.socDate })
+      })
+      setCreateToolModalOpen(false)
+    } catch {
+      // toast already in createAuditTool
+    } finally {
+      setCreatingTool(false)
+    }
   }
 
   if (id === undefined) {
@@ -39,40 +127,54 @@ export default function AuditToolsPage () {
     )
   }
 
-  const audit = auditToolsMap[id]
-
-  const filteredTools = useMemo(() => {
-    if (!audit) return []
-    return audit.tools
-      .filter((t) => {
-        if (searchQuery && !t.name.toLowerCase().includes(searchQuery.toLowerCase())) return false
-        if (statusFilter !== 'all' && getToolStatus(t.completed, t.total) !== statusFilter) return false
-        return true
-      })
-      .sort((a, b) => {
-        const order: Record<string, number> = { 'not-started': 0, 'in-progress': 1, complete: 2 }
-        return order[getToolStatus(a.completed, a.total)] - order[getToolStatus(b.completed, b.total)]
-      })
-  }, [audit, searchQuery, statusFilter])
-
-  const totalComplete = useMemo(() => audit?.tools.filter((t) => getToolStatus(t.completed, t.total) === 'complete').length ?? 0, [audit])
-  const totalInProgress = useMemo(() => audit?.tools.filter((t) => getToolStatus(t.completed, t.total) === 'in-progress').length ?? 0, [audit])
-  const totalNotStarted = useMemo(() => audit?.tools.filter((t) => getToolStatus(t.completed, t.total) === 'not-started').length ?? 0, [audit])
-
-  if (audit === undefined) {
+  if (loading) {
     return (
-      <div className='min-h-screen bg-background flex items-center justify-center'>
-        <p className='text-muted-foreground'>Audit not found.</p>
+      <div className='min-h-screen bg-background'>
+        <header className='sticky top-0 z-30 bg-card border-b border-border'>
+          <div className='mx-auto max-w-3xl px-4 sm:px-6'>
+            <div className='flex items-center gap-4 h-14'>
+              <Link
+                to='/'
+                className='flex items-center gap-2 text-sm text-muted-foreground hover:text-card-foreground transition-colors shrink-0'
+              >
+                <ArrowLeft className='size-4' />
+                <span className='hidden sm:inline'>Home</span>
+              </Link>
+              <div className='flex-1 min-w-0 flex flex-col gap-1.5'>
+                <Skeleton className='h-4 w-48' />
+                <Skeleton className='h-3 w-32' />
+              </div>
+              <Skeleton className='h-5 w-16 rounded-md shrink-0' />
+            </div>
+          </div>
+        </header>
+        <main className='mx-auto max-w-3xl px-4 sm:px-6 py-6'>
+          <Skeleton className='h-8 w-64 mb-5' />
+          <div className='flex flex-col gap-2'>
+            {Array.from({ length: 4 }, (_, i) => (
+              <Skeleton key={i} className='h-12 w-full rounded-lg' />
+            ))}
+          </div>
+        </main>
       </div>
     )
   }
 
-  const statusFilters: Array<{ key: FilterStatus, label: string, count: number }> = [
-    { key: 'all', label: 'All', count: audit.tools.length },
-    { key: 'not-started', label: 'Not started', count: totalNotStarted },
-    { key: 'in-progress', label: 'In progress', count: totalInProgress },
-    { key: 'complete', label: 'Complete', count: totalComplete }
-  ]
+  if (error || audit === null) {
+    return (
+      <div className='min-h-screen bg-background flex flex-col items-center justify-center gap-3 px-4'>
+        <p className='text-sm text-destructive text-center'>{error ?? 'Audit not found.'}</p>
+        <Button variant='outline' size='sm' onClick={() => window.location.reload()}>
+          Try again
+        </Button>
+        <Link to='/' className='text-sm text-primary hover:underline'>
+          Back to Home
+        </Link>
+      </div>
+    )
+  }
+
+  const statusConfig = PACKAGE_STATUS_MAP[audit.packageStatus] ?? { label: 'Unknown', className: '' }
 
   return (
     <div className='min-h-screen bg-background'>
@@ -89,13 +191,23 @@ export default function AuditToolsPage () {
 
             <div className='flex-1 min-w-0'>
               <h1 className='text-sm font-semibold text-card-foreground truncate'>
-                {audit.title}
+                {audit.packageName}
               </h1>
-              <p className='text-xs text-muted-foreground truncate'>{audit.location}</p>
+              <p className='text-xs text-muted-foreground truncate'>
+                {[
+                  audit.edNumber ? `ED: ${audit.edNumber}` : null,
+                  audit.startDate && audit.endDate
+                    ? `${formatDate(audit.startDate)} – ${formatDate(audit.endDate)}`
+                    : audit.startDate
+                      ? formatDate(audit.startDate)
+                      : null,
+                  audit.packageScore ? `Score: ${audit.packageScore}` : null
+                ].filter(Boolean).join(' · ')}
+              </p>
             </div>
 
-            <Badge variant='outline' className={`shrink-0 text-xs ${getStatusBadgeClass(audit.status)}`}>
-              {audit.status}
+            <Badge variant='outline' className={`shrink-0 text-xs ${statusConfig.className}`}>
+              {statusConfig.label}
             </Badge>
           </div>
         </div>
@@ -109,7 +221,7 @@ export default function AuditToolsPage () {
               Tools
             </h2>
             <span className='text-sm text-muted-foreground'>
-              {totalComplete} of {audit.tools.length} complete
+              {totalComplete} of {tools.length} complete
             </span>
           </div>
           <Button
@@ -125,7 +237,9 @@ export default function AuditToolsPage () {
         <CreateToolModal
           open={createToolModalOpen}
           onOpenChange={setCreateToolModalOpen}
-          locations={MOCK_LOCATIONS}
+          packageId={id}
+          audit={audit}
+          isSubmitting={creatingTool}
           onSubmit={handleCreateTool}
         />
 
@@ -158,7 +272,37 @@ export default function AuditToolsPage () {
         </div>
 
         <div className='flex flex-col gap-2'>
-          {filteredTools.map((tool) => (
+          {toolsLoading && (
+            <>
+              {Array.from({ length: 4 }, (_, i) => (
+                <Skeleton key={i} className='h-12 w-full rounded-lg' />
+              ))}
+            </>
+          )}
+
+          {!toolsLoading && toolsError && (
+            <div className='flex flex-col items-center justify-center py-16 text-center rounded-lg border border-border bg-card'>
+              <p className='text-sm text-destructive'>{toolsError}</p>
+              <Button
+                variant='outline'
+                size='sm'
+                className='mt-3'
+                onClick={() => {
+                  if (id === undefined) return
+                  setToolsError(null)
+                  setToolsLoading(true)
+                  getToolsByAuditPackageId(id)
+                    .then(setTools)
+                    .catch((err) => setToolsError(err instanceof Error ? err.message : 'Failed to load tools'))
+                    .finally(() => setToolsLoading(false))
+                }}
+              >
+                Try again
+              </Button>
+            </div>
+          )}
+
+          {!toolsLoading && !toolsError && filteredTools.map((tool) => (
             <ToolListItem
               key={tool.id}
               auditId={id}
@@ -169,18 +313,20 @@ export default function AuditToolsPage () {
             />
           ))}
 
-          {filteredTools.length === 0 && (
+          {!toolsLoading && !toolsError && filteredTools.length === 0 && (
             <div className='flex flex-col items-center justify-center py-16 text-center rounded-lg border border-border bg-card'>
               <p className='text-sm text-muted-foreground'>
                 No tools match your search.
               </p>
-              {(searchQuery || statusFilter !== 'all') && (
+              {(searchQuery || statusFilter !== 'all') ? (
                 <button
                   onClick={() => { setSearchQuery(''); setStatusFilter('all') }}
                   className='mt-2 text-sm text-primary hover:underline'
                 >
                   Clear filters
                 </button>
+              ) : (
+                <p className='mt-2 text-sm text-muted-foreground'>No tools in this audit yet.</p>
               )}
             </div>
           )}

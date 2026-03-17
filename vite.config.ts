@@ -18,5 +18,10 @@ export default defineConfig({
   server: {
     host: process.env.VITE_HOST || 'localhost',
     port: parseInt(process.env.VITE_PORT || '8080'),
+    strictPort: false,
+    hmr: {
+      protocol: 'wss',
+      host: 'localhost',
+    },
   },
 })

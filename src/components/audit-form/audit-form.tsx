@@ -14,11 +14,21 @@ import { ToolNavigationBar } from './tool-navigation-bar'
 import { ToolDropdown } from './tool-dropdown'
 import { ToolMetadataPanel } from './tool-metadata-panel'
 
+export interface ToolDetailsForDisplay {
+  templateName: string
+  locationName: string
+  assignedAuditor: string
+}
+
 interface AuditFormProps {
   audit: AuditFormContext
   toolId: string
   allTools: ToolInfo[]
   sections: SectionData[]
+  toolDetails?: ToolDetailsForDisplay | null
+  initialToolMetadata?: ToolMetadata
+  formLoading?: boolean
+  formError?: string | null
 }
 
 const defaultToolMetadata = (locationName: string): ToolMetadata => ({
@@ -30,17 +40,33 @@ export function AuditForm ({
   audit,
   toolId,
   allTools,
-  sections: initialSections
+  sections: initialSections,
+  toolDetails,
+  initialToolMetadata,
+  formLoading = false,
+  formError = null
 }: AuditFormProps) {
   const [sections, setSections] = useState(initialSections)
   const [searchQuery, setSearchQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState<QuestionFilter>(null)
   const [toolDropdownOpen, setToolDropdownOpen] = useState(false)
   const [toolSearch, setToolSearch] = useState('')
-  const [toolMetadata, setToolMetadata] = useState<ToolMetadata>(() => defaultToolMetadata(audit.location))
+  const [toolMetadata, setToolMetadata] = useState<ToolMetadata>(() =>
+    initialToolMetadata ?? defaultToolMetadata(toolDetails?.locationName ?? audit.location)
+  )
   const [generalComments, setGeneralComments] = useState('')
   const dropdownRef = useRef<HTMLDivElement>(null)
   const toolSearchInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    setSections(initialSections)
+  }, [initialSections])
+
+  useEffect(() => {
+    if (initialToolMetadata != null) {
+      setToolMetadata(initialToolMetadata)
+    }
+  }, [initialToolMetadata])
 
   const { currentToolIndex, currentTool, prevTool, nextTool, navigateToTool: navToTool } = useToolNavigation(
     allTools,
@@ -97,8 +123,10 @@ export function AuditForm ({
         <div className='mx-auto max-w-7xl px-4 sm:px-6'>
           <AuditFormHeader
             audit={audit}
-            currentToolName={currentTool?.name ?? ''}
+            currentToolName={toolDetails?.templateName ?? currentTool?.name ?? ''}
             percent={percent}
+            toolLocationName={toolDetails?.locationName}
+            assignedAuditor={toolDetails?.assignedAuditor}
           />
 
           <ToolNavigationBar
@@ -126,6 +154,14 @@ export function AuditForm ({
       </header>
 
       <div className='mx-auto max-w-7xl px-4 sm:px-6 py-6'>
+        {formError != null && (
+          <div className='mb-4 rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive'>
+            {formError}
+          </div>
+        )}
+        {formLoading && (
+          <div className='mb-4 text-sm text-muted-foreground'>Loading tool and form...</div>
+        )}
         <ToolMetadataPanel
           metadata={toolMetadata}
           onMetadataChange={setToolMetadata}
