@@ -1,6 +1,7 @@
 import { Download, CheckCircle2, XCircle, ChevronRight, CalendarDays, Hash, TrendingUp } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Tooltip,
   TooltipContent,
@@ -9,6 +10,44 @@ import {
 import { Link } from 'react-router-dom'
 import type { Audit } from '@/shared/types'
 import { PACKAGE_STATUS_MAP } from '@shared/utils/status-config'
+
+const SKELETON_CARD_COUNT = 5
+
+export function AuditCardSkeleton () {
+  return (
+    <div className='flex items-center gap-0 rounded-lg border border-border bg-card'>
+      <div className='flex-1 min-w-0 flex items-center gap-4 p-4 pr-0'>
+        <div className='flex-1 min-w-0'>
+          <div className='flex items-center gap-2.5 mb-1'>
+            <Skeleton className='h-4 w-48' />
+            <Skeleton className='h-4 w-14 rounded-md' />
+          </div>
+          <div className='flex items-center gap-3 mt-1.5'>
+            <Skeleton className='h-3 w-20' />
+            <Skeleton className='h-3 w-28' />
+            <Skeleton className='h-3 w-12' />
+          </div>
+        </div>
+        <Skeleton className='size-4 rounded shrink-0' />
+      </div>
+      <div className='flex items-center gap-0.5 border-l border-border px-2 py-4 shrink-0'>
+        <Skeleton className='size-8 rounded' />
+        <Skeleton className='size-8 rounded' />
+        <Skeleton className='size-8 rounded' />
+      </div>
+    </div>
+  )
+}
+
+export function AuditCardSkeletonList () {
+  return (
+    <>
+      {Array.from({ length: SKELETON_CARD_COUNT }, (_, i) => (
+        <AuditCardSkeleton key={i} />
+      ))}
+    </>
+  )
+}
 
 function formatDate (isoString: string): string {
   return isoString.slice(0, 10)

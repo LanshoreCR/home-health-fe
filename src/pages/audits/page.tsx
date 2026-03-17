@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { AppHeader } from '@/components/app-header'
-import { AuditCard } from '@/components/audit-card'
+import { AuditCard, AuditCardSkeletonList } from '@/components/audit-card'
 import { getAudits } from '@shared/services/api/endpoints/audit-packages'
 import { PACKAGE_STATUS_MAP } from '@shared/utils/status-config'
 import type { Audit } from '@shared/types'
@@ -13,13 +13,19 @@ const defaultFilters = {
 export default function AuditsPage () {
   const [audits, setAudits] = useState<Audit[]>([])
   const [filters, setFilters] = useState(defaultFilters)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const fetchAudits = async () => {
+    setLoading(true)
+    setError(null)
     try {
       const data = await getAudits()
       setAudits(data)
-    } catch {
-      // error already handled via toast in the service
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load audits')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -68,11 +74,27 @@ export default function AuditsPage () {
       />
       <main className='mx-auto max-w-5xl px-4 sm:px-6 py-6'>
         <div className='flex flex-col gap-3'>
-          {filteredAudits.map((audit) => (
+          {loading && <AuditCardSkeletonList />}
+
+          {!loading && error && (
+            <div className='flex flex-col items-center justify-center py-16 text-center'>
+              <p className='text-sm text-destructive'>
+                {error}
+              </p>
+              <button
+                onClick={() => void fetchAudits()}
+                className='mt-3 text-sm text-primary hover:underline'
+              >
+                Try again
+              </button>
+            </div>
+          )}
+
+          {!loading && !error && filteredAudits.map((audit) => (
             <AuditCard key={audit.packageID} {...audit} />
           ))}
 
-          {filteredAudits.length === 0 && (
+          {!loading && !error && filteredAudits.length === 0 && (
             <div className='flex flex-col items-center justify-center py-16 text-center'>
               <p className='text-sm text-muted-foreground'>
                 No audits match your filters.

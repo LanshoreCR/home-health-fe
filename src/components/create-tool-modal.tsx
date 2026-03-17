@@ -21,28 +21,29 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { getLocationHierarchy } from '@shared/services/api/endpoints/location-hierarchy'
+import type { Audit } from '@shared/types'
 import type { ToolMetadata } from '@/shared/types'
 
 interface CreateToolModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  locations: Array<{ id: string; name: string }>
+  packageId: string
+  audit: Audit | null
+  isSubmitting?: boolean
   onSubmit?: (data: ToolMetadata) => void
 }
-
-const MOCK_LOCATIONS = [
-  { id: 'loc1', name: 'Consolidated Homecare Services' },
-  { id: 'loc2', name: 'Pacific Health Partners' },
-  { id: 'loc3', name: 'Golden State Home Health' },
-  { id: 'loc4', name: 'Lone Star Care Services' }
-]
 
 export function CreateToolModal ({
   open,
   onOpenChange,
-  locations = MOCK_LOCATIONS,
+  packageId,
+  audit,
+  isSubmitting = false,
   onSubmit
 }: CreateToolModalProps) {
+  const [locations, setLocations] = useState<Array<{ id: string; name: string }>>([])
+  const [locationsLoading, setLocationsLoading] = useState(false)
   const [locationId, setLocationId] = useState('')
   const [optionalOpen, setOptionalOpen] = useState(false)
   const [auditDate, setAuditDate] = useState('')
@@ -56,6 +57,32 @@ export function CreateToolModal ({
 
   const selectedLocation = locations.find((l) => l.id === locationId)
   const isFormComplete = locationId !== ''
+
+  useEffect(() => {
+    if (!open || !audit) return
+    const rdId = audit.regionalDirector?.id
+    const edId = audit.executiveDirector?.id
+    if (!rdId && !edId) {
+      setLocations([])
+      return
+    }
+    setLocationsLoading(true)
+    setLocations([])
+    getLocationHierarchy({ rdId: rdId ?? undefined, edId: edId ?? undefined })
+      .then((hierarchy) => {
+        const seen = new Set<string>()
+        const list = hierarchy
+          .map((item) => ({ id: item.location.id, name: item.location.name }))
+          .filter((loc) => {
+            if (seen.has(loc.id)) return false
+            seen.add(loc.id)
+            return true
+          })
+        setLocations(list)
+      })
+      .catch(() => {})
+      .finally(() => setLocationsLoading(false))
+  }, [open, audit?.regionalDirector?.id, audit?.executiveDirector?.id])
 
   const resetForm = () => {
     setLocationId('')
@@ -71,7 +98,10 @@ export function CreateToolModal ({
   }
 
   useEffect(() => {
-    if (!open) resetForm()
+    if (!open) {
+      resetForm()
+      setLocations([])
+    }
   }, [open])
 
   const handleCancel = () => {
@@ -97,8 +127,7 @@ export function CreateToolModal ({
         : {})
     }
     onSubmit?.(data)
-    onOpenChange(false)
-    resetForm()
+    // Parent closes modal and resets on success
   }
 
   return (
@@ -114,9 +143,15 @@ export function CreateToolModal ({
         <div className='grid gap-4 py-2'>
           <div className='grid gap-2'>
             <Label htmlFor='location'>Location</Label>
-            <Select value={locationId || undefined} onValueChange={setLocationId}>
+            <Select
+              value={locationId || undefined}
+              onValueChange={setLocationId}
+              disabled={locationsLoading}
+            >
               <SelectTrigger id='location' className='w-full h-9 text-sm bg-background'>
-                <SelectValue placeholder='Select location...' />
+                <SelectValue
+                  placeholder={locationsLoading ? 'Loading locations...' : 'Select location...'}
+                />
               </SelectTrigger>
               <SelectContent>
                 {locations.map((loc) => (
@@ -235,8 +270,8 @@ export function CreateToolModal ({
           <Button type='button' variant='outline' onClick={handleCancel}>
             Cancel
           </Button>
-          <Button type='button' onClick={handleCreate} disabled={!isFormComplete}>
-            Create Tool
+          <Button type='button' onClick={handleCreate} disabled={!isFormComplete || isSubmitting}>
+            {isSubmitting ? 'Creating...' : 'Create Tool'}
           </Button>
         </DialogFooter>
       </DialogContent>

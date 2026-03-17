@@ -19,3 +19,35 @@ export interface ToolMetadata {
   reviewDates?: string
   servicesBilledForReviewDates?: 'yes' | 'no'
 }
+
+/** Response from GET /api/Tools/{id} */
+export interface ToolByIdResponse {
+  templateID: number
+  templateDesc: string
+  locationNumber: string
+  locationName: string
+  assignedAuditor: string
+  auditorName: string
+  generalComments: string | null
+  patientNumber: string | null
+  auditDate: string | null
+  activeOrDischarged: string | null
+  disciplines: string | null
+  payor: string | null
+  reviewDate: string | null
+  servicesBilled: string | null
+  socDate: string | null
+}
+
+/** One form question from GET /api/Tools/{id}/form */
+export interface ToolFormQuestionResponse {
+  templateQuestionID: number
+  questionText: string
+  gTag?: string
+  questionSort: number
+  categ: string | null
+  answers: unknown
+  comments: string | null
+  templateAnswerID?: number | null
+  flag: boolean | null
+}

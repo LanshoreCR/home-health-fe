@@ -28,6 +28,49 @@ export const getAudits = async (): Promise<Audit[]> => {
   }
 }
 
+interface GetAuditByIdResponse {
+  packageID: number
+  packageName: string
+  packageStatus: number
+  startDate: string
+  endDate: string
+  folderID: number | null
+  packageScore: string
+  edNumber?: string
+  regionalDirector?: { id: string; name: string }
+  executiveDirector?: { id: string; name: string }
+}
+
+export const getAuditById = async (id: string): Promise<Audit> => {
+  try {
+    const response = await axiosInstance.get<GetAuditByIdResponse>(
+      `${ENDPOINTS.GET_AUDITS_PACKAGES}/${id}`,
+      { params: { controller: 1 } }
+    )
+    if (response.status !== 200) {
+      toast.error('Failed to fetch audit')
+      throw new Error('error getting audit from the database')
+    }
+    const data = response.data
+    return {
+      packageID: data.packageID,
+      packageName: data.packageName,
+      packageStatus: data.packageStatus,
+      edNumber: data.edNumber ?? '',
+      startDate: data.startDate,
+      endDate: data.endDate,
+      folderID: data.folderID,
+      packageScore: data.packageScore,
+      regionalDirector: data.regionalDirector,
+      executiveDirector: data.executiveDirector
+    }
+  } catch (error) {
+    console.error(error)
+    toast.error('Failed to fetch audit')
+    throw new Error('cannot get audit')
+  }
+}
+
 export const createAudit = async (payload: CreateAuditPayload): Promise<CreateAuditResponse> => {
   try {
     const response = await axiosInstance.post<CreateAuditResponse>(ENDPOINTS.POST_AUDIT, payload)

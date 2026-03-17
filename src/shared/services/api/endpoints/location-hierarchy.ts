@@ -9,7 +9,7 @@ export interface LocationHierarchyItem {
   location: { id: string, name: string }
 }
 
-export const getLocationHierarchy = async (params?: { rdId?: string }): Promise<LocationHierarchyItem[]> => {
+export const getLocationHierarchy = async (params?: { rdId?: string; edId?: string }): Promise<LocationHierarchyItem[]> => {
   try {
     const response = await axiosInstance.get<LocationHierarchyItem[]>(
       ENDPOINTS.GET_LOCATION_HIERARCHY,

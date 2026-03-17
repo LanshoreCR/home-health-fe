@@ -9,6 +9,8 @@ export interface Audit {
   endDate: string
   folderID: number | null
   packageScore: string
+  regionalDirector?: { id: string; name: string }
+  executiveDirector?: { id: string; name: string }
 }
 
 /** Context object for the audit form (title, location, status, auditId). */

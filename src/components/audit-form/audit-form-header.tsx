@@ -10,10 +10,19 @@ interface AuditFormHeaderProps {
   audit: AuditFormContext
   currentToolName: string
   percent: number
+  toolLocationName?: string
+  assignedAuditor?: string
 }
 
-export function AuditFormHeader ({ audit, currentToolName, percent }: AuditFormHeaderProps) {
+export function AuditFormHeader ({
+  audit,
+  currentToolName,
+  percent,
+  toolLocationName,
+  assignedAuditor
+}: AuditFormHeaderProps) {
   const { auditId, title, location, status } = audit
+  const displayLocation = toolLocationName ?? location
   return (
     <div className='flex items-center gap-4 h-14'>
       <Link
@@ -39,8 +48,13 @@ export function AuditFormHeader ({ audit, currentToolName, percent }: AuditFormH
           <ChevronRight className='size-3 shrink-0' />
           <span className='text-card-foreground font-medium truncate'>{currentToolName}</span>
         </div>
-        <div className='flex items-center gap-2 mt-0.5'>
-          <span className='text-xs text-muted-foreground truncate'>{location}</span>
+        <div className='flex items-center gap-2 mt-0.5 flex-wrap'>
+          <span className='text-xs text-muted-foreground truncate'>{displayLocation}</span>
+          {assignedAuditor != null && assignedAuditor !== '' && (
+            <span className='text-xs text-muted-foreground truncate'>
+              Auditor: {assignedAuditor}
+            </span>
+          )}
           <Badge
             variant='outline'
             className={`shrink-0 text-[10px] px-1.5 py-0 ${getStatusBadgeClass(status)}`}
