@@ -1,68 +1,34 @@
-import type { QuestionData, SectionData, ToolInfo } from '@shared/types'
-
-export interface ToolDef {
-  name: string
-  sections: SectionData[]
-}
+import type { QuestionData, ToolInfo } from '@shared/types'
 
 export interface AuditDef {
   title: string
   location: string
   status: string
-  tools: Record<string, ToolDef>
 }
 
+let mockAnswerIdCounter = 9000
+
 export function makeQ (id: string, text: string): QuestionData {
-  return { id, text, answer: null, note: '', flagged: false }
+  return { id, templateAnswerId: mockAnswerIdCounter++, text, answer: null, note: '', flagged: false }
 }
 
 export const auditDatabase: Record<string, AuditDef> = {
   1: {
     title: 'ED: RCHC WA South King County Quality Q1 2026 - 409',
     location: 'Consolidated Homecare Services',
-    status: 'Pending',
-    tools: {
-      'admin-review': {
-        name: 'Administrative Review',
-        sections: [
-          { title: 'Admission Consent', questions: [makeQ('ar-1-1', 'At the SOC, there is an Admission Consent signed and dated by the patient or their representative that includes all disciplines ordered in the referral.'), makeQ('ar-1-2', 'If patient unable to sign and representative not available, evidence of consent performed through a 3-way call followed by mail/email signed consent.')] },
-          { title: 'Financial Charges', questions: [makeQ('ar-2-1', 'At the SOC, there is evidence the patient or their representative was informed about the charges for services and the amount, if any, they may have to pay.')] },
-          { title: 'Advance Directives', questions: [makeQ('ar-3-1', 'The POC includes information related to any advanced directives.')] },
-          { title: 'Emergency Care Plan', questions: [makeQ('ar-4-1', "Patient Emergency Care Plan completed, dated, signed & attached - includes contact information for the patient, the patient's representative (if any), and the patient's primary caregiver."), makeQ('ar-4-2', 'If emergency plan activated there is evidence in chart of patient triaging.')] },
-          { title: 'Face-to-Face (F2F)', questions: [makeQ('ar-5-1', 'Where required by the payer, there is evidence of a qualifying F2F encounter with a physician or allowed practitioner that occurred within 90 days prior to the SOC or within 30 days after the SOC.')] },
-          { title: 'Master Admission Packet', questions: [makeQ('ar-6-1', 'Introductory information is provided to the client and/or their family/guardian to include: contact information for key staff, hours of operation, after hours information and contact number for state hotlines.'), makeQ('ar-6-2', 'Patient rights and responsibilities are provided and a signed copy is in the patient record.'), makeQ('ar-6-3', 'HIPAA notice of privacy practices provided and acknowledged by the patient or representative.')] },
-          { title: 'Plan of Care', questions: [makeQ('ar-7-1', 'The plan of care contains all pertinent diagnoses, including mental health diagnoses, medications, and treatment orders.'), makeQ('ar-7-2', 'The plan of care includes measurable goals and expected outcomes with specific timeframes.'), makeQ('ar-7-3', "There is evidence that the plan of care is reviewed and updated at each recertification period or when there is a significant change in the patient's condition."), makeQ('ar-7-4', 'Physician orders are obtained for all services, treatments, and changes in the plan of care.'), makeQ('ar-7-5', "The plan of care reflects coordination between all disciplines involved in the patient's care.")] }
-        ]
-      },
-      'key-indicators': {
-        name: 'Key Indicators',
-        sections: [
-          { title: 'Clinical Documentation', questions: [makeQ('ki-1-1', 'Visit notes document skilled services provided and are consistent with the plan of care.'), makeQ('ki-1-2', 'Documentation supports medical necessity for services ordered and provided.'), makeQ('ki-1-3', 'Vital signs are documented as required per discipline and condition.')] },
-          { title: 'Infection Control', questions: [makeQ('ki-2-1', 'There is evidence of proper infection control practices documented including hand hygiene and use of personal protective equipment.'), makeQ('ki-2-2', 'Documentation reflects patient/caregiver education on infection prevention measures.')] },
-          { title: 'Patient Safety', questions: [makeQ('ki-3-1', 'Fall risk assessment is completed at admission and updated as needed.'), makeQ('ki-3-2', 'Medication reconciliation is documented at each visit with evidence of patient education.'), makeQ('ki-3-3', 'There is evidence of proper sharps and bio-hazard waste disposal education.')] }
-        ]
-      },
-      'clinical-review': {
-        name: 'Clinical Review',
-        sections: [
-          { title: 'Assessment Accuracy', questions: [makeQ('cr-1-1', "OASIS assessment is completed timely and accurately reflects the patient's clinical status."), makeQ('cr-1-2', 'Clinical assessment findings are consistent with documented diagnoses and treatment plan.'), makeQ('cr-1-3', 'Functional limitations are accurately assessed and documented.')] },
-          { title: 'Care Coordination', questions: [makeQ('cr-2-1', 'There is evidence of communication with the physician regarding changes in patient condition.'), makeQ('cr-2-2', 'Coordination between disciplines is documented with consistent goals.'), makeQ('cr-2-3', 'Discharge planning begins at admission with patient/caregiver involvement.')] }
-        ]
-      }
-    }
+    status: 'Pending'
   }
 }
 
-/** Fallback when toolId is not in auditDatabase (e.g. for demo or missing tool). */
-export function generateFallbackTool (toolId: string): ToolDef {
-  const name = toolId.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-  return {
-    name,
-    sections: [
-      { title: 'General Compliance', questions: [makeQ(`${toolId}-1`, 'All required documentation is present and properly completed.'), makeQ(`${toolId}-2`, 'Documentation is signed and dated by the appropriate personnel.'), makeQ(`${toolId}-3`, 'Records are maintained in accordance with regulatory requirements.')] },
-      { title: 'Quality Standards', questions: [makeQ(`${toolId}-4`, 'Services provided meet the established quality benchmarks.'), makeQ(`${toolId}-5`, 'There is evidence of continuous quality improvement activities.')] }
-    ]
-  }
+/** Fallback flat question list when the API call fails. */
+export function generateFallbackQuestions (toolId: string): QuestionData[] {
+  return [
+    makeQ(`${toolId}-1`, 'All required documentation is present and properly completed.'),
+    makeQ(`${toolId}-2`, 'Documentation is signed and dated by the appropriate personnel.'),
+    makeQ(`${toolId}-3`, 'Records are maintained in accordance with regulatory requirements.'),
+    makeQ(`${toolId}-4`, 'Services provided meet the established quality benchmarks.'),
+    makeQ(`${toolId}-5`, 'There is evidence of continuous quality improvement activities.')
+  ]
 }
 
 export const toolListMap: Record<string, ToolInfo[]> = {

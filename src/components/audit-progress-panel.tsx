@@ -4,18 +4,17 @@ import { cn } from '@/lib/utils'
 import type { QuestionData, QuestionFilter } from '@/shared/types'
 
 interface AuditProgressPanelProps {
-  sections: Array<{ title: string, questions: QuestionData[] }>
+  questions: QuestionData[]
   activeFilter: QuestionFilter
   onFilterChange: (filter: QuestionFilter) => void
 }
 
-export function AuditProgressPanel ({ sections, activeFilter, onFilterChange }: AuditProgressPanelProps) {
-  const allQuestions = sections.flatMap((s) => s.questions)
-  const total = allQuestions.length
-  const completed = allQuestions.filter((q) => q.answer !== null).length
+export function AuditProgressPanel ({ questions, activeFilter, onFilterChange }: AuditProgressPanelProps) {
+  const total = questions.length
+  const completed = questions.filter((q) => q.answer !== null).length
   const incomplete = total - completed
-  const flagged = allQuestions.filter((q) => q.flagged).length
-  const withNotes = allQuestions.filter((q) => q.note.length > 0).length
+  const flagged = questions.filter((q) => q.flagged).length
+  const withNotes = questions.filter((q) => q.note.length > 0).length
   const percent = total > 0 ? Math.round((completed / total) * 100) : 0
 
   const stats: Array<{ key: QuestionFilter, label: string, count: number, icon: typeof ListChecks, color: string }> = [
@@ -62,36 +61,6 @@ export function AuditProgressPanel ({ sections, activeFilter, onFilterChange }: 
             </span>
           </button>
         ))}
-      </div>
-
-      <div className='mt-5 pt-5 border-t border-border'>
-        <p className='text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3'>
-          Sections
-        </p>
-        <div className='space-y-2.5'>
-          {sections.map((section) => {
-            const sAnswered = section.questions.filter((q) => q.answer !== null).length
-            const sTotal = section.questions.length
-            const sPercent = sTotal > 0 ? Math.round((sAnswered / sTotal) * 100) : 0
-            const sDone = sAnswered === sTotal
-
-            return (
-              <div key={section.title}>
-                <div className='flex items-center justify-between mb-1'>
-                  <span className='text-xs text-card-foreground truncate pr-2'>{section.title}</span>
-                  <span className={cn(
-                    'text-xs tabular-nums font-medium shrink-0',
-                    sDone ? 'text-emerald-600' : 'text-muted-foreground'
-                  )}
-                  >
-                    {sAnswered}/{sTotal}
-                  </span>
-                </div>
-                <Progress value={sPercent} className='h-1' />
-              </div>
-            )
-          })}
-        </div>
       </div>
     </div>
   )

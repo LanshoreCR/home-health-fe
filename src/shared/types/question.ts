@@ -4,13 +4,9 @@ export type QuestionFilter = 'complete' | 'incomplete' | 'flagged' | 'notes' | n
 
 export interface QuestionData {
   id: string
+  templateAnswerId: number
   text: string
   answer: AnswerValue
   note: string
   flagged: boolean
-}
-
-export interface SectionData {
-  title: string
-  questions: QuestionData[]
 }

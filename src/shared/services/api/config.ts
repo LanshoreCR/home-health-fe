@@ -19,6 +19,7 @@ export const ENDPOINTS = {
   GET_TOOL_TEMPLATES_BY_LOCATION_ID: '/api/Tools/GetAuditToolTemplates',
   GET_QUESTIONS_BY_PACKAGE_TEMPLATE_ID: '/api/Form/GetQuestions',
   UPDATE_TOOL_STATUS: '/api/Form/UpdateFormStatus',
+  FORM_BASE: '/api/Form',
   SAVE_ANSWER: '/api/Form/SaveAnswer',
   SUBMIT_ANSWERS: '/api/Form/SubmitAnswers',
   UPLOAD_ATTACHMENT: '/api/Services/CreateAttachments',

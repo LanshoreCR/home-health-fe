@@ -117,13 +117,15 @@ export const saveEmployeeId = async ({ customerName, packageId }: { customerName
   }
 }
 
-export const submitAnswers = async ({ packageTemplateId, createdBy }: { packageTemplateId: string, createdBy: string }) => {
+export const submitAnswers = async ({ packageTemplateId }: { packageTemplateId: string }) => {
   try {
+    // Backend route: POST /api/Form/{packageTemplateId}/submit
+    const url = `${ENDPOINTS.FORM_BASE}/${packageTemplateId}/submit`
     const body = {
-      PackageTemplateID: packageTemplateId,
-      CreatedBy: createdBy
+      PackageTemplateID: packageTemplateId
     }
-    await axiosInstance.post(ENDPOINTS.SUBMIT_ANSWERS, body)
+    // Body is not required by the backend, but sending it is harmless if accepted.
+    await axiosInstance.post(url, body)
     return null
   } catch (error) {
     return new Error('cannot save question')

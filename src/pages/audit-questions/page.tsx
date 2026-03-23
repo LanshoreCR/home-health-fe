@@ -1,15 +1,16 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { AuditForm, type ToolDetailsForDisplay } from '@/components/audit-form'
-import { auditDatabase, toolListMap, generateFallbackTool } from '@/mocks'
+import { auditDatabase, toolListMap, generateFallbackQuestions } from '@/mocks'
 import {
   getToolsByAuditPackageId,
   getToolById,
   getToolForm,
   mapToolByIdToToolMetadata,
-  mapFormQuestionsToSections
+  mapFormQuestions
 } from '@shared/services/api/endpoints/tools'
-import type { ToolInfo, ToolMetadata, SectionData } from '@shared/types'
+import { useFormStore } from '@/stores/useFormStore'
+import type { ToolInfo, ToolMetadata } from '@shared/types'
 
 export default function AuditQuestionsPage () {
   const { id, toolId } = useParams<{ id: string, toolId: string }>()
@@ -18,9 +19,9 @@ export default function AuditQuestionsPage () {
   const [toolsError, setToolsError] = useState<string | null>(null)
   const [toolDetails, setToolDetails] = useState<ToolDetailsForDisplay | null>(null)
   const [initialToolMetadata, setInitialToolMetadata] = useState<ToolMetadata | null>(null)
-  const [sections, setSections] = useState<SectionData[]>([])
   const [formLoading, setFormLoading] = useState(true)
   const [formError, setFormError] = useState<string | null>(null)
+  const initializeForm = useFormStore((s) => s.initialize)
 
   if (id === undefined || toolId === undefined) {
     return null
@@ -31,7 +32,7 @@ export default function AuditQuestionsPage () {
   const auditLocation = auditDef?.location ?? ''
   const auditStatus = auditDef?.status ?? 'Pending'
   const fallbackTools = toolListMap[id] ?? toolListMap['1'] ?? []
-  const fallbackSections = useMemo(() => generateFallbackTool(toolId).sections, [toolId])
+  const fallbackQuestions = useMemo(() => generateFallbackQuestions(toolId), [toolId])
 
   useEffect(() => {
     setToolsLoading(true)
@@ -42,29 +43,37 @@ export default function AuditQuestionsPage () {
       .finally(() => setToolsLoading(false))
   }, [id])
 
+  const formRequestId = useRef(0)
+
   useEffect(() => {
     if (!toolId) return
+    const requestId = ++formRequestId.current
     setFormLoading(true)
     setFormError(null)
     Promise.all([getToolById(toolId), getToolForm(toolId)])
       .then(([tool, formQuestions]) => {
+        if (requestId !== formRequestId.current) return
         setToolDetails({
           templateName: tool.templateDesc ?? '',
           locationName: tool.locationName ?? '',
           assignedAuditor: tool.auditorName ?? ''
         })
         setInitialToolMetadata(mapToolByIdToToolMetadata(tool))
-        setSections(mapFormQuestionsToSections(formQuestions))
+        const mappedQuestions = mapFormQuestions(formQuestions)
+        initializeForm(toolId, mappedQuestions)
       })
       .catch((err) => {
+        if (requestId !== formRequestId.current) return
         setFormError(err instanceof Error ? err.message : 'Failed to load tool or form')
-        setSections(fallbackSections)
+        initializeForm(toolId, fallbackQuestions)
       })
-      .finally(() => setFormLoading(false))
+      .finally(() => {
+        if (requestId !== formRequestId.current) return
+        setFormLoading(false)
+      })
   }, [toolId])
 
   const tools = allTools.length > 0 ? allTools : fallbackTools
-  const displaySections = sections.length > 0 ? sections : fallbackSections
 
   return (
     <AuditForm
@@ -76,7 +85,6 @@ export default function AuditQuestionsPage () {
       }}
       toolId={toolId}
       allTools={tools}
-      sections={displaySections}
       toolDetails={toolDetails}
       initialToolMetadata={initialToolMetadata ?? undefined}
       formLoading={formLoading}

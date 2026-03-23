@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronRight, Download, Save } from 'lucide-react'
+import { ArrowLeft, ChevronRight, Download, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
@@ -12,6 +12,9 @@ interface AuditFormHeaderProps {
   percent: number
   toolLocationName?: string
   assignedAuditor?: string
+  canSubmit: boolean
+  onSubmit: () => void
+  isSubmitting: boolean
 }
 
 export function AuditFormHeader ({
@@ -19,7 +22,10 @@ export function AuditFormHeader ({
   currentToolName,
   percent,
   toolLocationName,
-  assignedAuditor
+  assignedAuditor,
+  canSubmit,
+  onSubmit,
+  isSubmitting
 }: AuditFormHeaderProps) {
   const { auditId, title, location, status } = audit
   const displayLocation = toolLocationName ?? location
@@ -73,9 +79,16 @@ export function AuditFormHeader ({
           <Download className='size-3.5 mr-1.5' />
           <span className='hidden sm:inline'>Export</span>
         </Button>
-        <Button size='sm' className='h-8 text-xs'>
-          <Save className='size-3.5 mr-1.5' />
-          <span className='hidden sm:inline'>Save</span>
+        <Button
+          size='sm'
+          className='h-8 text-xs'
+          type='button'
+          disabled={!canSubmit || isSubmitting}
+          onClick={onSubmit}
+          aria-busy={isSubmitting}
+        >
+          <Send className='size-3.5 mr-1.5' />
+          <span className='hidden sm:inline'>{isSubmitting ? 'Submitting...' : 'Submit'}</span>
         </Button>
       </div>
     </div>

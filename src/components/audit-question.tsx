@@ -71,7 +71,7 @@ export function AuditQuestion ({
                   role='radio'
                   aria-checked={answer === value}
                   disabled={disabled}
-                  onClick={() => onAnswerChange(answer === value ? null : value)}
+                  onClick={() => { if (answer !== value) onAnswerChange(value) }}
                   className={cn(
                     'px-4 py-2 text-sm font-medium transition-colors border-r border-border last:border-r-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
                     answer === value && value !== null
