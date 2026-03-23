@@ -1,14 +1,18 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { Search } from 'lucide-react'
+import { toast } from 'sonner'
+import { useNavigate } from 'react-router-dom'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { AuditSection } from '@/components/audit-section'
+import { AuditQuestion } from '@/components/audit-question'
 import { AuditProgressPanel } from '@/components/audit-progress-panel'
-import type { ToolInfo, SectionData, QuestionFilter, QuestionData, AuditFormContext, ToolMetadata } from '@/shared/types'
+import type { ToolInfo, QuestionFilter, AuditFormContext, ToolMetadata } from '@/shared/types'
 import { useToolNavigation } from '@/hooks/useToolNavigation'
-import { useFilteredSections } from '@/hooks/useFilteredSections'
+import { useFilteredQuestions } from '@/hooks/useFilteredQuestions'
 import { useAuditProgress } from '@/hooks/useAuditProgress'
+import { useFormStore } from '@/stores/useFormStore'
+import { submitAnswers } from '@shared/services/api/endpoints/questions'
 import { AuditFormHeader } from './audit-form-header'
 import { ToolNavigationBar } from './tool-navigation-bar'
 import { ToolDropdown } from './tool-dropdown'
@@ -24,7 +28,6 @@ interface AuditFormProps {
   audit: AuditFormContext
   toolId: string
   allTools: ToolInfo[]
-  sections: SectionData[]
   toolDetails?: ToolDetailsForDisplay | null
   initialToolMetadata?: ToolMetadata
   formLoading?: boolean
@@ -40,13 +43,14 @@ export function AuditForm ({
   audit,
   toolId,
   allTools,
-  sections: initialSections,
   toolDetails,
   initialToolMetadata,
   formLoading = false,
   formError = null
 }: AuditFormProps) {
-  const [sections, setSections] = useState(initialSections)
+  const questions = useFormStore((s) => s.questions)
+  const { updateAnswer, updateComment, toggleFlag } = useFormStore.getState()
+  const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState<QuestionFilter>(null)
   const [toolDropdownOpen, setToolDropdownOpen] = useState(false)
@@ -54,13 +58,10 @@ export function AuditForm ({
   const [toolMetadata, setToolMetadata] = useState<ToolMetadata>(() =>
     initialToolMetadata ?? defaultToolMetadata(toolDetails?.locationName ?? audit.location)
   )
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [generalComments, setGeneralComments] = useState('')
   const dropdownRef = useRef<HTMLDivElement>(null)
   const toolSearchInputRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    setSections(initialSections)
-  }, [initialSections])
 
   useEffect(() => {
     if (initialToolMetadata != null) {
@@ -73,8 +74,26 @@ export function AuditForm ({
     toolId,
     audit.auditId
   )
-  const { filteredSections, sectionsWithNumbers } = useFilteredSections(sections, searchQuery, activeFilter)
-  const { total, completed, percent } = useAuditProgress(sections)
+
+  // Filters are scoped to the current tool/view.
+  // When switching tools, clear the sidebar/mobile filter state.
+  useEffect(() => {
+    setActiveFilter(null)
+  }, [toolId])
+
+  const filteredQuestions = useFilteredQuestions(questions, searchQuery, activeFilter)
+  const { total, completed, percent } = useAuditProgress(questions)
+  const canSubmit = total > 0 && completed === total
+
+  const blockedFromIndex = useMemo(() => {
+    for (let i = 0; i < filteredQuestions.length; i++) {
+      const q = filteredQuestions[i]
+      if (q.answer === 'no' && q.note.trim().length === 0) {
+        return i + 1
+      }
+    }
+    return -1
+  }, [filteredQuestions])
 
   const navigateToTool = useCallback(
     (id: string) => {
@@ -99,23 +118,25 @@ export function AuditForm ({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [toolDropdownOpen])
 
-  const handleQuestionUpdate = useCallback(
-    (questionId: string, updates: Partial<QuestionData>) => {
-      setSections((prev) =>
-        prev.map((section) => ({
-          ...section,
-          questions: section.questions.map((q) =>
-            q.id === questionId ? { ...q, ...updates } : q
-          )
-        }))
-      )
-    },
-    []
-  )
-
   const filteredDropdownTools = toolSearch
     ? allTools.filter((t) => t.name.toLowerCase().includes(toolSearch.toLowerCase()))
     : allTools
+
+  const handleSubmit = useCallback(async () => {
+    if (!canSubmit || isSubmitting) return
+
+    setIsSubmitting(true)
+    try {
+      const result = await submitAnswers({ packageTemplateId: toolId })
+      if (result instanceof Error) {
+        toast.error(result.message)
+        return
+      }
+      navigate(`/audit/${audit.auditId}`)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }, [audit.auditId, canSubmit, isSubmitting, navigate, toolId])
 
   return (
     <div className='min-h-screen bg-background'>
@@ -127,6 +148,9 @@ export function AuditForm ({
             percent={percent}
             toolLocationName={toolDetails?.locationName}
             assignedAuditor={toolDetails?.assignedAuditor}
+            canSubmit={canSubmit}
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
           />
 
           <ToolNavigationBar
@@ -169,7 +193,7 @@ export function AuditForm ({
         <div className='flex gap-6'>
           <aside className='hidden lg:block w-64 shrink-0'>
             <AuditProgressPanel
-              sections={sections}
+              questions={questions}
               activeFilter={activeFilter}
               onFilterChange={setActiveFilter}
             />
@@ -221,19 +245,23 @@ export function AuditForm ({
               ))}
             </div>
 
-            <div className='space-y-2 bg-card rounded-lg border border-border px-5'>
-              {sectionsWithNumbers.map((section) => (
-                <div key={section.title} className='border-b border-border last:border-b-0'>
-                  <AuditSection
-                    title={section.title}
-                    questions={section.questions}
-                    startNumber={section.startNumber}
-                    onQuestionUpdate={handleQuestionUpdate}
-                  />
-                </div>
+            <div className='bg-card rounded-lg border border-border px-5 divide-y divide-border'>
+              {filteredQuestions.map((q, i) => (
+                <AuditQuestion
+                  key={q.id}
+                  number={i + 1}
+                  text={q.text}
+                  answer={q.answer}
+                  note={q.note}
+                  flagged={q.flagged}
+                  disabled={blockedFromIndex !== -1 && i >= blockedFromIndex}
+                  onAnswerChange={(value) => updateAnswer(q.id, value)}
+                  onNoteChange={(value) => updateComment(q.id, value)}
+                  onFlagToggle={() => toggleFlag(q.id)}
+                />
               ))}
 
-              {filteredSections.length === 0 && (
+              {filteredQuestions.length === 0 && (
                 <div className='py-12 text-center'>
                   <p className='text-sm text-muted-foreground'>
                     No questions match your search or filter.

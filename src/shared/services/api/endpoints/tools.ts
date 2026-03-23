@@ -6,7 +6,7 @@ import type {
   ToolByIdResponse,
   ToolFormQuestionResponse,
   ToolMetadata,
-  SectionData
+  QuestionData
 } from '@shared/types'
 import type { AnswerValue } from '@shared/types'
 
@@ -253,30 +253,29 @@ export function mapToolByIdToToolMetadata (tool: ToolByIdResponse): ToolMetadata
 /** Map form question API response to AnswerValue when possible */
 function mapAnswerToValue (answers: unknown): AnswerValue {
   if (answers == null) return null
+  if (typeof answers === 'number') {
+    if (answers === 1) return 'yes'
+    if (answers === 0) return 'no'
+    if (answers === 2) return 'na'
+    return null
+  }
   const s = typeof answers === 'string' ? answers.toLowerCase() : String(answers).toLowerCase()
-  if (s === 'yes' || s === 'y') return 'yes'
-  if (s === 'no' || s === 'n') return 'no'
-  if (s === 'na' || s === 'n/a') return 'na'
+  if (s === 'yes' || s === 'y' || s === '1') return 'yes'
+  if (s === 'no' || s === 'n' || s === '0') return 'no'
+  if (s === 'na' || s === 'n/a' || s === '2') return 'na'
   return null
 }
 
-/** Map form questions to SectionData[] (group by categ, sort by questionSort) */
-export function mapFormQuestionsToSections (questions: ToolFormQuestionResponse[]): SectionData[] {
-  const sorted = [...questions].sort((a, b) => (a.questionSort ?? 0) - (b.questionSort ?? 0))
-  const byCateg = new Map<string, typeof sorted>()
-  for (const q of sorted) {
-    const key = q.categ != null && q.categ !== '' ? q.categ : 'Questions'
-    if (!byCateg.has(key)) byCateg.set(key, [])
-    byCateg.get(key)!.push(q)
-  }
-  return Array.from(byCateg.entries()).map(([title, qs]) => ({
-    title,
-    questions: qs.map((q) => ({
+/** Map form questions API response to a flat QuestionData[] sorted by questionSort */
+export function mapFormQuestions (questions: ToolFormQuestionResponse[]): QuestionData[] {
+  return [...questions]
+    .sort((a, b) => (a.questionSort ?? 0) - (b.questionSort ?? 0))
+    .map((q) => ({
       id: String(q.templateQuestionID),
+      templateAnswerId: q.templateAnswerID ?? 0,
       text: q.questionText ?? '',
       answer: mapAnswerToValue(q.answers),
       note: q.comments ?? '',
-      flagged: q.flag === true
+      flagged: q.flag === true || q.flag === 1 || (q.flag as unknown) === '1'
     }))
-  }))
 }
