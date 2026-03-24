@@ -3,6 +3,7 @@ import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { DateInput } from '@/components/ui/date-input'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -16,7 +17,10 @@ import type { ToolMetadata } from '@/shared/types'
 
 interface ToolMetadataPanelProps {
   metadata: ToolMetadata
+  initialMetadata?: ToolMetadata
   onMetadataChange: (data: ToolMetadata) => void
+  onSave: () => void
+  isSaving: boolean
 }
 
 function formatDateDisplay (value: string | undefined) {
@@ -26,7 +30,7 @@ function formatDateDisplay (value: string | undefined) {
   return `${m}/${d}/${y.slice(-2)}`
 }
 
-export function ToolMetadataPanel ({ metadata, onMetadataChange }: ToolMetadataPanelProps) {
+export function ToolMetadataPanel ({ metadata, initialMetadata, onMetadataChange, onSave, isSaving }: ToolMetadataPanelProps) {
   const [open, setOpen] = useState(false)
 
   const update = (updates: Partial<ToolMetadata>) => {
@@ -40,6 +44,7 @@ export function ToolMetadataPanel ({ metadata, onMetadataChange }: ToolMetadataP
     metadata.patientNumber && `Patient #: ${metadata.patientNumber}`
   ].filter(Boolean)
   const summary = summaryParts.length > 0 ? summaryParts.join(' | ') : 'Tool details (expand to edit)'
+  const isDirty = initialMetadata == null ? true : JSON.stringify(metadata) !== JSON.stringify(initialMetadata)
 
   return (
     <Collapsible open={open} onOpenChange={setOpen} className='mb-5'>
@@ -65,9 +70,9 @@ export function ToolMetadataPanel ({ metadata, onMetadataChange }: ToolMetadataP
               id='md-location'
               type='text'
               value={metadata.locationName}
-              onChange={(e) => update({ locationName: e.target.value })}
-              className='h-9 text-sm'
-              placeholder='Location name'
+              readOnly
+              disabled
+              className='h-9 text-sm opacity-70 cursor-not-allowed'
             />
           </div>
           <div className='grid gap-2'>
@@ -160,6 +165,11 @@ export function ToolMetadataPanel ({ metadata, onMetadataChange }: ToolMetadataP
               </SelectContent>
             </Select>
           </div>
+        </div>
+        <div className='mt-3 flex justify-end'>
+          <Button type='button' onClick={onSave} disabled={isSaving || !isDirty}>
+            {isSaving ? 'Saving changes...' : 'Save Changes'}
+          </Button>
         </div>
       </CollapsibleContent>
     </Collapsible>
