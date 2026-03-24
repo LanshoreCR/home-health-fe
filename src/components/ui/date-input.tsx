@@ -4,7 +4,8 @@ import { cn } from '@/lib/utils'
 
 function formatIsoToDisplay (iso: string): string {
   if (!iso) return ''
-  const [y, m, d] = iso.split('-')
+  const normalized = iso.includes('T') ? iso.split('T')[0] : iso
+  const [y, m, d] = normalized.split('-')
   if (!y || !m || !d) return ''
   return `${m}/${d}/${y.slice(-2)}`
 }
@@ -16,6 +17,7 @@ interface DateInputProps extends Omit<React.ComponentProps<'input'>, 'type' | 'o
 
 function DateInput ({ className, value = '', onChange, id, ...props }: DateInputProps) {
   const hiddenRef = useRef<HTMLInputElement>(null)
+  const normalizedValue = value.includes('T') ? value.split('T')[0] : value
 
   return (
     <div className='relative'>
@@ -34,7 +36,7 @@ function DateInput ({ className, value = '', onChange, id, ...props }: DateInput
         }}
       >
         <span className={cn(!value && 'text-muted-foreground')}>
-          {value ? formatIsoToDisplay(value) : 'mm/dd/yy'}
+          {normalizedValue ? formatIsoToDisplay(normalizedValue) : 'mm/dd/yy'}
         </span>
         <svg className='size-4 text-muted-foreground shrink-0' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
           <rect x='3' y='4' width='18' height='18' rx='2' ry='2' />
@@ -46,7 +48,7 @@ function DateInput ({ className, value = '', onChange, id, ...props }: DateInput
       <input
         ref={hiddenRef}
         type='date'
-        value={value}
+        value={normalizedValue}
         onChange={(e) => onChange?.(e.target.value)}
         className='sr-only'
         tabIndex={-1}

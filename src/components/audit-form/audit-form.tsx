@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
+import { useDebouncedCallback } from 'use-debounce'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
@@ -30,6 +31,10 @@ interface AuditFormProps {
   allTools: ToolInfo[]
   toolDetails?: ToolDetailsForDisplay | null
   initialToolMetadata?: ToolMetadata
+  initialGeneralComments?: string
+  onSaveToolMetadata: (metadata: ToolMetadata) => Promise<void>
+  onSaveGeneralComments: (text: string) => void
+  isSavingMetadata: boolean
   formLoading?: boolean
   formError?: string | null
 }
@@ -45,6 +50,10 @@ export function AuditForm ({
   allTools,
   toolDetails,
   initialToolMetadata,
+  initialGeneralComments = '',
+  onSaveToolMetadata,
+  onSaveGeneralComments,
+  isSavingMetadata,
   formLoading = false,
   formError = null
 }: AuditFormProps) {
@@ -59,7 +68,7 @@ export function AuditForm ({
     initialToolMetadata ?? defaultToolMetadata(toolDetails?.locationName ?? audit.location)
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [generalComments, setGeneralComments] = useState('')
+  const [generalComments, setGeneralComments] = useState(initialGeneralComments)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const toolSearchInputRef = useRef<HTMLInputElement>(null)
 
@@ -68,6 +77,18 @@ export function AuditForm ({
       setToolMetadata(initialToolMetadata)
     }
   }, [initialToolMetadata])
+
+  useEffect(() => {
+    setGeneralComments(initialGeneralComments)
+  }, [initialGeneralComments])
+
+  const debouncedSaveGeneralComments = useDebouncedCallback((value: string) => {
+    onSaveGeneralComments(value)
+  }, 600)
+
+  useEffect(() => {
+    return () => debouncedSaveGeneralComments.cancel()
+  }, [debouncedSaveGeneralComments])
 
   const { currentToolIndex, currentTool, prevTool, nextTool, navigateToTool: navToTool } = useToolNavigation(
     allTools,
@@ -119,7 +140,14 @@ export function AuditForm ({
   }, [toolDropdownOpen])
 
   const filteredDropdownTools = toolSearch
-    ? allTools.filter((t) => t.name.toLowerCase().includes(toolSearch.toLowerCase()))
+    ? allTools.filter((t) => {
+      const query = toolSearch.toLowerCase()
+      return (
+        t.name.toLowerCase().includes(query) ||
+        (t.locationName?.toLowerCase().includes(query) ?? false) ||
+        (t.assignedAuditor?.toLowerCase().includes(query) ?? false)
+      )
+    })
     : allTools
 
   const handleSubmit = useCallback(async () => {
@@ -188,7 +216,12 @@ export function AuditForm ({
         )}
         <ToolMetadataPanel
           metadata={toolMetadata}
+          initialMetadata={initialToolMetadata}
           onMetadataChange={setToolMetadata}
+          onSave={() => {
+            void onSaveToolMetadata(toolMetadata)
+          }}
+          isSaving={isSavingMetadata}
         />
         <div className='flex gap-6'>
           <aside className='hidden lg:block w-64 shrink-0'>
@@ -217,7 +250,11 @@ export function AuditForm ({
               <Textarea
                 id='general-comments'
                 value={generalComments}
-                onChange={(e) => setGeneralComments(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value
+                  setGeneralComments(value)
+                  debouncedSaveGeneralComments(value)
+                }}
                 placeholder='Add general comments...'
                 className='mt-1.5 min-h-[80px] resize-none bg-card text-sm'
               />

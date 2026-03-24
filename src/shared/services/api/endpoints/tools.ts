@@ -20,6 +20,8 @@ interface AuditPackageToolRaw {
   packageTemplateID: number
   auditPlaceLocation?: string
   locationName?: string
+  totalQuestions?: number
+  totalAnswered?: number
   allQuestionsAnswered: boolean | null
 }
 
@@ -32,16 +34,26 @@ export const getToolsByAuditPackageId = async (packageId: string): Promise<ToolI
       throw new Error('error getting tools from the database')
     }
     const data = response.data ?? []
-    return data.map((tool) => ({
-      id: String(tool.packageTemplateID),
-      name: tool.templateName ?? '',
-      completed: tool.allQuestionsAnswered === true ? 1 : 0,
-      total: 1,
-      locationName: tool.locationName,
-      assignedAuditor: tool.assignedAuditor,
-      templateScore: tool.templateScore,
-      templateStatus: tool.templateStatus
-    }))
+    return data.map((tool) => {
+      const hasValidTotalQuestions = Number.isFinite(tool.totalQuestions) && (tool.totalQuestions ?? 0) >= 0
+      const hasValidTotalAnswered = Number.isFinite(tool.totalAnswered) && (tool.totalAnswered ?? 0) >= 0
+
+      const total = hasValidTotalQuestions ? Number(tool.totalQuestions) : 1
+      const completedFromLegacyFlag = tool.allQuestionsAnswered === true ? 1 : 0
+      const rawCompleted = hasValidTotalAnswered ? Number(tool.totalAnswered) : completedFromLegacyFlag
+      const completed = total > 0 ? Math.min(Math.max(rawCompleted, 0), total) : 0
+
+      return {
+        id: String(tool.packageTemplateID),
+        name: tool.templateName ?? '',
+        completed,
+        total,
+        locationName: tool.locationName,
+        assignedAuditor: tool.assignedAuditor,
+        templateScore: tool.templateScore,
+        templateStatus: tool.templateStatus
+      }
+    })
   } catch (error) {
     console.error(error)
     toast.error('Failed to fetch tools')
@@ -158,6 +170,18 @@ export interface CreateAuditToolPayload {
   socDate?: string
 }
 
+export interface UpdateToolPayload {
+  patientNumber?: string | null
+  auditDate?: string | null
+  activeOrDischarged?: string | null
+  disciplines?: string | null
+  payor?: string | null
+  reviewDate?: string | null
+  servicesBilled?: string | null
+  socDate?: string | null
+  generalComments?: string | null
+}
+
 export const createAuditTool = async (payload: CreateAuditToolPayload): Promise<{ returnValue: number }> => {
   try {
     const optional = (v: string | undefined): string | null =>
@@ -213,6 +237,69 @@ export const getToolById = async (id: string): Promise<ToolByIdResponse> => {
   return response.data
 }
 
+/** Convert tool metadata into PUT /api/Tools/{id} payload (generalComments handled separately). */
+export function mapToolMetadataToUpdatePayload (metadata: ToolMetadata): UpdateToolPayload {
+  const toNullIfEmpty = (value: string | undefined): string | null => {
+    if (value == null) return null
+    const trimmed = value.trim()
+    return trimmed === '' ? null : trimmed
+  }
+
+  return {
+    patientNumber: toNullIfEmpty(metadata.patientNumber),
+    auditDate: toNullIfEmpty(metadata.auditDate),
+    activeOrDischarged:
+      metadata.activeOrDischarge === 'active'
+        ? 'A'
+        : metadata.activeOrDischarge === 'discharge'
+          ? 'D'
+          : null,
+    disciplines: toNullIfEmpty(metadata.disciplines),
+    payor: toNullIfEmpty(metadata.payor),
+    reviewDate: toNullIfEmpty(metadata.reviewDates),
+    servicesBilled:
+      metadata.servicesBilledForReviewDates === 'yes'
+        ? 'Y'
+        : metadata.servicesBilledForReviewDates === 'no'
+          ? 'N'
+          : null,
+    socDate: toNullIfEmpty(metadata.socDate),
+    // This save path is only for metadata fields.
+    generalComments: null
+  }
+}
+
+/** Save metadata fields only. generalComments is intentionally set to null. */
+export const updateToolMetadata = async (id: string, payload: UpdateToolPayload): Promise<void> => {
+  const url = `${ENDPOINTS.GET_TOOLS_BASE}/${id}`
+  const response = await axiosInstance.put(url, payload)
+  if (response.status !== 200 && response.status !== 204) {
+    toast.error('Failed to save tool details')
+    throw new Error('error updating tool metadata')
+  }
+}
+
+/** Real-time save for general comments; all other fields are sent as null. */
+export const updateToolGeneralComments = async (id: string, generalComments: string): Promise<void> => {
+  const payload: UpdateToolPayload = {
+    patientNumber: null,
+    auditDate: null,
+    activeOrDischarged: null,
+    disciplines: null,
+    payor: null,
+    reviewDate: null,
+    servicesBilled: null,
+    socDate: null,
+    generalComments: generalComments.trim() === '' ? null : generalComments
+  }
+  const url = `${ENDPOINTS.GET_TOOLS_BASE}/${id}`
+  const response = await axiosInstance.put(url, payload)
+  if (response.status !== 200 && response.status !== 204) {
+    toast.error('Failed to save general comments')
+    throw new Error('error updating general comments')
+  }
+}
+
 /** GET /api/Tools/{id}/form - all form questions for the tool */
 export const getToolForm = async (id: string): Promise<ToolFormQuestionResponse[]> => {
   const url = `${ENDPOINTS.GET_TOOLS_BASE}/${id}/form`
@@ -231,16 +318,18 @@ export const getToolForm = async (id: string): Promise<ToolFormQuestionResponse[
 
 /** Map tool-by-id response to ToolMetadata (non-nullish only) */
 export function mapToolByIdToToolMetadata (tool: ToolByIdResponse): ToolMetadata {
+  const toDateOnly = (value: string): string => value.split('T')[0]
+
   const metadata: ToolMetadata = {
     locationId: tool.locationNumber ?? '',
     locationName: tool.locationName ?? ''
   }
-  if (tool.auditDate != null && tool.auditDate !== '') metadata.auditDate = tool.auditDate
+  if (tool.auditDate != null && tool.auditDate !== '') metadata.auditDate = toDateOnly(tool.auditDate)
   if (tool.payor != null && tool.payor !== '') metadata.payor = tool.payor
   if (tool.disciplines != null && tool.disciplines !== '') metadata.disciplines = tool.disciplines
   if (tool.patientNumber != null && tool.patientNumber !== '') metadata.patientNumber = tool.patientNumber
-  if (tool.socDate != null && tool.socDate !== '') metadata.socDate = tool.socDate
-  if (tool.reviewDate != null && tool.reviewDate !== '') metadata.reviewDates = tool.reviewDate
+  if (tool.socDate != null && tool.socDate !== '') metadata.socDate = toDateOnly(tool.socDate)
+  if (tool.reviewDate != null && tool.reviewDate !== '') metadata.reviewDates = toDateOnly(tool.reviewDate)
   if (tool.activeOrDischarged != null && tool.activeOrDischarged !== '') {
     const v = tool.activeOrDischarged.toUpperCase()
     if (v === 'A') metadata.activeOrDischarge = 'active'

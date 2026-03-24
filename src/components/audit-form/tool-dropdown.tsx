@@ -1,4 +1,4 @@
-import { Search, Check, ChevronsUpDown } from 'lucide-react'
+import { Search, Check, ChevronsUpDown, MapPin, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { ToolInfo } from '@/shared/types'
 
@@ -83,7 +83,25 @@ export function ToolDropdown ({
                   <span className='w-5 text-xs text-muted-foreground tabular-nums text-right shrink-0'>
                     {i + 1}.
                   </span>
-                  <span className='flex-1 truncate'>{tool.name}</span>
+                  <span className='flex-1 min-w-0'>
+                    <span className='block truncate'>{tool.name}</span>
+                    {((tool.locationName != null && tool.locationName !== '') || (tool.assignedAuditor != null && tool.assignedAuditor !== '')) && (
+                      <span className='mt-0.5 block text-[11px] text-muted-foreground'>
+                        {tool.locationName != null && tool.locationName !== '' && (
+                          <span className='flex items-center gap-1 min-w-0'>
+                            <MapPin className='size-3 shrink-0' aria-hidden />
+                            <span className='truncate'>{tool.locationName}</span>
+                          </span>
+                        )}
+                        {tool.assignedAuditor != null && tool.assignedAuditor !== '' && (
+                          <span className='mt-0.5 flex items-center gap-1 min-w-0'>
+                            <User className='size-3 shrink-0' aria-hidden />
+                            <span className='truncate'>{tool.assignedAuditor}</span>
+                          </span>
+                        )}
+                      </span>
+                    )}
+                  </span>
                   <span
                     className={cn(
                       'text-xs tabular-nums shrink-0 font-medium',
