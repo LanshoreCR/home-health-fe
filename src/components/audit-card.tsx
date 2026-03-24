@@ -1,7 +1,18 @@
-import { Download, CheckCircle2, XCircle, ChevronRight, CalendarDays, Hash, TrendingUp } from 'lucide-react'
+import { useState, type MouseEvent } from 'react'
+import { Download, CheckCircle2, XCircle, ChevronRight, CalendarDays, Hash, TrendingUp, Loader2, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog'
 import {
   Tooltip,
   TooltipContent,
@@ -9,11 +20,12 @@ import {
 } from '@/components/ui/tooltip'
 import { Link } from 'react-router-dom'
 import type { Audit } from '@/shared/types'
-import { PACKAGE_STATUS_MAP } from '@shared/utils/status-config'
+import { deleteAuditPackage, updateAuditStatus } from '@shared/services/api/endpoints/audit-packages'
+import { PACKAGE_STATUS_MAP, TEMPLATE_STATUS } from '@shared/utils/status-config'
 
 const SKELETON_CARD_COUNT = 5
 
-export function AuditCardSkeleton () {
+export function AuditCardSkeleton (): JSX.Element {
   return (
     <div className='flex items-center gap-0 rounded-lg border border-border bg-card'>
       <div className='flex-1 min-w-0 flex items-center gap-4 p-4 pr-0'>
@@ -34,12 +46,13 @@ export function AuditCardSkeleton () {
         <Skeleton className='size-8 rounded' />
         <Skeleton className='size-8 rounded' />
         <Skeleton className='size-8 rounded' />
+        <Skeleton className='size-8 rounded' />
       </div>
     </div>
   )
 }
 
-export function AuditCardSkeletonList () {
+export function AuditCardSkeletonList (): JSX.Element {
   return (
     <>
       {Array.from({ length: SKELETON_CARD_COUNT }, (_, i) => (
@@ -53,6 +66,10 @@ function formatDate (isoString: string): string {
   return isoString.slice(0, 10)
 }
 
+export type AuditCardProps = Audit & {
+  onStatusUpdated?: () => void | Promise<void>
+}
+
 export function AuditCard ({
   packageID,
   packageName,
@@ -60,9 +77,72 @@ export function AuditCard ({
   edNumber,
   startDate,
   endDate,
-  packageScore
-}: Audit) {
+  packageScore,
+  onStatusUpdated
+}: AuditCardProps): JSX.Element {
   const statusConfig = PACKAGE_STATUS_MAP[packageStatus] ?? { label: 'Unknown', className: '' }
+
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [confirmAction, setConfirmAction] = useState<'approve' | 'reject' | 'delete' | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  const canChangeStatus =
+    packageStatus === TEMPLATE_STATUS.PENDING ||
+    packageStatus === TEMPLATE_STATUS.UNDER_REVIEW
+
+  const openConfirm = (action: 'approve' | 'reject') => (e: MouseEvent): void => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!canChangeStatus || submitting) return
+    setConfirmAction(action)
+    setConfirmOpen(true)
+  }
+
+  const openConfirmDelete = (e: MouseEvent): void => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (submitting) return
+    setConfirmAction('delete')
+    setConfirmOpen(true)
+  }
+
+  const handleConfirm = async (): Promise<void> => {
+    if (confirmAction === null) return
+    if (confirmAction === 'delete') {
+      setSubmitting(true)
+      try {
+        await deleteAuditPackage(packageID)
+        toast.success('Audit deleted')
+        await onStatusUpdated?.()
+        setConfirmOpen(false)
+        setConfirmAction(null)
+      } catch {
+        // Error toast is handled in deleteAuditPackage
+      } finally {
+        setSubmitting(false)
+      }
+      return
+    }
+    const templateStatusID =
+      confirmAction === 'approve' ? TEMPLATE_STATUS.APPROVED : TEMPLATE_STATUS.REJECTED
+    setSubmitting(true)
+    try {
+      await updateAuditStatus(packageID, templateStatusID)
+      toast.success(confirmAction === 'approve' ? 'Audit approved' : 'Audit rejected')
+      await onStatusUpdated?.()
+      setConfirmOpen(false)
+      setConfirmAction(null)
+    } catch {
+      // Error toast is handled in updateAuditStatus
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleOpenChange = (open: boolean): void => {
+    if (!open) setConfirmAction(null)
+    setConfirmOpen(open)
+  }
 
   return (
     <div className='group relative flex items-center gap-0 rounded-lg border border-border bg-card transition-all hover:border-primary/30 hover:shadow-sm'>
@@ -106,9 +186,16 @@ export function AuditCard ({
               variant='ghost'
               size='icon'
               className='size-8 text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50'
-              onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
+              disabled={!canChangeStatus || submitting}
+              onClick={openConfirm('approve')}
             >
-              <CheckCircle2 className='size-4' />
+              {submitting && confirmAction === 'approve'
+                ? (
+                  <Loader2 className='size-4 animate-spin' />
+                  )
+                : (
+                  <CheckCircle2 className='size-4' />
+                  )}
               <span className='sr-only'>Approve</span>
             </Button>
           </TooltipTrigger>
@@ -121,9 +208,16 @@ export function AuditCard ({
               variant='ghost'
               size='icon'
               className='size-8 text-muted-foreground hover:text-red-600 hover:bg-red-50'
-              onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
+              disabled={!canChangeStatus || submitting}
+              onClick={openConfirm('reject')}
             >
-              <XCircle className='size-4' />
+              {submitting && confirmAction === 'reject'
+                ? (
+                  <Loader2 className='size-4 animate-spin' />
+                  )
+                : (
+                  <XCircle className='size-4' />
+                  )}
               <span className='sr-only'>Reject</span>
             </Button>
           </TooltipTrigger>
@@ -144,7 +238,70 @@ export function AuditCard ({
           </TooltipTrigger>
           <TooltipContent side='bottom'>Export CSV</TooltipContent>
         </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant='ghost'
+              size='icon'
+              className='size-8 text-muted-foreground hover:text-red-600 hover:bg-red-50'
+              disabled={submitting}
+              onClick={openConfirmDelete}
+            >
+              {submitting && confirmAction === 'delete'
+                ? (
+                  <Loader2 className='size-4 animate-spin' />
+                  )
+                : (
+                  <Trash2 className='size-4' />
+                  )}
+              <span className='sr-only'>Delete</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side='bottom'>Delete</TooltipContent>
+        </Tooltip>
       </div>
+
+      <AlertDialog open={confirmOpen} onOpenChange={handleOpenChange}>
+        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmAction === 'delete'
+                ? 'Delete this audit?'
+                : confirmAction === 'approve'
+                  ? 'Approve this audit?'
+                  : 'Reject this audit?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction === 'delete'
+                ? `“${packageName}” will be permanently removed. This action cannot be undone.`
+                : confirmAction === 'approve'
+                  ? `“${packageName}” will be marked as approved.`
+                  : `“${packageName}” will be marked as rejected.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={submitting}>Cancel</AlertDialogCancel>
+            <Button
+              type='button'
+              variant={
+                confirmAction === 'reject' || confirmAction === 'delete' ? 'destructive' : 'default'
+              }
+              disabled={submitting}
+              onClick={() => {
+                handleConfirm().catch(() => {})
+              }}
+            >
+              {submitting && <Loader2 className='size-4 animate-spin' />}
+              {confirmAction === 'delete'
+                ? 'Delete'
+                : confirmAction === 'approve'
+                  ? 'Approve'
+                  : 'Reject'}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

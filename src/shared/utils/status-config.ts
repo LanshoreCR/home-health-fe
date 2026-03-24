@@ -1,5 +1,13 @@
 import type { AuditStatus } from '@shared/types/audit'
 
+/** Template / package status IDs from the API (avoid magic numbers). */
+export const TEMPLATE_STATUS = {
+  PENDING: 1,
+  UNDER_REVIEW: 2,
+  APPROVED: 3,
+  REJECTED: 4
+} as const
+
 export const STATUS_CONFIG: Record<AuditStatus, { label: string, className: string }> = {
   pending: {
     label: 'Pending',
@@ -20,19 +28,20 @@ export const STATUS_CONFIG: Record<AuditStatus, { label: string, className: stri
 }
 
 export const PACKAGE_STATUS_MAP: Record<number, { label: string, className: string }> = {
-  1: { label: 'Pending', className: 'bg-amber-50 text-amber-700 border-amber-200' },
-  2: { label: 'In Progress', className: 'bg-primary/10 text-primary border-primary/30' },
-  3: { label: 'Completed', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  4: { label: 'Rejected', className: 'bg-red-50 text-red-700 border-red-200' }
+  [TEMPLATE_STATUS.PENDING]: { label: 'Pending', className: 'bg-amber-50 text-amber-700 border-amber-200' },
+  [TEMPLATE_STATUS.UNDER_REVIEW]: { label: 'Under Review', className: 'bg-primary/10 text-primary border-primary/30' },
+  [TEMPLATE_STATUS.APPROVED]: { label: 'Approved', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  [TEMPLATE_STATUS.REJECTED]: { label: 'Rejected', className: 'bg-red-50 text-red-700 border-red-200' }
 }
 
 /** Display status strings (e.g. from API) to Tailwind class */
 export const DISPLAY_STATUS_CLASS: Record<string, string> = {
   Pending: 'bg-amber-50 text-amber-700 border-amber-200',
   'In Progress': 'bg-primary/10 text-primary border-primary/30',
+  'Under Review': 'bg-primary/10 text-primary border-primary/30',
+  Approved: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   Completed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  Rejected: 'bg-red-50 text-red-700 border-red-200',
-  'Under Review': 'bg-sky-50 text-sky-800 border-sky-200'
+  Rejected: 'bg-red-50 text-red-700 border-red-200'
 }
 
 const TOOL_TEMPLATE_STATUS_FALLBACK =

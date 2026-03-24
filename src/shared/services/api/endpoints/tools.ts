@@ -154,6 +154,34 @@ export const deleteTool = async ({ packageTemplateId }: { packageTemplateId: str
   }
 }
 
+export const deleteToolById = async (id: string): Promise<void> => {
+  try {
+    const response = await axiosInstance.delete(`${ENDPOINTS.DELETE_TOOL_BY_ID}/${id}`)
+    if (response.status !== 200 && response.status !== 204) {
+      toast.error('Failed to delete tool')
+      throw new Error('error deleting tool')
+    }
+    if (response.status === 204) return
+
+    const raw = response.data
+    if (raw == null || raw === '') return
+
+    const data =
+      typeof raw === 'string'
+        ? (JSON.parse(raw) as { returnValue: number })
+        : (raw as { returnValue: number })
+    if (data?.returnValue !== 0) {
+      toast.error('Failed to delete tool')
+      throw new Error(`delete tool failed: returnValue=${String(data?.returnValue)}`)
+    }
+  } catch (error) {
+    console.error(error)
+    if (error instanceof Error && error.message.startsWith('delete tool failed')) throw error
+    toast.error('Failed to delete tool')
+    throw new Error('cannot delete tool')
+  }
+}
+
 /** Payload for POST /api/Audits/tools. Required: packageID, templateID, assignedAuditor, locationNumber. Rest optional. */
 export interface CreateAuditToolPayload {
   packageID: number

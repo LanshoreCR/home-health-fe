@@ -85,3 +85,37 @@ export const createAudit = async (payload: CreateAuditPayload): Promise<CreateAu
     throw new Error('cannot create audit')
   }
 }
+
+export const updateAuditStatus = async (
+  packageID: number,
+  templateStatusID: number
+): Promise<void> => {
+  try {
+    const response = await axiosInstance.patch(
+      ENDPOINTS.PATCH_AUDIT_STATUS,
+      { packageID, templateStatusID }
+    )
+    if (response.status !== 200 && response.status !== 204) {
+      toast.error('Failed to update audit status')
+      throw new Error('error updating audit status')
+    }
+  } catch (error) {
+    console.error(error)
+    toast.error('Failed to update audit status')
+    throw new Error('cannot update audit status')
+  }
+}
+
+export const deleteAuditPackage = async (packageId: number): Promise<void> => {
+  try {
+    const response = await axiosInstance.delete(`${ENDPOINTS.DELETE_AUDIT}/${packageId}`)
+    if (response.status !== 200 && response.status !== 204) {
+      toast.error('Failed to delete audit')
+      throw new Error('error deleting audit')
+    }
+  } catch (error) {
+    console.error(error)
+    toast.error('Failed to delete audit')
+    throw new Error('cannot delete audit')
+  }
+}

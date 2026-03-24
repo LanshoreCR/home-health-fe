@@ -80,6 +80,17 @@ export default function AuditToolsPage () {
       })
   }, [tools, searchQuery, statusFilter])
 
+  const refreshTools = async (): Promise<void> => {
+    if (id === undefined) return
+    try {
+      const data = await getToolsByAuditPackageId(id)
+      setTools(data)
+      setToolsError(null)
+    } catch (err) {
+      setToolsError(err instanceof Error ? err.message : 'Failed to load tools')
+    }
+  }
+
   const totalComplete = useMemo(() => tools.filter((t) => getToolStatus(t.completed, t.total) === 'complete').length, [tools])
   const totalInProgress = useMemo(() => tools.filter((t) => getToolStatus(t.completed, t.total) === 'in-progress').length, [tools])
   const totalNotStarted = useMemo(() => tools.filter((t) => getToolStatus(t.completed, t.total) === 'not-started').length, [tools])
@@ -314,6 +325,7 @@ export default function AuditToolsPage () {
               assignedAuditor={tool.assignedAuditor}
               templateScore={tool.templateScore}
               templateStatus={tool.templateStatus}
+              onDeleted={refreshTools}
             />
           ))}
 

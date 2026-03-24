@@ -10,13 +10,13 @@ const defaultFilters = {
   status: 'all'
 }
 
-export default function AuditsPage () {
+export default function AuditsPage (): JSX.Element {
   const [audits, setAudits] = useState<Audit[]>([])
   const [filters, setFilters] = useState(defaultFilters)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchAudits = async () => {
+  const fetchAudits = async (): Promise<void> => {
     setLoading(true)
     setError(null)
     try {
@@ -29,8 +29,18 @@ export default function AuditsPage () {
     }
   }
 
+  /** Refetch list without full-page loading (e.g. after approve/reject). */
+  const refreshAudits = async (): Promise<void> => {
+    try {
+      const data = await getAudits()
+      setAudits(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load audits')
+    }
+  }
+
   useEffect(() => {
-    void fetchAudits()
+    fetchAudits().catch(() => {})
   }, [])
 
   const hasActiveFilters = filters.search !== '' || filters.status !== 'all'
@@ -38,7 +48,7 @@ export default function AuditsPage () {
   const filteredAudits = useMemo(() => {
     return audits.filter((audit) => {
       if (
-        filters.search &&
+        filters.search !== '' &&
         !audit.packageName.toLowerCase().includes(filters.search.toLowerCase()) &&
         !audit.edNumber.toLowerCase().includes(filters.search.toLowerCase())
       ) {
@@ -54,11 +64,11 @@ export default function AuditsPage () {
     })
   }, [audits, filters])
 
-  const handleFilterChange = (key: string, value: string) => {
+  const handleFilterChange = (key: string, value: string): void => {
     setFilters((prev) => ({ ...prev, [key]: value }))
   }
 
-  const handleClearFilters = () => {
+  const handleClearFilters = (): void => {
     setFilters(defaultFilters)
   }
 
@@ -70,19 +80,23 @@ export default function AuditsPage () {
         onFilterChange={handleFilterChange}
         onClearFilters={handleClearFilters}
         hasActiveFilters={hasActiveFilters}
-        onAuditCreated={fetchAudits}
+        onAuditCreated={() => {
+          fetchAudits().catch(() => {})
+        }}
       />
       <main className='mx-auto max-w-5xl px-4 sm:px-6 py-6'>
         <div className='flex flex-col gap-3'>
           {loading && <AuditCardSkeletonList />}
 
-          {!loading && error && (
+          {!loading && error !== null && (
             <div className='flex flex-col items-center justify-center py-16 text-center'>
               <p className='text-sm text-destructive'>
                 {error}
               </p>
               <button
-                onClick={() => void fetchAudits()}
+                onClick={() => {
+                  fetchAudits().catch(() => {})
+                }}
                 className='mt-3 text-sm text-primary hover:underline'
               >
                 Try again
@@ -90,11 +104,15 @@ export default function AuditsPage () {
             </div>
           )}
 
-          {!loading && !error && filteredAudits.map((audit) => (
-            <AuditCard key={audit.packageID} {...audit} />
+          {!loading && error === null && filteredAudits.map((audit) => (
+            <AuditCard
+              key={audit.packageID}
+              {...audit}
+              onStatusUpdated={refreshAudits}
+            />
           ))}
 
-          {!loading && !error && filteredAudits.length === 0 && (
+          {!loading && error === null && filteredAudits.length === 0 && (
             <div className='flex flex-col items-center justify-center py-16 text-center'>
               <p className='text-sm text-muted-foreground'>
                 No audits match your filters.

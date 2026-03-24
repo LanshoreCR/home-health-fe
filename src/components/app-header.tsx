@@ -84,8 +84,8 @@ export function AppHeader ({
             <SelectContent>
               <SelectItem value='all'>All Statuses</SelectItem>
               <SelectItem value='pending'>Pending</SelectItem>
-              <SelectItem value='in-progress'>In Progress</SelectItem>
-              <SelectItem value='completed'>Completed</SelectItem>
+              <SelectItem value='under-review'>Under Review</SelectItem>
+              <SelectItem value='approved'>Approved</SelectItem>
               <SelectItem value='rejected'>Rejected</SelectItem>
             </SelectContent>
           </Select>
