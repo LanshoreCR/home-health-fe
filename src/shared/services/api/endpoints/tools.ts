@@ -20,7 +20,7 @@ interface AuditPackageToolRaw {
   packageTemplateID: number
   auditPlaceLocation?: string
   locationName?: string
-  allQuestionsAnswered: boolean
+  allQuestionsAnswered: boolean | null
 }
 
 export const getToolsByAuditPackageId = async (packageId: string): Promise<ToolInfo[]> => {
@@ -36,7 +36,11 @@ export const getToolsByAuditPackageId = async (packageId: string): Promise<ToolI
       id: String(tool.packageTemplateID),
       name: tool.templateName ?? '',
       completed: tool.allQuestionsAnswered === true ? 1 : 0,
-      total: 1
+      total: 1,
+      locationName: tool.locationName,
+      assignedAuditor: tool.assignedAuditor,
+      templateScore: tool.templateScore,
+      templateStatus: tool.templateStatus
     }))
   } catch (error) {
     console.error(error)

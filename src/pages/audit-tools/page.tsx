@@ -275,7 +275,7 @@ export default function AuditToolsPage () {
           {toolsLoading && (
             <>
               {Array.from({ length: 4 }, (_, i) => (
-                <Skeleton key={i} className='h-12 w-full rounded-lg' />
+                <Skeleton key={i} className='h-16 w-full rounded-lg' />
               ))}
             </>
           )}
@@ -310,6 +310,10 @@ export default function AuditToolsPage () {
               name={tool.name}
               completed={tool.completed}
               total={tool.total}
+              locationName={tool.locationName}
+              assignedAuditor={tool.assignedAuditor}
+              templateScore={tool.templateScore}
+              templateStatus={tool.templateStatus}
             />
           ))}
 

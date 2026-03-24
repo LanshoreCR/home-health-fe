@@ -5,6 +5,10 @@ export interface ToolInfo {
   name: string
   completed: number
   total: number
+  locationName?: string
+  assignedAuditor?: string
+  templateScore?: string
+  templateStatus?: string
 }
 
 export interface ToolMetadata {
