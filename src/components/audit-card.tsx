@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/tooltip'
 import { Link } from 'react-router-dom'
 import type { Audit } from '@/shared/types'
+import { ExportAuditModal } from '@/components/export-audit-modal'
 import { deleteAuditPackage, updateAuditStatus } from '@shared/services/api/endpoints/audit-packages'
 import { PACKAGE_STATUS_MAP, TEMPLATE_STATUS } from '@shared/utils/status-config'
 
@@ -85,6 +86,7 @@ export function AuditCard ({
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [confirmAction, setConfirmAction] = useState<'approve' | 'reject' | 'delete' | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [exportOpen, setExportOpen] = useState(false)
 
   const canChangeStatus =
     packageStatus === TEMPLATE_STATUS.PENDING ||
@@ -104,6 +106,12 @@ export function AuditCard ({
     if (submitting) return
     setConfirmAction('delete')
     setConfirmOpen(true)
+  }
+
+  const openExportModal = (e: MouseEvent): void => {
+    e.preventDefault()
+    e.stopPropagation()
+    setExportOpen(true)
   }
 
   const handleConfirm = async (): Promise<void> => {
@@ -230,13 +238,13 @@ export function AuditCard ({
               variant='ghost'
               size='icon'
               className='size-8 text-muted-foreground hover:text-card-foreground'
-              onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
+              onClick={openExportModal}
             >
               <Download className='size-4' />
-              <span className='sr-only'>Export CSV</span>
+              <span className='sr-only'>Export to Excel</span>
             </Button>
           </TooltipTrigger>
-          <TooltipContent side='bottom'>Export CSV</TooltipContent>
+          <TooltipContent side='bottom'>Export to Excel</TooltipContent>
         </Tooltip>
 
         <Tooltip>
@@ -261,6 +269,13 @@ export function AuditCard ({
           <TooltipContent side='bottom'>Delete</TooltipContent>
         </Tooltip>
       </div>
+
+      <ExportAuditModal
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        packageID={packageID}
+        packageName={packageName}
+      />
 
       <AlertDialog open={confirmOpen} onOpenChange={handleOpenChange}>
         <AlertDialogContent onClick={(e) => e.stopPropagation()}>
