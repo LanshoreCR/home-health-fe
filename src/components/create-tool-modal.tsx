@@ -172,7 +172,7 @@ export function CreateToolModal ({
                 <ChevronDown
                   className={cn('size-4 transition-transform', optionalOpen && 'rotate-180')}
                 />
-                Optional details
+                Additional details
               </button>
             </CollapsibleTrigger>
             <CollapsibleContent>
