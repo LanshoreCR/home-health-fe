@@ -1,5 +1,5 @@
 import { useState, type MouseEvent } from 'react'
-import { Download, CheckCircle2, XCircle, ChevronRight, CalendarDays, Hash, TrendingUp, Loader2, Trash2 } from 'lucide-react'
+import { Download, CheckCircle2, XCircle, ChevronRight, CalendarDays, Hash, TrendingUp, Loader2, Trash2, Paperclip } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -21,6 +21,7 @@ import {
 import { Link } from 'react-router-dom'
 import type { Audit } from '@/shared/types'
 import { ExportAuditModal } from '@/components/export-audit-modal'
+import { AttachmentsModal } from '@/components/attachments-modal'
 import { deleteAuditPackage, updateAuditStatus } from '@shared/services/api/endpoints/audit-packages'
 import { PACKAGE_STATUS_MAP, TEMPLATE_STATUS } from '@shared/utils/status-config'
 
@@ -87,6 +88,7 @@ export function AuditCard ({
   const [confirmAction, setConfirmAction] = useState<'approve' | 'reject' | 'delete' | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
+  const [attachmentsOpen, setAttachmentsOpen] = useState(false)
 
   const canChangeStatus =
     packageStatus === TEMPLATE_STATUS.PENDING ||
@@ -112,6 +114,12 @@ export function AuditCard ({
     e.preventDefault()
     e.stopPropagation()
     setExportOpen(true)
+  }
+
+  const openAttachmentsModal = (e: MouseEvent): void => {
+    e.preventDefault()
+    e.stopPropagation()
+    setAttachmentsOpen(true)
   }
 
   const handleConfirm = async (): Promise<void> => {
@@ -252,6 +260,21 @@ export function AuditCard ({
             <Button
               variant='ghost'
               size='icon'
+              className='size-8 text-muted-foreground hover:text-card-foreground'
+              onClick={openAttachmentsModal}
+            >
+              <Paperclip className='size-4' />
+              <span className='sr-only'>Attachments</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side='bottom'>Attachments</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant='ghost'
+              size='icon'
               className='size-8 text-muted-foreground hover:text-red-600 hover:bg-red-50'
               disabled={submitting}
               onClick={openConfirmDelete}
@@ -273,6 +296,13 @@ export function AuditCard ({
       <ExportAuditModal
         open={exportOpen}
         onOpenChange={setExportOpen}
+        packageID={packageID}
+        packageName={packageName}
+      />
+
+      <AttachmentsModal
+        open={attachmentsOpen}
+        onOpenChange={setAttachmentsOpen}
         packageID={packageID}
         packageName={packageName}
       />
