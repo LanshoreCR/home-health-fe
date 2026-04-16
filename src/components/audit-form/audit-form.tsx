@@ -286,7 +286,7 @@ export function AuditForm ({
               {filteredQuestions.map((q, i) => (
                 <AuditQuestion
                   key={q.id}
-                  number={i + 1}
+                  number={q.displayNumber ?? i + 1}
                   text={q.text}
                   answer={q.answer}
                   note={q.note}

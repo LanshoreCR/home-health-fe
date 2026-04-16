@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronRight, Download, Send } from 'lucide-react'
+import { ArrowLeft, ChevronRight, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
@@ -75,10 +75,6 @@ export function AuditFormHeader ({
           <Progress value={percent} className='w-20 h-1.5' />
           <span className='text-xs font-semibold text-card-foreground tabular-nums'>{percent}%</span>
         </div>
-        <Button variant='outline' size='sm' className='h-8 text-xs'>
-          <Download className='size-3.5 mr-1.5' />
-          <span className='hidden sm:inline'>Export</span>
-        </Button>
         <Button
           size='sm'
           className='h-8 text-xs'
