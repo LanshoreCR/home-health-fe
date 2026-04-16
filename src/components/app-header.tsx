@@ -16,7 +16,9 @@ interface AppHeaderProps {
   filters: {
     search: string
     status: string
+    quarter: string
   }
+  quarterOptions: string[]
   onFilterChange: (key: string, value: string) => void
   onClearFilters: () => void
   hasActiveFilters: boolean
@@ -26,6 +28,7 @@ interface AppHeaderProps {
 export function AppHeader ({
   auditCount,
   filters,
+  quarterOptions,
   onFilterChange,
   onClearFilters,
   hasActiveFilters,
@@ -87,6 +90,23 @@ export function AppHeader ({
               <SelectItem value='under-review'>Under Review</SelectItem>
               <SelectItem value='approved'>Approved</SelectItem>
               <SelectItem value='rejected'>Rejected</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={filters.quarter}
+            onValueChange={(v) => onFilterChange('quarter', v)}
+          >
+            <SelectTrigger className='w-[130px] h-8 text-xs bg-background'>
+              <SelectValue placeholder='Quarter' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='all'>All Quarters</SelectItem>
+              {quarterOptions.map((q) => (
+                <SelectItem key={q} value={q}>
+                  {q}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
