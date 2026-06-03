@@ -23,7 +23,8 @@ import type { Audit } from '@/shared/types'
 import { ExportAuditModal } from '@/components/export-audit-modal'
 import { AttachmentsModal } from '@/components/attachments-modal'
 import { deleteAuditPackage, updateAuditStatus } from '@shared/services/api/endpoints/audit-packages'
-import { PACKAGE_STATUS_MAP, TEMPLATE_STATUS } from '@shared/utils/status-config'
+import { getToolsByAuditPackageId } from '@shared/services/api/endpoints/tools'
+import { PACKAGE_STATUS_MAP, TEMPLATE_STATUS, TOOL_STATUS_UNDER_REVIEW } from '@shared/utils/status-config'
 
 const SKELETON_CARD_COUNT = 5
 
@@ -87,6 +88,7 @@ export function AuditCard ({
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [confirmAction, setConfirmAction] = useState<'approve' | 'reject' | 'delete' | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [checkingAction, setCheckingAction] = useState<'approve' | 'reject' | null>(null)
   const [exportOpen, setExportOpen] = useState(false)
   const [attachmentsOpen, setAttachmentsOpen] = useState(false)
 
@@ -94,12 +96,30 @@ export function AuditCard ({
     packageStatus === TEMPLATE_STATUS.PENDING ||
     packageStatus === TEMPLATE_STATUS.UNDER_REVIEW
 
+  const validateAndOpenConfirm = async (action: 'approve' | 'reject'): Promise<void> => {
+    setCheckingAction(action)
+    try {
+      const tools = await getToolsByAuditPackageId(String(packageID))
+      const allUnderReview =
+        tools.length > 0 && tools.every((tool) => tool.templateStatus === TOOL_STATUS_UNDER_REVIEW)
+      if (!allUnderReview) {
+        toast.error('All tools must be under review before approving or rejecting this audit')
+        return
+      }
+      setConfirmAction(action)
+      setConfirmOpen(true)
+    } catch {
+      // Error toast is handled in getToolsByAuditPackageId
+    } finally {
+      setCheckingAction(null)
+    }
+  }
+
   const openConfirm = (action: 'approve' | 'reject') => (e: MouseEvent): void => {
     e.preventDefault()
     e.stopPropagation()
-    if (!canChangeStatus || submitting) return
-    setConfirmAction(action)
-    setConfirmOpen(true)
+    if (!canChangeStatus || submitting || checkingAction !== null) return
+    void validateAndOpenConfirm(action)
   }
 
   const openConfirmDelete = (e: MouseEvent): void => {
@@ -202,10 +222,10 @@ export function AuditCard ({
               variant='ghost'
               size='icon'
               className='size-8 text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50'
-              disabled={!canChangeStatus || submitting}
+              disabled={!canChangeStatus || submitting || checkingAction !== null}
               onClick={openConfirm('approve')}
             >
-              {submitting && confirmAction === 'approve'
+              {(submitting && confirmAction === 'approve') || checkingAction === 'approve'
                 ? (
                   <Loader2 className='size-4 animate-spin' />
                   )
@@ -224,10 +244,10 @@ export function AuditCard ({
               variant='ghost'
               size='icon'
               className='size-8 text-muted-foreground hover:text-red-600 hover:bg-red-50'
-              disabled={!canChangeStatus || submitting}
+              disabled={!canChangeStatus || submitting || checkingAction !== null}
               onClick={openConfirm('reject')}
             >
-              {submitting && confirmAction === 'reject'
+              {(submitting && confirmAction === 'reject') || checkingAction === 'reject'
                 ? (
                   <Loader2 className='size-4 animate-spin' />
                   )
