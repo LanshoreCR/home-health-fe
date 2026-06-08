@@ -31,6 +31,25 @@ function toISOStartOfDay (dateStr: string): string {
   return `${dateStr}T00:00:00.000Z`
 }
 
+function todayISO (): string {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function addOneMonthISO (dateStr: string): string {
+  if (dateStr === '') return ''
+  const [year, month, day] = dateStr.split('-').map(Number)
+  const date = new Date(year, month - 1, day)
+  date.setMonth(date.getMonth() + 1)
+  const nextYear = date.getFullYear()
+  const nextMonth = String(date.getMonth() + 1).padStart(2, '0')
+  const nextDay = String(date.getDate()).padStart(2, '0')
+  return `${nextYear}-${nextMonth}-${nextDay}`
+}
+
 export function CreateAuditModal ({ open, onOpenChange, onAuditCreated }: CreateAuditModalProps) {
   const [selectedRd, setSelectedRd] = useState('')
   const [selectedEd, setSelectedEd] = useState('')
@@ -67,11 +86,14 @@ export function CreateAuditModal ({ open, onOpenChange, onAuditCreated }: Create
       })
   }, [hierarchyByRd])
 
+  const dateError = startDate !== '' && endDate !== '' && endDate < startDate ? 'End date must be on or after start date' : ''
+
   const isFormComplete =
     selectedRd !== '' &&
     selectedEd !== '' &&
     startDate !== '' &&
-    endDate !== ''
+    endDate !== '' &&
+    dateError === ''
 
   const resetForm = () => {
     setSelectedRd('')
@@ -86,6 +108,8 @@ export function CreateAuditModal ({ open, onOpenChange, onAuditCreated }: Create
       resetForm()
       return
     }
+    setStartDate(todayISO())
+    setEndDate(addOneMonthISO(todayISO()))
     const fetchHierarchy = async () => {
       setLoadingHierarchy(true)
       try {
@@ -221,6 +245,9 @@ export function CreateAuditModal ({ open, onOpenChange, onAuditCreated }: Create
               />
             </div>
           </div>
+          {dateError !== '' && (
+            <p className='text-xs text-destructive'>{dateError}</p>
+          )}
         </div>
 
         <DialogFooter className='gap-3'>
