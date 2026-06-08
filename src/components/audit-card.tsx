@@ -19,6 +19,7 @@ import {
   TooltipTrigger
 } from '@/components/ui/tooltip'
 import { Link } from 'react-router-dom'
+import useRole from '@shared/hooks/useRole'
 import type { Audit } from '@/shared/types'
 import { ExportAuditModal } from '@/components/export-audit-modal'
 import { AttachmentsModal } from '@/components/attachments-modal'
@@ -84,6 +85,8 @@ export function AuditCard ({
   onStatusUpdated
 }: AuditCardProps): JSX.Element {
   const statusConfig = PACKAGE_STATUS_MAP[packageStatus] ?? { label: 'Unknown', className: '' }
+  const { isAdmin, isUser } = useRole()
+  const canDelete = isAdmin || (isUser && packageStatus === TEMPLATE_STATUS.PENDING)
 
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [confirmAction, setConfirmAction] = useState<'approve' | 'reject' | 'delete' | null>(null)
@@ -126,6 +129,7 @@ export function AuditCard ({
     e.preventDefault()
     e.stopPropagation()
     if (submitting) return
+    if (!canDelete) return
     setConfirmAction('delete')
     setConfirmOpen(true)
   }
@@ -145,6 +149,7 @@ export function AuditCard ({
   const handleConfirm = async (): Promise<void> => {
     if (confirmAction === null) return
     if (confirmAction === 'delete') {
+      if (!canDelete) return
       setSubmitting(true)
       try {
         await deleteAuditPackage(packageID)
@@ -296,7 +301,7 @@ export function AuditCard ({
               variant='ghost'
               size='icon'
               className='size-8 text-muted-foreground hover:text-red-600 hover:bg-red-50'
-              disabled={submitting}
+              disabled={submitting || !canDelete}
               onClick={openConfirmDelete}
             >
               {submitting && confirmAction === 'delete'
@@ -309,7 +314,7 @@ export function AuditCard ({
               <span className='sr-only'>Delete</span>
             </Button>
           </TooltipTrigger>
-          <TooltipContent side='bottom'>Delete</TooltipContent>
+          <TooltipContent side='bottom'>{canDelete ? 'Delete' : 'Only pending audits can be deleted'}</TooltipContent>
         </Tooltip>
       </div>
 
