@@ -160,11 +160,11 @@ export function AuditCard ({
       return
     }
     const templateStatusID =
-      confirmAction === 'approve' ? TEMPLATE_STATUS.APPROVED : TEMPLATE_STATUS.REJECTED
+      confirmAction === 'approve' ? TEMPLATE_STATUS.APPROVED : TEMPLATE_STATUS.PENDING
     setSubmitting(true)
     try {
       await updateAuditStatus(packageID, templateStatusID)
-      toast.success(confirmAction === 'approve' ? 'Audit approved' : 'Audit rejected')
+      toast.success(confirmAction === 'approve' ? 'Audit approved' : 'Audit sent back to pending')
       await onStatusUpdated?.()
       setConfirmOpen(false)
       setConfirmAction(null)
@@ -342,7 +342,7 @@ export function AuditCard ({
                 ? `“${packageName}” will be permanently removed. This action cannot be undone.`
                 : confirmAction === 'approve'
                   ? `“${packageName}” will be marked as approved.`
-                  : `“${packageName}” will be marked as rejected.`}
+                  : `“${packageName}” will be sent back to pending.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
