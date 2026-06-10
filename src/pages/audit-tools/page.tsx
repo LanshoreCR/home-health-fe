@@ -7,8 +7,13 @@ import { Input } from '@/components/ui/input'
 import { ToolListItem } from '@/components/tool-list-item'
 import { CreateToolModal } from '@/components/create-tool-modal'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger
+} from '@/components/ui/tooltip'
 import { getToolStatus } from '@shared/utils/tool-status'
-import { PACKAGE_STATUS_MAP } from '@shared/utils/status-config'
+import { PACKAGE_STATUS_MAP, TEMPLATE_STATUS } from '@shared/utils/status-config'
 import { getAuditById } from '@shared/services/api/endpoints/audit-packages'
 import { getToolsByAuditPackageId, createAuditTool } from '@shared/services/api/endpoints/tools'
 import type { ToolMetadata, ToolInfo } from '@/shared/types'
@@ -104,6 +109,7 @@ export default function AuditToolsPage () {
 
   const handleCreateTool = async (data: ToolMetadata) => {
     if (id === undefined || audit === null) return
+    if (audit.packageStatus === TEMPLATE_STATUS.APPROVED) return
     setCreatingTool(true)
     try {
       await createAuditTool({
@@ -186,6 +192,7 @@ export default function AuditToolsPage () {
   }
 
   const statusConfig = PACKAGE_STATUS_MAP[audit.packageStatus] ?? { label: 'Unknown', className: '' }
+  const isApproved = audit.packageStatus === TEMPLATE_STATUS.APPROVED
 
   return (
     <div className='min-h-screen bg-background'>
@@ -235,14 +242,24 @@ export default function AuditToolsPage () {
               {totalComplete} of {tools.length} complete
             </span>
           </div>
-          <Button
-            size='sm'
-            onClick={() => setCreateToolModalOpen(true)}
-            className='shrink-0'
-          >
-            <Plus className='size-4 mr-1.5' />
-            Create Tool
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className='shrink-0'>
+                <Button
+                  size='sm'
+                  onClick={() => setCreateToolModalOpen(true)}
+                  disabled={isApproved}
+                  className='shrink-0'
+                >
+                  <Plus className='size-4 mr-1.5' />
+                  Create Tool
+                </Button>
+              </span>
+            </TooltipTrigger>
+            {isApproved && (
+              <TooltipContent side='bottom'>This audit is approved and locked</TooltipContent>
+            )}
+          </Tooltip>
         </div>
 
         <CreateToolModal
