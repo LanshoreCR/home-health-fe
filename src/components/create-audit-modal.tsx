@@ -39,11 +39,11 @@ function todayISO (): string {
   return `${year}-${month}-${day}`
 }
 
-function addOneMonthISO (dateStr: string): string {
+function addMonthsISO (dateStr: string, months: number): string {
   if (dateStr === '') return ''
   const [year, month, day] = dateStr.split('-').map(Number)
   const date = new Date(year, month - 1, day)
-  date.setMonth(date.getMonth() + 1)
+  date.setMonth(date.getMonth() + months)
   const nextYear = date.getFullYear()
   const nextMonth = String(date.getMonth() + 1).padStart(2, '0')
   const nextDay = String(date.getDate()).padStart(2, '0')
@@ -108,8 +108,8 @@ export function CreateAuditModal ({ open, onOpenChange, onAuditCreated }: Create
       resetForm()
       return
     }
-    setStartDate(todayISO())
-    setEndDate(addOneMonthISO(todayISO()))
+    setStartDate(addMonthsISO(todayISO(), -1))
+    setEndDate(addMonthsISO(todayISO(), 1))
     const fetchHierarchy = async () => {
       setLoadingHierarchy(true)
       try {
