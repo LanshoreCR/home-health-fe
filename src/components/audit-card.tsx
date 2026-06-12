@@ -103,8 +103,11 @@ export function AuditCard ({
     setCheckingAction(action)
     try {
       const tools = await getToolsByAuditPackageId(String(packageID))
-      const allUnderReview =
-        tools.length > 0 && tools.every((tool) => tool.templateStatus === TOOL_STATUS_UNDER_REVIEW)
+      if (tools.length === 0) {
+        toast.error('This audit has no tools, so it cannot be approved or rejected')
+        return
+      }
+      const allUnderReview = tools.every((tool) => tool.templateStatus === TOOL_STATUS_UNDER_REVIEW)
       if (!allUnderReview) {
         toast.error('All tools must be under review before approving or rejecting this audit')
         return
