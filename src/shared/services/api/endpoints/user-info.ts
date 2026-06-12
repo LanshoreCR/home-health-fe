@@ -17,7 +17,7 @@ export const getUserInfo = async () => {
       edName: data.edName,
       locationId: data.locationID,
       locationName: data.locationName,
-      role: data.role
+      role: data.roles
 
     }
   } catch (error) {
