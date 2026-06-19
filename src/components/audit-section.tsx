@@ -62,7 +62,7 @@ export function AuditSection ({ title, questions, startNumber, onQuestionUpdate 
           {questions.map((q, i) => (
             <AuditQuestion
               key={q.id}
-              number={startNumber + i}
+              number={q.displayNumber ?? startNumber + i}
               text={q.text}
               answer={q.answer}
               note={q.note}

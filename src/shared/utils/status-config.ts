@@ -8,6 +8,9 @@ export const TEMPLATE_STATUS = {
   REJECTED: 4
 } as const
 
+/** Tool templateStatus string (from API) required before approving/rejecting an audit. */
+export const TOOL_STATUS_UNDER_REVIEW = 'Under Review'
+
 export const STATUS_CONFIG: Record<AuditStatus, { label: string, className: string }> = {
   pending: {
     label: 'Pending',

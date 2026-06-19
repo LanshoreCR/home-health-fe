@@ -5,9 +5,35 @@ import { getAudits } from '@shared/services/api/endpoints/audit-packages'
 import { PACKAGE_STATUS_MAP } from '@shared/utils/status-config'
 import type { Audit } from '@shared/types'
 
+/** Derive fiscal quarter label from an ISO date string (Jan–Mar = Q1, etc.). */
+function deriveQuarter (startDate: string): string {
+  const d = new Date(startDate)
+  if (Number.isNaN(d.getTime())) return ''
+  const year = d.getFullYear()
+  const month = d.getMonth()
+  let q = 1
+  if (month >= 3 && month <= 5) q = 2
+  else if (month >= 6 && month <= 8) q = 3
+  else if (month >= 9) q = 4
+  return `Q${q} ${year}`
+}
+
+function compareQuarterLabels (a: string, b: string): number {
+  const parse = (s: string): { q: number, y: number } => {
+    const m = /^Q([1-4])\s+(\d{4})$/.exec(s.trim())
+    if (m == null) return { q: 0, y: 0 }
+    return { q: Number(m[1]), y: Number(m[2]) }
+  }
+  const pa = parse(a)
+  const pb = parse(b)
+  if (pa.y !== pb.y) return pa.y - pb.y
+  return pa.q - pb.q
+}
+
 const defaultFilters = {
   search: '',
-  status: 'all'
+  status: 'all',
+  quarter: 'all'
 }
 
 export default function AuditsPage (): JSX.Element {
@@ -43,7 +69,17 @@ export default function AuditsPage (): JSX.Element {
     fetchAudits().catch(() => {})
   }, [])
 
-  const hasActiveFilters = filters.search !== '' || filters.status !== 'all'
+  const quarterOptions = useMemo(() => {
+    const labels = new Set<string>()
+    for (const audit of audits) {
+      const q = deriveQuarter(audit.startDate)
+      if (q !== '') labels.add(q)
+    }
+    return Array.from(labels).sort(compareQuarterLabels)
+  }, [audits])
+
+  const hasActiveFilters =
+    filters.search !== '' || filters.status !== 'all' || filters.quarter !== 'all'
 
   const filteredAudits = useMemo(() => {
     return audits.filter((audit) => {
@@ -59,6 +95,9 @@ export default function AuditsPage (): JSX.Element {
           ?.toLowerCase()
           .replace(/\s+/g, '-')
         if (statusLabel !== filters.status) return false
+      }
+      if (filters.quarter !== 'all') {
+        if (deriveQuarter(audit.startDate) !== filters.quarter) return false
       }
       return true
     })
@@ -77,6 +116,7 @@ export default function AuditsPage (): JSX.Element {
       <AppHeader
         auditCount={filteredAudits.length}
         filters={filters}
+        quarterOptions={quarterOptions}
         onFilterChange={handleFilterChange}
         onClearFilters={handleClearFilters}
         hasActiveFilters={hasActiveFilters}

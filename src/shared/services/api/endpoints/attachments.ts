@@ -1,125 +1,86 @@
+import { toast } from 'sonner'
 import { axiosInstance } from '../api-master'
 import { ENDPOINTS } from '../config'
 
-interface FileUploadItem {
-  name: string
-  src: string
-  type: string
-  tags?: unknown
-  comments?: string
-}
-
-interface UploadAttachmentParams {
-  packageId: string
-  folderId: string
-  file: FileUploadItem[]
-  userId: string
-}
-
-export const uploadAttachment = async ({ packageId, folderId, file, userId }: UploadAttachmentParams) => {
-  try {
-    const filesToUpload = file.map((f: FileUploadItem) => ({
-      folderID: folderId,
-      packageID: parseInt(packageId, 10),
-      fileName: f.name,
-      fileBase64: f.src,
-      fileType: f.type,
-      createdBy: userId,
-      tags: f.tags,
-      comments: f.comments
-    }))
-
-    const response = await axiosInstance.post(ENDPOINTS.UPLOAD_ATTACHMENT, filesToUpload, {})
-    if (response.status !== 200) return new Error('error saving attachment to the database')
-    const data = response.data
-    return data
-  } catch (error) {
-    console.error(error)
-    return new Error('cannot upload attachment')
-  }
-}
-
-export const getAttachments = async ({ packageId }: { packageId: string }) => {
-  try {
-    const params = {
-      PackageID: packageId
-    }
-
-    const response = await axiosInstance.get(ENDPOINTS.GET_ATTACHMENTS, { params })
-    if (response.status !== 200) return new Error('error getting attachments')
-    const data = response.data as Array<Record<string, unknown>>
-    const attachments = data.map((item) => ({
-      packageId: item.packageID,
-      recordId: item.recordID,
-      fileId: item.fileID,
-      fileName: item.fileName,
-      downloadLink: item.downloadLink,
-      siteId: item.siteID
-    }))
-
-    return attachments
-  } catch (error) {
-    console.error(error)
-    return new Error('cannot get attachments')
-  }
-}
-
-export const downloadAttachment = async ({ attachmentId }: { attachmentId: string }) => {
-  try {
-    const params = {
-      fileID: attachmentId
-    }
-
-    const response = await axiosInstance.get(ENDPOINTS.DOWNLOAD_ATTACHMENT, { params })
-    if (response.status !== 200) return new Error('error downloading attachment')
-    const data = response.data
-
-    const fileBase64 = data.fileType === 'image/png' || data.fileType === 'image/jpg' || data.fileType === 'image/jpeg'
-      ? `data:image/${data.fileType};base64,${data.fileBase64String}`
-      : `data:${data.fileType};base64,${data.fileBase64String}`
-
-    const attachment = {
-      src: fileBase64,
-      name: data.fileName,
-      type: data.fileType
-    }
-
-    return attachment
-  } catch (error) {
-    console.error(error)
-    return new Error('cannot download attachment')
-  }
-}
-
-interface DeleteAttachmentFile {
-  recordId: string
-  packageId: string
+export interface AttachmentInfo {
   fileId: string
   fileName: string
-  siteId: string
-  downloadLink: string
+  fileType?: string
+  size?: number
+  modifiedDateTime?: string
 }
 
-export const deleteAttachment = async ({ file, userId }: { file: DeleteAttachmentFile, userId: string }) => {
+export interface DownloadedAttachment {
+  src: string
+  name: string
+  type: string
+}
+
+export interface UploadAttachmentParams {
+  packageId: number
+  fileName: string
+  fileBase64: string
+  fileType?: string
+}
+
+export const uploadAttachment = async (params: UploadAttachmentParams): Promise<void> => {
   try {
-    const { recordId, packageId, fileId, fileName, siteId, downloadLink } = file
-
-    const params = {
-      RecordID: recordId,
-      PackageID: packageId,
-      FileID: fileId,
-      FileName: fileName,
-      SiteID: siteId,
-      DownloadLink: downloadLink,
-      Controller: 1
+    const response = await axiosInstance.post(ENDPOINTS.ATTACHMENT_UPLOAD, params)
+    if (response.status !== 200) {
+      toast.error('Failed to upload attachment')
+      throw new Error('Failed to upload attachment')
     }
-
-    const response = await axiosInstance.put(ENDPOINTS.DELETE_ATTACHMENT, params, {})
-    if (response.status !== 200) return new Error('error deleting attachment')
-    const data = response.data
-    return data
   } catch (error) {
     console.error(error)
-    return new Error('cannot delete attachment')
+    toast.error('Failed to upload attachment')
+    throw error
+  }
+}
+
+export const getAttachmentsByPackageId = async (packageId: number): Promise<AttachmentInfo[]> => {
+  try {
+    const response = await axiosInstance.get(`${ENDPOINTS.ATTACHMENT_LIST}/${packageId}`)
+    if (response.status !== 200) {
+      toast.error('Failed to load attachments')
+      throw new Error('Failed to load attachments')
+    }
+    return (response.data.attachments ?? []) as AttachmentInfo[]
+  } catch (error) {
+    console.error(error)
+    toast.error('Failed to load attachments')
+    throw error
+  }
+}
+
+export const downloadAttachment = async (fileId: string): Promise<DownloadedAttachment> => {
+  try {
+    const response = await axiosInstance.get(`${ENDPOINTS.ATTACHMENT_DOWNLOAD}/${fileId}`)
+    if (response.status !== 200) {
+      toast.error('Failed to download attachment')
+      throw new Error('Failed to download attachment')
+    }
+    const data = response.data as { fileBase64: string; fileName: string; fileType: string }
+    const src = data.fileBase64.startsWith('data:')
+      ? data.fileBase64
+      : `data:${data.fileType};base64,${data.fileBase64}`
+    return { src, name: data.fileName, type: data.fileType }
+  } catch (error) {
+    console.error(error)
+    toast.error('Failed to download attachment')
+    throw error
+  }
+}
+
+export const deleteAttachment = async (fileId: string): Promise<void> => {
+  try {
+    const response = await axiosInstance.delete(`${ENDPOINTS.ATTACHMENT_DELETE}/${fileId}`)
+    if (response.status !== 200) {
+      toast.error('Failed to delete attachment')
+      throw new Error('Failed to delete attachment')
+    }
+  } catch (error) {
+    console.error(error)
+    toast.error('Failed to delete attachment')
+    throw error
   }
 }

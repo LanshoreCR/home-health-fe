@@ -1,7 +1,7 @@
 export const API_URL = import.meta.env.VITE_API_URL ?? ''
 
 export const ENDPOINTS = {
-  GET_USER_INFO: '/api/User/GetUserInfo',
+  GET_USER_INFO: '/api/Users/me',
   GET_LOCATION_HIERARCHY: '/api/Locations/hierarchy',
   GET_AUDITS_PACKAGES: '/api/Audits',
   EXPORT_AUDIT_EXCEL: '/api/Export/audit',
@@ -26,10 +26,10 @@ export const ENDPOINTS = {
   FORM_BASE: '/api/Form',
   SAVE_ANSWER: '/api/Form/SaveAnswer',
   SUBMIT_ANSWERS: '/api/Form/SubmitAnswers',
-  UPLOAD_ATTACHMENT: '/api/Services/CreateAttachments',
-  GET_ATTACHMENTS: '/api/Services/GetAttachments',
-  DOWNLOAD_ATTACHMENT: '/api/Services/DownloadAttachment',
-  DELETE_ATTACHMENT: '/api/Services/DeleteAttachments',
+  ATTACHMENT_UPLOAD: '/api/Attachment',
+  ATTACHMENT_LIST: '/api/Attachment/package',
+  ATTACHMENT_DOWNLOAD: '/api/Attachment/download',
+  ATTACHMENT_DELETE: '/api/Attachment',
   GET_NOTIFICATION_USERS: '/api/Services/GetNotificationUsers',
   GET_CAPA_DETAILS: '/api/CAPA/GetCAPADetails',
   CREATE_CAPA: '/api/CAPA/PostCreateCAPA',

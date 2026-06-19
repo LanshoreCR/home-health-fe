@@ -1,5 +1,5 @@
 import { useState, type MouseEvent } from 'react'
-import { Download, CheckCircle2, XCircle, ChevronRight, CalendarDays, Hash, TrendingUp, Loader2, Trash2 } from 'lucide-react'
+import { Download, CheckCircle2, XCircle, ChevronRight, CalendarDays, Hash, TrendingUp, Loader2, Trash2, Paperclip } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -19,10 +19,13 @@ import {
   TooltipTrigger
 } from '@/components/ui/tooltip'
 import { Link } from 'react-router-dom'
+import useRole from '@shared/hooks/useRole'
 import type { Audit } from '@/shared/types'
 import { ExportAuditModal } from '@/components/export-audit-modal'
+import { AttachmentsModal } from '@/components/attachments-modal'
 import { deleteAuditPackage, updateAuditStatus } from '@shared/services/api/endpoints/audit-packages'
-import { PACKAGE_STATUS_MAP, TEMPLATE_STATUS } from '@shared/utils/status-config'
+import { getToolsByAuditPackageId } from '@shared/services/api/endpoints/tools'
+import { PACKAGE_STATUS_MAP, TEMPLATE_STATUS, TOOL_STATUS_UNDER_REVIEW } from '@shared/utils/status-config'
 
 const SKELETON_CARD_COUNT = 5
 
@@ -82,28 +85,54 @@ export function AuditCard ({
   onStatusUpdated
 }: AuditCardProps): JSX.Element {
   const statusConfig = PACKAGE_STATUS_MAP[packageStatus] ?? { label: 'Unknown', className: '' }
+  const { isAdmin, isUser } = useRole()
+  const canDelete = isAdmin || (isUser && packageStatus === TEMPLATE_STATUS.PENDING)
 
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [confirmAction, setConfirmAction] = useState<'approve' | 'reject' | 'delete' | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [checkingAction, setCheckingAction] = useState<'approve' | 'reject' | null>(null)
   const [exportOpen, setExportOpen] = useState(false)
+  const [attachmentsOpen, setAttachmentsOpen] = useState(false)
 
   const canChangeStatus =
     packageStatus === TEMPLATE_STATUS.PENDING ||
     packageStatus === TEMPLATE_STATUS.UNDER_REVIEW
 
+  const validateAndOpenConfirm = async (action: 'approve' | 'reject'): Promise<void> => {
+    setCheckingAction(action)
+    try {
+      const tools = await getToolsByAuditPackageId(String(packageID))
+      if (tools.length === 0) {
+        toast.error('This audit has no tools, so it cannot be approved or rejected')
+        return
+      }
+      const allUnderReview = tools.every((tool) => tool.templateStatus === TOOL_STATUS_UNDER_REVIEW)
+      if (!allUnderReview) {
+        toast.error('All tools must be under review before approving or rejecting this audit')
+        return
+      }
+      setConfirmAction(action)
+      setConfirmOpen(true)
+    } catch {
+      // Error toast is handled in getToolsByAuditPackageId
+    } finally {
+      setCheckingAction(null)
+    }
+  }
+
   const openConfirm = (action: 'approve' | 'reject') => (e: MouseEvent): void => {
     e.preventDefault()
     e.stopPropagation()
-    if (!canChangeStatus || submitting) return
-    setConfirmAction(action)
-    setConfirmOpen(true)
+    if (!canChangeStatus || submitting || checkingAction !== null) return
+    void validateAndOpenConfirm(action)
   }
 
   const openConfirmDelete = (e: MouseEvent): void => {
     e.preventDefault()
     e.stopPropagation()
     if (submitting) return
+    if (!canDelete) return
     setConfirmAction('delete')
     setConfirmOpen(true)
   }
@@ -114,9 +143,16 @@ export function AuditCard ({
     setExportOpen(true)
   }
 
+  const openAttachmentsModal = (e: MouseEvent): void => {
+    e.preventDefault()
+    e.stopPropagation()
+    setAttachmentsOpen(true)
+  }
+
   const handleConfirm = async (): Promise<void> => {
     if (confirmAction === null) return
     if (confirmAction === 'delete') {
+      if (!canDelete) return
       setSubmitting(true)
       try {
         await deleteAuditPackage(packageID)
@@ -132,11 +168,11 @@ export function AuditCard ({
       return
     }
     const templateStatusID =
-      confirmAction === 'approve' ? TEMPLATE_STATUS.APPROVED : TEMPLATE_STATUS.REJECTED
+      confirmAction === 'approve' ? TEMPLATE_STATUS.APPROVED : TEMPLATE_STATUS.PENDING
     setSubmitting(true)
     try {
       await updateAuditStatus(packageID, templateStatusID)
-      toast.success(confirmAction === 'approve' ? 'Audit approved' : 'Audit rejected')
+      toast.success(confirmAction === 'approve' ? 'Audit approved' : 'Audit sent back to pending')
       await onStatusUpdated?.()
       setConfirmOpen(false)
       setConfirmAction(null)
@@ -194,10 +230,10 @@ export function AuditCard ({
               variant='ghost'
               size='icon'
               className='size-8 text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50'
-              disabled={!canChangeStatus || submitting}
+              disabled={!canChangeStatus || submitting || checkingAction !== null}
               onClick={openConfirm('approve')}
             >
-              {submitting && confirmAction === 'approve'
+              {(submitting && confirmAction === 'approve') || checkingAction === 'approve'
                 ? (
                   <Loader2 className='size-4 animate-spin' />
                   )
@@ -216,10 +252,10 @@ export function AuditCard ({
               variant='ghost'
               size='icon'
               className='size-8 text-muted-foreground hover:text-red-600 hover:bg-red-50'
-              disabled={!canChangeStatus || submitting}
+              disabled={!canChangeStatus || submitting || checkingAction !== null}
               onClick={openConfirm('reject')}
             >
-              {submitting && confirmAction === 'reject'
+              {(submitting && confirmAction === 'reject') || checkingAction === 'reject'
                 ? (
                   <Loader2 className='size-4 animate-spin' />
                   )
@@ -252,8 +288,23 @@ export function AuditCard ({
             <Button
               variant='ghost'
               size='icon'
+              className='size-8 text-muted-foreground hover:text-card-foreground'
+              onClick={openAttachmentsModal}
+            >
+              <Paperclip className='size-4' />
+              <span className='sr-only'>Attachments</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side='bottom'>Attachments</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant='ghost'
+              size='icon'
               className='size-8 text-muted-foreground hover:text-red-600 hover:bg-red-50'
-              disabled={submitting}
+              disabled={submitting || !canDelete}
               onClick={openConfirmDelete}
             >
               {submitting && confirmAction === 'delete'
@@ -266,13 +317,20 @@ export function AuditCard ({
               <span className='sr-only'>Delete</span>
             </Button>
           </TooltipTrigger>
-          <TooltipContent side='bottom'>Delete</TooltipContent>
+          <TooltipContent side='bottom'>{canDelete ? 'Delete' : 'Only pending audits can be deleted'}</TooltipContent>
         </Tooltip>
       </div>
 
       <ExportAuditModal
         open={exportOpen}
         onOpenChange={setExportOpen}
+        packageID={packageID}
+        packageName={packageName}
+      />
+
+      <AttachmentsModal
+        open={attachmentsOpen}
+        onOpenChange={setAttachmentsOpen}
         packageID={packageID}
         packageName={packageName}
       />
@@ -292,7 +350,7 @@ export function AuditCard ({
                 ? `“${packageName}” will be permanently removed. This action cannot be undone.`
                 : confirmAction === 'approve'
                   ? `“${packageName}” will be marked as approved.`
-                  : `“${packageName}” will be marked as rejected.`}
+                  : `“${packageName}” will be sent back to pending.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

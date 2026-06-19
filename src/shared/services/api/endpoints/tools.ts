@@ -387,16 +387,34 @@ function mapAnswerToValue (answers: unknown): AnswerValue {
   return null
 }
 
+/** Split "3. Question body" from API into display number + body text */
+function parseQuestionTextFromApi (raw: string): { displayNumber?: number, text: string } {
+  const trimmed = raw.trim()
+  const dotIdx = trimmed.indexOf('. ')
+  if (dotIdx <= 0) return { text: trimmed }
+  const head = trimmed.slice(0, dotIdx).trim()
+  const rest = trimmed.slice(dotIdx + 2).trim()
+  const num = Number.parseInt(head, 10)
+  if (!Number.isFinite(num) || String(num) !== head) {
+    return { text: trimmed }
+  }
+  return { displayNumber: num, text: rest }
+}
+
 /** Map form questions API response to a flat QuestionData[] sorted by questionSort */
 export function mapFormQuestions (questions: ToolFormQuestionResponse[]): QuestionData[] {
   return [...questions]
     .sort((a, b) => (a.questionSort ?? 0) - (b.questionSort ?? 0))
-    .map((q) => ({
-      id: String(q.templateQuestionID),
-      templateAnswerId: q.templateAnswerID ?? 0,
-      text: q.questionText ?? '',
-      answer: mapAnswerToValue(q.answers),
-      note: q.comments ?? '',
-      flagged: q.flag === true || q.flag === 1 || (q.flag as unknown) === '1'
-    }))
+    .map((q) => {
+      const parsed = parseQuestionTextFromApi(q.questionText ?? '')
+      return {
+        id: String(q.templateQuestionID),
+        templateAnswerId: q.templateAnswerID ?? 0,
+        text: parsed.text,
+        ...(parsed.displayNumber !== undefined ? { displayNumber: parsed.displayNumber } : {}),
+        answer: mapAnswerToValue(q.answers),
+        note: q.comments ?? '',
+        flagged: q.flag === true || q.flag === 1 || (q.flag as unknown) === '1'
+      }
+    })
 }
