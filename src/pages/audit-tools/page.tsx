@@ -115,7 +115,6 @@ export default function AuditToolsPage () {
       await createAuditTool({
         packageID: audit.packageID,
         templateID: 1,
-        assignedAuditor: '0765647',
         locationNumber: data.locationId,
         ...(data.patientNumber && { patientNumber: data.patientNumber }),
         ...(data.auditDate && { auditDate: data.auditDate }),
