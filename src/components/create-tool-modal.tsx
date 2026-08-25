@@ -98,7 +98,7 @@ export function CreateToolModal ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-md'>
+      <DialogContent className='sm:max-w-2xl max-h-[85dvh] grid-rows-[auto_auto_minmax(0,1fr)_auto]'>
         <DialogHeader>
           <DialogTitle>Create Tool</DialogTitle>
           <DialogDescription>
@@ -106,21 +106,21 @@ export function CreateToolModal ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className='grid gap-4 py-2'>
-          <div className='grid gap-2'>
-            <Label htmlFor='location'>Location</Label>
-            <SearchableSelect
-              id='location'
-              options={locations}
-              value={locationId}
-              onChange={setLocationId}
-              disabled={locationsLoading}
-              placeholder={locationsLoading ? 'Loading locations...' : 'Select location...'}
-              searchPlaceholder='Search locations...'
-              emptyMessage='No locations found.'
-            />
-          </div>
+        <div className='grid gap-2 pt-2'>
+          <Label htmlFor='location'>Location</Label>
+          <SearchableSelect
+            id='location'
+            options={locations}
+            value={locationId}
+            onChange={setLocationId}
+            disabled={locationsLoading}
+            placeholder={locationsLoading ? 'Loading locations...' : 'Select location...'}
+            searchPlaceholder='Search locations...'
+            emptyMessage='No locations found.'
+          />
+        </div>
 
+        <div className='overflow-y-auto -mx-1 px-1'>
           <Collapsible open={optionalOpen} onOpenChange={setOptionalOpen}>
             <CollapsibleTrigger asChild>
               <button
@@ -134,7 +134,7 @@ export function CreateToolModal ({
               </button>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div className='grid gap-4 pt-2 border-t border-border'>
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-border'>
                 <div className='grid gap-2'>
                   <Label htmlFor='audit-date'>Audit Date</Label>
                   <DateInput
