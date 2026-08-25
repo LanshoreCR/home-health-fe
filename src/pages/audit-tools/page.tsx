@@ -265,8 +265,6 @@ export default function AuditToolsPage () {
         <CreateToolModal
           open={createToolModalOpen}
           onOpenChange={setCreateToolModalOpen}
-          packageId={id}
-          audit={audit}
           isSubmitting={creatingTool}
           onSubmit={handleCreateTool}
         />
