@@ -10,14 +10,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { DateInput } from '@/components/ui/date-input'
 import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
-import { getLocationHierarchy } from '@shared/services/api/endpoints/location-hierarchy'
+import { SearchableSelect } from '@/components/ui/searchable-select'
+import { useLocationOptions } from '@/hooks/useLocationOptions'
 import { createAudit } from '@shared/services/api/endpoints/audit-packages'
 
 interface CreateAuditModalProps {
@@ -51,56 +45,29 @@ function addMonthsISO (dateStr: string, months: number): string {
 }
 
 export function CreateAuditModal ({ open, onOpenChange, onAuditCreated }: CreateAuditModalProps) {
-  const [selectedRd, setSelectedRd] = useState('')
-  const [selectedEd, setSelectedEd] = useState('')
+  const [selectedLocationId, setSelectedLocationId] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
-  const [hierarchyAll, setHierarchyAll] = useState<Awaited<ReturnType<typeof getLocationHierarchy>>>([])
-  const [hierarchyByRd, setHierarchyByRd] = useState<Awaited<ReturnType<typeof getLocationHierarchy>>>([])
-  const [loadingHierarchy, setLoadingHierarchy] = useState(false)
-  const [loadingEd, setLoadingEd] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const { options, loading: loadingLocations } = useLocationOptions(open)
 
-  const regionalDirectors = useMemo(() => {
-    const seen = new Set<string>()
-    return hierarchyAll
-      .filter((item) => item.regionalDirector != null)
-      .filter((item) => {
-        const id = item.regionalDirector!.id
-        if (seen.has(id)) return false
-        seen.add(id)
-        return true
-      })
-      .map((item) => ({ id: item.regionalDirector!.id, name: item.regionalDirector!.name }))
-  }, [hierarchyAll])
-
-  const executiveDirectors = useMemo(() => {
-    const seen = new Set<string>()
-    return hierarchyByRd
-      .filter((item) => item.executiveDirector != null)
-      .map((item) => ({ id: item.executiveDirector!.id, name: item.executiveDirector!.name }))
-      .filter((ed) => {
-        if (seen.has(ed.id)) return false
-        seen.add(ed.id)
-        return true
-      })
-  }, [hierarchyByRd])
+  const auditableLocations = useMemo(
+    () => options.filter((location) => location.edId !== null),
+    [options]
+  )
 
   const dateError = startDate !== '' && endDate !== '' && endDate < startDate ? 'End date must be on or after start date' : ''
 
   const isFormComplete =
-    selectedRd !== '' &&
-    selectedEd !== '' &&
+    selectedLocationId !== '' &&
     startDate !== '' &&
     endDate !== '' &&
     dateError === ''
 
   const resetForm = () => {
-    setSelectedRd('')
-    setSelectedEd('')
+    setSelectedLocationId('')
     setStartDate('')
     setEndDate('')
-    setHierarchyByRd([])
   }
 
   useEffect(() => {
@@ -110,44 +77,7 @@ export function CreateAuditModal ({ open, onOpenChange, onAuditCreated }: Create
     }
     setStartDate(addMonthsISO(todayISO(), -1))
     setEndDate(addMonthsISO(todayISO(), 1))
-    const fetchHierarchy = async () => {
-      setLoadingHierarchy(true)
-      try {
-        const data = await getLocationHierarchy()
-        setHierarchyAll(data)
-      } catch {
-        // error already toasted in the service
-      } finally {
-        setLoadingHierarchy(false)
-      }
-    }
-    void fetchHierarchy()
   }, [open])
-
-  useEffect(() => {
-    if (!open || !selectedRd) {
-      setHierarchyByRd([])
-      return
-    }
-    setSelectedEd('')
-    const fetchByRd = async () => {
-      setLoadingEd(true)
-      try {
-        const data = await getLocationHierarchy({ rdId: selectedRd })
-        setHierarchyByRd(data)
-      } catch {
-        // error already toasted in the service
-      } finally {
-        setLoadingEd(false)
-      }
-    }
-    void fetchByRd()
-  }, [open, selectedRd])
-
-  const handleRdChange = (value: string) => {
-    setSelectedRd(value)
-    setSelectedEd('')
-  }
 
   const handleCancel = () => {
     resetForm()
@@ -156,10 +86,12 @@ export function CreateAuditModal ({ open, onOpenChange, onAuditCreated }: Create
 
   const handleCreate = async () => {
     if (!isFormComplete) return
+    const selectedLocation = auditableLocations.find((location) => location.id === selectedLocationId)
+    if (selectedLocation?.edId == null) return
     setSubmitting(true)
     try {
       await createAudit({
-        edId: selectedEd,
+        edId: selectedLocation.edId,
         startDate: toISOStartOfDay(startDate),
         endDate: toISOStartOfDay(endDate)
       })
@@ -179,49 +111,23 @@ export function CreateAuditModal ({ open, onOpenChange, onAuditCreated }: Create
         <DialogHeader>
           <DialogTitle>Create New Audit</DialogTitle>
           <DialogDescription>
-            Select audit location details
+            Select the location and date range for this audit
           </DialogDescription>
         </DialogHeader>
 
         <div className='grid gap-4 py-2'>
           <div className='grid gap-2'>
-            <Label htmlFor='region-director'>Regional Director</Label>
-            <Select
-              value={selectedRd || undefined}
-              onValueChange={handleRdChange}
-              disabled={loadingHierarchy}
-            >
-              <SelectTrigger id='region-director' className='w-full h-9 text-sm bg-background'>
-                <SelectValue placeholder={loadingHierarchy ? 'Loading...' : 'Select Regional Director...'} />
-              </SelectTrigger>
-              <SelectContent>
-                {regionalDirectors.map((rd) => (
-                  <SelectItem key={rd.id} value={rd.id}>
-                    {rd.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className='grid gap-2'>
-            <Label htmlFor='executive-director'>Executive Director</Label>
-            <Select
-              value={selectedEd || undefined}
-              onValueChange={setSelectedEd}
-              disabled={!selectedRd || loadingEd}
-            >
-              <SelectTrigger id='executive-director' className='w-full h-9 text-sm bg-background'>
-                <SelectValue placeholder={loadingEd ? 'Loading...' : 'Select Executive Director...'} />
-              </SelectTrigger>
-              <SelectContent>
-                {executiveDirectors.map((ed) => (
-                  <SelectItem key={ed.id} value={ed.id}>
-                    {ed.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor='audit-location'>Location</Label>
+            <SearchableSelect
+              id='audit-location'
+              options={auditableLocations}
+              value={selectedLocationId}
+              onChange={setSelectedLocationId}
+              disabled={loadingLocations}
+              placeholder={loadingLocations ? 'Loading locations...' : 'Select location...'}
+              searchPlaceholder='Search locations...'
+              emptyMessage='No locations found.'
+            />
           </div>
 
           <div className='grid grid-cols-2 gap-4'>

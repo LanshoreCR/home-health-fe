@@ -19,17 +19,15 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { SearchableSelect } from '@/components/ui/searchable-select'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { getLocationHierarchy } from '@shared/services/api/endpoints/location-hierarchy'
-import type { Audit } from '@shared/types'
+import { useLocationOptions } from '@/hooks/useLocationOptions'
 import type { ToolMetadata } from '@/shared/types'
 
 interface CreateToolModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  packageId: string
-  audit: Audit | null
   isSubmitting?: boolean
   onSubmit?: (data: ToolMetadata) => void
 }
@@ -37,13 +35,10 @@ interface CreateToolModalProps {
 export function CreateToolModal ({
   open,
   onOpenChange,
-  packageId,
-  audit,
   isSubmitting = false,
   onSubmit
 }: CreateToolModalProps) {
-  const [locations, setLocations] = useState<Array<{ id: string; name: string }>>([])
-  const [locationsLoading, setLocationsLoading] = useState(false)
+  const { options: locations, loading: locationsLoading } = useLocationOptions(open)
   const [locationId, setLocationId] = useState('')
   const [optionalOpen, setOptionalOpen] = useState(false)
   const [auditDate, setAuditDate] = useState('')
@@ -57,32 +52,6 @@ export function CreateToolModal ({
 
   const selectedLocation = locations.find((l) => l.id === locationId)
   const isFormComplete = locationId !== ''
-
-  useEffect(() => {
-    if (!open || !audit) return
-    const rdId = audit.regionalDirector?.id
-    const edId = audit.executiveDirector?.id
-    if (!rdId && !edId) {
-      setLocations([])
-      return
-    }
-    setLocationsLoading(true)
-    setLocations([])
-    getLocationHierarchy({ rdId: rdId ?? undefined, edId: edId ?? undefined })
-      .then((hierarchy) => {
-        const seen = new Set<string>()
-        const list = hierarchy
-          .map((item) => ({ id: item.location.id, name: item.location.name }))
-          .filter((loc) => {
-            if (seen.has(loc.id)) return false
-            seen.add(loc.id)
-            return true
-          })
-        setLocations(list)
-      })
-      .catch(() => {})
-      .finally(() => setLocationsLoading(false))
-  }, [open, audit?.regionalDirector?.id, audit?.executiveDirector?.id])
 
   const resetForm = () => {
     setLocationId('')
@@ -98,10 +67,7 @@ export function CreateToolModal ({
   }
 
   useEffect(() => {
-    if (!open) {
-      resetForm()
-      setLocations([])
-    }
+    if (!open) resetForm()
   }, [open])
 
   const handleCancel = () => {
@@ -143,24 +109,16 @@ export function CreateToolModal ({
         <div className='grid gap-4 py-2'>
           <div className='grid gap-2'>
             <Label htmlFor='location'>Location</Label>
-            <Select
-              value={locationId || undefined}
-              onValueChange={setLocationId}
+            <SearchableSelect
+              id='location'
+              options={locations}
+              value={locationId}
+              onChange={setLocationId}
               disabled={locationsLoading}
-            >
-              <SelectTrigger id='location' className='w-full h-9 text-sm bg-background'>
-                <SelectValue
-                  placeholder={locationsLoading ? 'Loading locations...' : 'Select location...'}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {locations.map((loc) => (
-                  <SelectItem key={loc.id} value={loc.id}>
-                    {loc.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              placeholder={locationsLoading ? 'Loading locations...' : 'Select location...'}
+              searchPlaceholder='Search locations...'
+              emptyMessage='No locations found.'
+            />
           </div>
 
           <Collapsible open={optionalOpen} onOpenChange={setOptionalOpen}>
