@@ -11,6 +11,7 @@ export interface Audit {
   packageScore: string
   regionalDirector?: { id: string; name: string }
   executiveDirector?: { id: string; name: string }
+  location?: { id: string; name: string }
 }
 
 /** Context object for the audit form (title, location, status, auditId). */

@@ -92,6 +92,7 @@ export function CreateAuditModal ({ open, onOpenChange, onAuditCreated }: Create
     try {
       await createAudit({
         edId: selectedLocation.edId,
+        locationNumber: selectedLocation.id,
         startDate: toISOStartOfDay(startDate),
         endDate: toISOStartOfDay(endDate)
       })

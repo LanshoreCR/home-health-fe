@@ -5,6 +5,7 @@ import type { Audit } from '@shared/types'
 
 export interface CreateAuditPayload {
   edId: string
+  locationNumber: string
   startDate: string
   endDate: string
 }
@@ -39,6 +40,7 @@ interface GetAuditByIdResponse {
   edNumber?: string
   regionalDirector?: { id: string; name: string }
   executiveDirector?: { id: string; name: string }
+  location?: { id: string; name: string }
 }
 
 export const getAuditById = async (id: string): Promise<Audit> => {
@@ -62,7 +64,8 @@ export const getAuditById = async (id: string): Promise<Audit> => {
       folderID: data.folderID,
       packageScore: data.packageScore,
       regionalDirector: data.regionalDirector,
-      executiveDirector: data.executiveDirector
+      executiveDirector: data.executiveDirector,
+      location: data.location
     }
   } catch (error) {
     console.error(error)
