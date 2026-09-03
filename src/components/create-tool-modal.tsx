@@ -19,10 +19,8 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { SearchableSelect } from '@/components/ui/searchable-select'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useLocationOptions } from '@/hooks/useLocationOptions'
 import type { ToolMetadata } from '@/shared/types'
 
 interface CreateToolModalProps {
@@ -38,8 +36,6 @@ export function CreateToolModal ({
   isSubmitting = false,
   onSubmit
 }: CreateToolModalProps) {
-  const { options: locations, loading: locationsLoading } = useLocationOptions(open)
-  const [locationId, setLocationId] = useState('')
   const [optionalOpen, setOptionalOpen] = useState(false)
   const [auditDate, setAuditDate] = useState('')
   const [payor, setPayor] = useState('')
@@ -50,11 +46,7 @@ export function CreateToolModal ({
   const [reviewDates, setReviewDates] = useState('')
   const [servicesBilled, setServicesBilled] = useState<string>('')
 
-  const selectedLocation = locations.find((l) => l.id === locationId)
-  const isFormComplete = locationId !== ''
-
   const resetForm = () => {
-    setLocationId('')
     setOptionalOpen(false)
     setAuditDate('')
     setPayor('')
@@ -77,8 +69,6 @@ export function CreateToolModal ({
 
   const handleCreate = () => {
     const data: ToolMetadata = {
-      locationId,
-      locationName: selectedLocation?.name ?? '',
       ...(auditDate && { auditDate }),
       ...(payor && { payor }),
       ...(disciplines && { disciplines }),
@@ -98,27 +88,13 @@ export function CreateToolModal ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-2xl max-h-[85dvh] grid-rows-[auto_auto_minmax(0,1fr)_auto]'>
+      <DialogContent className='sm:max-w-2xl max-h-[85dvh] grid-rows-[auto_minmax(0,1fr)_auto]'>
         <DialogHeader>
           <DialogTitle>Create Tool</DialogTitle>
           <DialogDescription>
-            Select location (required). Optionally add details below.
+            The tool covers this audit's location. Optionally add details below.
           </DialogDescription>
         </DialogHeader>
-
-        <div className='grid gap-2 pt-2'>
-          <Label htmlFor='location'>Location</Label>
-          <SearchableSelect
-            id='location'
-            options={locations}
-            value={locationId}
-            onChange={setLocationId}
-            disabled={locationsLoading}
-            placeholder={locationsLoading ? 'Loading locations...' : 'Select location...'}
-            searchPlaceholder='Search locations...'
-            emptyMessage='No locations found.'
-          />
-        </div>
 
         <div className='overflow-y-auto -mx-1 px-1'>
           <Collapsible open={optionalOpen} onOpenChange={setOptionalOpen}>
@@ -228,7 +204,7 @@ export function CreateToolModal ({
           <Button type='button' variant='outline' onClick={handleCancel}>
             Cancel
           </Button>
-          <Button type='button' onClick={handleCreate} disabled={!isFormComplete || isSubmitting}>
+          <Button type='button' onClick={handleCreate} disabled={isSubmitting}>
             {isSubmitting ? 'Creating...' : 'Create Tool'}
           </Button>
         </DialogFooter>
