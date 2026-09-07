@@ -115,8 +115,6 @@ export default function AuditToolsPage () {
       await createAuditTool({
         packageID: audit.packageID,
         templateID: 1,
-        assignedAuditor: '0765647',
-        locationNumber: data.locationId,
         ...(data.patientNumber && { patientNumber: data.patientNumber }),
         ...(data.auditDate && { auditDate: data.auditDate }),
         ...(data.activeOrDischarge && { activeOrDischarged: data.activeOrDischarge }),
@@ -213,6 +211,7 @@ export default function AuditToolsPage () {
               </h1>
               <p className='text-xs text-muted-foreground truncate'>
                 {[
+                  audit.location?.name ?? null,
                   audit.edNumber ? `ED: ${audit.edNumber}` : null,
                   audit.startDate && audit.endDate
                     ? `${formatDate(audit.startDate)} – ${formatDate(audit.endDate)}`

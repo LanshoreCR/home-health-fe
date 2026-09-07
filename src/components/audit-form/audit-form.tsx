@@ -40,7 +40,6 @@ interface AuditFormProps {
 }
 
 const defaultToolMetadata = (locationName: string): ToolMetadata => ({
-  locationId: '',
   locationName
 })
 
