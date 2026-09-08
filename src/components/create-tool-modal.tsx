@@ -21,15 +21,11 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { getLocationHierarchy } from '@shared/services/api/endpoints/location-hierarchy'
-import type { Audit } from '@shared/types'
 import type { ToolMetadata } from '@/shared/types'
 
 interface CreateToolModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  packageId: string
-  audit: Audit | null
   isSubmitting?: boolean
   onSubmit?: (data: ToolMetadata) => void
 }
@@ -37,14 +33,9 @@ interface CreateToolModalProps {
 export function CreateToolModal ({
   open,
   onOpenChange,
-  packageId,
-  audit,
   isSubmitting = false,
   onSubmit
 }: CreateToolModalProps) {
-  const [locations, setLocations] = useState<Array<{ id: string; name: string }>>([])
-  const [locationsLoading, setLocationsLoading] = useState(false)
-  const [locationId, setLocationId] = useState('')
   const [optionalOpen, setOptionalOpen] = useState(false)
   const [auditDate, setAuditDate] = useState('')
   const [payor, setPayor] = useState('')
@@ -55,37 +46,7 @@ export function CreateToolModal ({
   const [reviewDates, setReviewDates] = useState('')
   const [servicesBilled, setServicesBilled] = useState<string>('')
 
-  const selectedLocation = locations.find((l) => l.id === locationId)
-  const isFormComplete = locationId !== ''
-
-  useEffect(() => {
-    if (!open || !audit) return
-    const rdId = audit.regionalDirector?.id
-    const edId = audit.executiveDirector?.id
-    if (!rdId && !edId) {
-      setLocations([])
-      return
-    }
-    setLocationsLoading(true)
-    setLocations([])
-    getLocationHierarchy({ rdId: rdId ?? undefined, edId: edId ?? undefined })
-      .then((hierarchy) => {
-        const seen = new Set<string>()
-        const list = hierarchy
-          .map((item) => ({ id: item.location.id, name: item.location.name }))
-          .filter((loc) => {
-            if (seen.has(loc.id)) return false
-            seen.add(loc.id)
-            return true
-          })
-        setLocations(list)
-      })
-      .catch(() => {})
-      .finally(() => setLocationsLoading(false))
-  }, [open, audit?.regionalDirector?.id, audit?.executiveDirector?.id])
-
   const resetForm = () => {
-    setLocationId('')
     setOptionalOpen(false)
     setAuditDate('')
     setPayor('')
@@ -98,10 +59,7 @@ export function CreateToolModal ({
   }
 
   useEffect(() => {
-    if (!open) {
-      resetForm()
-      setLocations([])
-    }
+    if (!open) resetForm()
   }, [open])
 
   const handleCancel = () => {
@@ -111,8 +69,6 @@ export function CreateToolModal ({
 
   const handleCreate = () => {
     const data: ToolMetadata = {
-      locationId,
-      locationName: selectedLocation?.name ?? '',
       ...(auditDate && { auditDate }),
       ...(payor && { payor }),
       ...(disciplines && { disciplines }),
@@ -132,37 +88,15 @@ export function CreateToolModal ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-md'>
+      <DialogContent className='sm:max-w-2xl max-h-[85dvh] grid-rows-[auto_minmax(0,1fr)_auto]'>
         <DialogHeader>
           <DialogTitle>Create Tool</DialogTitle>
           <DialogDescription>
-            Select location (required). Optionally add details below.
+            The tool covers this audit's location. Optionally add details below.
           </DialogDescription>
         </DialogHeader>
 
-        <div className='grid gap-4 py-2'>
-          <div className='grid gap-2'>
-            <Label htmlFor='location'>Location</Label>
-            <Select
-              value={locationId || undefined}
-              onValueChange={setLocationId}
-              disabled={locationsLoading}
-            >
-              <SelectTrigger id='location' className='w-full h-9 text-sm bg-background'>
-                <SelectValue
-                  placeholder={locationsLoading ? 'Loading locations...' : 'Select location...'}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {locations.map((loc) => (
-                  <SelectItem key={loc.id} value={loc.id}>
-                    {loc.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
+        <div className='overflow-y-auto -mx-1 px-1'>
           <Collapsible open={optionalOpen} onOpenChange={setOptionalOpen}>
             <CollapsibleTrigger asChild>
               <button
@@ -176,7 +110,7 @@ export function CreateToolModal ({
               </button>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div className='grid gap-4 pt-2 border-t border-border'>
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-border'>
                 <div className='grid gap-2'>
                   <Label htmlFor='audit-date'>Audit Date</Label>
                   <DateInput
@@ -270,7 +204,7 @@ export function CreateToolModal ({
           <Button type='button' variant='outline' onClick={handleCancel}>
             Cancel
           </Button>
-          <Button type='button' onClick={handleCreate} disabled={!isFormComplete || isSubmitting}>
+          <Button type='button' onClick={handleCreate} disabled={isSubmitting}>
             {isSubmitting ? 'Creating...' : 'Create Tool'}
           </Button>
         </DialogFooter>

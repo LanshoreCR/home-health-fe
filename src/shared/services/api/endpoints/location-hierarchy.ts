@@ -3,10 +3,10 @@ import { ENDPOINTS } from '../config'
 import { toast } from 'sonner'
 
 export interface LocationHierarchyItem {
-  region: { id: string, name: string }
+  region: { id: string, name: string } | null
   regionalDirector: { id: string, name: string } | null
   executiveDirector: { id: string, name: string } | null
-  location: { id: string, name: string }
+  location: { id: string, name: string } | null
 }
 
 export const getLocationHierarchy = async (params?: { rdId?: string; edId?: string }): Promise<LocationHierarchyItem[]> => {

@@ -12,8 +12,8 @@ export interface ToolInfo {
 }
 
 export interface ToolMetadata {
-  locationId: string
-  locationName: string
+  locationId?: string
+  locationName?: string
   auditDate?: string
   payor?: string
   disciplines?: string

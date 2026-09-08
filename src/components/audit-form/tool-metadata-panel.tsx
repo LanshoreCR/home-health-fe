@@ -69,7 +69,7 @@ export function ToolMetadataPanel ({ metadata, initialMetadata, onMetadataChange
             <Input
               id='md-location'
               type='text'
-              value={metadata.locationName}
+              value={metadata.locationName ?? ''}
               readOnly
               disabled
               className='h-9 text-sm opacity-70 cursor-not-allowed'

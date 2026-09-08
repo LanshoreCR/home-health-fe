@@ -86,7 +86,8 @@ export default function AuditsPage (): JSX.Element {
       if (
         filters.search !== '' &&
         !audit.packageName.toLowerCase().includes(filters.search.toLowerCase()) &&
-        !audit.edNumber.toLowerCase().includes(filters.search.toLowerCase())
+        !audit.edNumber.toLowerCase().includes(filters.search.toLowerCase()) &&
+        !(audit.location?.name.toLowerCase().includes(filters.search.toLowerCase()) ?? false)
       ) {
         return false
       }

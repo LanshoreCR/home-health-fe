@@ -182,13 +182,11 @@ export const deleteToolById = async (id: string): Promise<void> => {
   }
 }
 
-/** Payload for POST /api/Audits/tools. Required: packageID, templateID, locationNumber. Rest optional. */
+/** Payload for POST /api/Audits/tools. Required: packageID, templateID. Rest optional.
+ *  The tool inherits its location from the audit, and its auditor from the bearer token. */
 export interface CreateAuditToolPayload {
   packageID: number
   templateID: number
-  /** Omit to let the backend assign the tool to the logged-in user. */
-  assignedAuditor?: string
-  locationNumber: string
   patientNumber?: string
   auditDate?: string
   activeOrDischarged?: string
@@ -222,8 +220,6 @@ export const createAuditTool = async (payload: CreateAuditToolPayload): Promise<
     const body = {
       packageID: payload.packageID,
       templateID: payload.templateID,
-      assignedAuditor: optional(payload.assignedAuditor),
-      locationNumber: payload.locationNumber,
       patientNumber: optional(payload.patientNumber),
       auditDate: optionalDateOrNow(payload.auditDate),
       activeOrDischarged: optional(payload.activeOrDischarged),
