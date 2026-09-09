@@ -85,7 +85,7 @@ export function AppHeader ({
               <SelectValue placeholder='Status' />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value='all'>All Statuses</SelectItem>
+              <SelectItem value='all'>All Status</SelectItem>
               <SelectItem value='pending'>Pending</SelectItem>
               <SelectItem value='under-review'>Under Review</SelectItem>
               <SelectItem value='approved'>Approved</SelectItem>
