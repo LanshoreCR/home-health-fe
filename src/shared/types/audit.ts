@@ -12,6 +12,8 @@ export interface Audit {
   regionalDirector?: { id: string; name: string }
   executiveDirector?: { id: string; name: string }
   location?: { id: string; name: string }
+  assignedAuditor?: string | null
+  auditorName?: string | null
 }
 
 /** Context object for the audit form (title, location, status, auditId). */

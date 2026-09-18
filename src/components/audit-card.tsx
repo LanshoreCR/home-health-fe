@@ -1,5 +1,5 @@
 import { useState, type MouseEvent } from 'react'
-import { Download, CheckCircle2, XCircle, ChevronRight, CalendarDays, Hash, MapPin, TrendingUp, Loader2, Trash2, Paperclip } from 'lucide-react'
+import { Download, CheckCircle2, XCircle, ChevronRight, CalendarDays, Hash, MapPin, TrendingUp, Loader2, Trash2, Paperclip, User } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -83,6 +83,7 @@ export function AuditCard ({
   endDate,
   packageScore,
   location,
+  auditorName,
   onStatusUpdated
 }: AuditCardProps): JSX.Element {
   const statusConfig = PACKAGE_STATUS_MAP[packageStatus] ?? { label: 'Unknown', className: '' }
@@ -210,6 +211,12 @@ export function AuditCard ({
               <span className='inline-flex items-center gap-1 min-w-0' title={location.name}>
                 <MapPin className='size-3 shrink-0' />
                 <span className='truncate'>{location.name}</span>
+              </span>
+            )}
+            {auditorName != null && auditorName !== '' && (
+              <span className='inline-flex items-center gap-1 min-w-0' title={auditorName}>
+                <User className='size-3 shrink-0' />
+                <span className='truncate'>{auditorName}</span>
               </span>
             )}
             <span className='inline-flex items-center gap-1'>
