@@ -212,6 +212,7 @@ export default function AuditToolsPage () {
               <p className='text-xs text-muted-foreground truncate'>
                 {[
                   audit.location?.name ?? null,
+                  audit.auditorName != null && audit.auditorName !== '' ? `Auditor: ${audit.auditorName}` : null,
                   audit.edNumber ? `ED: ${audit.edNumber}` : null,
                   audit.startDate && audit.endDate
                     ? `${formatDate(audit.startDate)} – ${formatDate(audit.endDate)}`
