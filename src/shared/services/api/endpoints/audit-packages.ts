@@ -8,6 +8,7 @@ export interface CreateAuditPayload {
   locationNumber: string
   startDate: string
   endDate: string
+  assignedAuditor: string
 }
 
 export interface CreateAuditResponse {
@@ -41,6 +42,8 @@ interface GetAuditByIdResponse {
   regionalDirector?: { id: string; name: string }
   executiveDirector?: { id: string; name: string }
   location?: { id: string; name: string }
+  assignedAuditor?: string | null
+  auditorName?: string | null
 }
 
 export const getAuditById = async (id: string): Promise<Audit> => {
@@ -65,7 +68,9 @@ export const getAuditById = async (id: string): Promise<Audit> => {
       packageScore: data.packageScore,
       regionalDirector: data.regionalDirector,
       executiveDirector: data.executiveDirector,
-      location: data.location
+      location: data.location,
+      assignedAuditor: data.assignedAuditor,
+      auditorName: data.auditorName
     }
   } catch (error) {
     console.error(error)

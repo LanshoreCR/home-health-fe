@@ -12,6 +12,8 @@ import { DateInput } from '@/components/ui/date-input'
 import { Label } from '@/components/ui/label'
 import { SearchableSelect } from '@/components/ui/searchable-select'
 import { useLocationOptions } from '@/hooks/useLocationOptions'
+import { useAuditorOptions } from '@/hooks/useAuditorOptions'
+import { useAppSelector } from '@shared/redux/hooks'
 import { createAudit } from '@shared/services/api/endpoints/audit-packages'
 
 interface CreateAuditModalProps {
@@ -46,10 +48,13 @@ function addMonthsISO (dateStr: string, months: number): string {
 
 export function CreateAuditModal ({ open, onOpenChange, onAuditCreated }: CreateAuditModalProps) {
   const [selectedLocationId, setSelectedLocationId] = useState('')
+  const [selectedAuditorId, setSelectedAuditorId] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const { options, loading: loadingLocations } = useLocationOptions(open)
+  const { options: auditorOptions, loading: loadingAuditors } = useAuditorOptions(open)
+  const currentEmployeeId = useAppSelector((state) => state.user.employeeId)
 
   const auditableLocations = useMemo(
     () => options.filter((location) => location.edId !== null),
@@ -60,12 +65,14 @@ export function CreateAuditModal ({ open, onOpenChange, onAuditCreated }: Create
 
   const isFormComplete =
     selectedLocationId !== '' &&
+    selectedAuditorId !== '' &&
     startDate !== '' &&
     endDate !== '' &&
     dateError === ''
 
   const resetForm = () => {
     setSelectedLocationId('')
+    setSelectedAuditorId('')
     setStartDate('')
     setEndDate('')
   }
@@ -78,6 +85,13 @@ export function CreateAuditModal ({ open, onOpenChange, onAuditCreated }: Create
     setStartDate(addMonthsISO(todayISO(), -1))
     setEndDate(addMonthsISO(todayISO(), 1))
   }, [open])
+
+  useEffect(() => {
+    if (selectedAuditorId !== '') return
+    const currentUserIsAuditor = auditorOptions.some((auditor) => auditor.id === currentEmployeeId)
+    if (!currentUserIsAuditor) return
+    setSelectedAuditorId(currentEmployeeId)
+  }, [auditorOptions, currentEmployeeId, selectedAuditorId])
 
   const handleCancel = () => {
     resetForm()
@@ -94,7 +108,8 @@ export function CreateAuditModal ({ open, onOpenChange, onAuditCreated }: Create
         edId: selectedLocation.edId,
         locationNumber: selectedLocation.id,
         startDate: toISOStartOfDay(startDate),
-        endDate: toISOStartOfDay(endDate)
+        endDate: toISOStartOfDay(endDate),
+        assignedAuditor: selectedAuditorId
       })
       onAuditCreated?.()
       onOpenChange(false)
@@ -112,7 +127,7 @@ export function CreateAuditModal ({ open, onOpenChange, onAuditCreated }: Create
         <DialogHeader>
           <DialogTitle>Create New Audit</DialogTitle>
           <DialogDescription>
-            Select the location and date range for this audit
+            Select the location, auditor and date range for this audit
           </DialogDescription>
         </DialogHeader>
 
@@ -128,6 +143,20 @@ export function CreateAuditModal ({ open, onOpenChange, onAuditCreated }: Create
               placeholder={loadingLocations ? 'Loading locations...' : 'Select location...'}
               searchPlaceholder='Search locations...'
               emptyMessage='No locations found.'
+            />
+          </div>
+
+          <div className='grid gap-2'>
+            <Label htmlFor='audit-auditor'>Auditor</Label>
+            <SearchableSelect
+              id='audit-auditor'
+              options={auditorOptions}
+              value={selectedAuditorId}
+              onChange={setSelectedAuditorId}
+              disabled={loadingAuditors}
+              placeholder={loadingAuditors ? 'Loading auditors...' : 'Select auditor...'}
+              searchPlaceholder='Search auditors...'
+              emptyMessage='No auditors found.'
             />
           </div>
 

@@ -2,6 +2,7 @@ export const API_URL = import.meta.env.VITE_API_URL ?? ''
 
 export const ENDPOINTS = {
   GET_USER_INFO: '/api/Users/me',
+  GET_AUDITORS: '/api/Users/auditors',
   GET_LOCATION_HIERARCHY: '/api/Locations/hierarchy',
   GET_AUDITS_PACKAGES: '/api/Audits',
   EXPORT_AUDIT_EXCEL: '/api/Export/audit',
