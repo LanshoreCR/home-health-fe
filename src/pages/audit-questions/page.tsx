@@ -9,12 +9,15 @@ import {
   getToolForm,
   updateToolMetadata,
   updateToolGeneralComments,
+  updateToolBilling,
+  mapToolByIdToBilling,
   mapToolMetadataToUpdatePayload,
   mapToolByIdToToolMetadata,
   mapFormQuestions
 } from '@shared/services/api/endpoints/tools'
 import { useFormStore } from '@/stores/useFormStore'
-import type { ToolInfo, ToolMetadata } from '@shared/types'
+import { emptyBilling } from '@/hooks/useToolBilling'
+import type { ToolInfo, ToolMetadata, ToolBilling } from '@shared/types'
 
 export default function AuditQuestionsPage () {
   const { id, toolId } = useParams<{ id: string, toolId: string }>()
@@ -24,6 +27,7 @@ export default function AuditQuestionsPage () {
   const [toolDetails, setToolDetails] = useState<ToolDetailsForDisplay | null>(null)
   const [initialToolMetadata, setInitialToolMetadata] = useState<ToolMetadata | null>(null)
   const [initialGeneralComments, setInitialGeneralComments] = useState('')
+  const [initialBilling, setInitialBilling] = useState<ToolBilling>(emptyBilling)
   const [isSavingMetadata, setIsSavingMetadata] = useState(false)
   const [formLoading, setFormLoading] = useState(true)
   const [formError, setFormError] = useState<string | null>(null)
@@ -58,6 +62,7 @@ export default function AuditQuestionsPage () {
     setFormError(null)
     // Reset comments immediately on tool switch; replaced by fetched value when available.
     setInitialGeneralComments('')
+    setInitialBilling(emptyBilling)
     Promise.all([getToolById(toolId), getToolForm(toolId)])
       .then(([tool, formQuestions]) => {
         if (requestId !== formRequestId.current) return
@@ -68,6 +73,7 @@ export default function AuditQuestionsPage () {
         })
         setInitialToolMetadata(mapToolByIdToToolMetadata(tool))
         setInitialGeneralComments(tool.generalComments ?? '')
+        setInitialBilling(mapToolByIdToBilling(tool))
         const mappedQuestions = mapFormQuestions(formQuestions)
         initializeForm(toolId, mappedQuestions)
       })
@@ -75,6 +81,7 @@ export default function AuditQuestionsPage () {
         if (requestId !== formRequestId.current) return
         setFormError(err instanceof Error ? err.message : 'Failed to load tool or form')
         setInitialGeneralComments('')
+        setInitialBilling(emptyBilling)
         initializeForm(toolId, fallbackQuestions)
       })
       .finally(() => {
@@ -98,6 +105,7 @@ export default function AuditQuestionsPage () {
       })
       setInitialToolMetadata(mapToolByIdToToolMetadata(tool))
       setInitialGeneralComments(tool.generalComments ?? '')
+      setInitialBilling(mapToolByIdToBilling(tool))
       toast.success('Tool details saved')
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to save tool details')
@@ -109,6 +117,12 @@ export default function AuditQuestionsPage () {
   const handleSaveGeneralComments = (text: string) => {
     void updateToolGeneralComments(toolId, text).catch((error) => {
       toast.error(error instanceof Error ? error.message : 'Failed to save general comments')
+    })
+  }
+
+  const handleSaveBilling = (billing: ToolBilling): void => {
+    void updateToolBilling(toolId, billing).catch((error) => {
+      toast.error(error instanceof Error ? error.message : 'Failed to save billing')
     })
   }
 
@@ -125,8 +139,10 @@ export default function AuditQuestionsPage () {
       toolDetails={toolDetails}
       initialToolMetadata={initialToolMetadata ?? undefined}
       initialGeneralComments={initialGeneralComments}
+      initialBilling={initialBilling}
       onSaveToolMetadata={handleSaveToolMetadata}
       onSaveGeneralComments={handleSaveGeneralComments}
+      onSaveBilling={handleSaveBilling}
       isSavingMetadata={isSavingMetadata}
       formLoading={formLoading}
       formError={formError}

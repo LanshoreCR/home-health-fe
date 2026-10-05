@@ -8,16 +8,18 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { AuditQuestion } from '@/components/audit-question'
 import { AuditProgressPanel } from '@/components/audit-progress-panel'
-import type { ToolInfo, QuestionFilter, AuditFormContext, ToolMetadata } from '@/shared/types'
+import type { ToolInfo, QuestionFilter, AuditFormContext, ToolMetadata, ToolBilling } from '@/shared/types'
 import { useToolNavigation } from '@/hooks/useToolNavigation'
 import { useFilteredQuestions } from '@/hooks/useFilteredQuestions'
 import { useAuditProgress } from '@/hooks/useAuditProgress'
+import { useToolBilling, emptyBilling } from '@/hooks/useToolBilling'
 import { useFormStore } from '@/stores/useFormStore'
 import { submitAnswers } from '@shared/services/api/endpoints/questions'
 import { AuditFormHeader } from './audit-form-header'
 import { ToolNavigationBar } from './tool-navigation-bar'
 import { ToolDropdown } from './tool-dropdown'
 import { ToolMetadataPanel } from './tool-metadata-panel'
+import { BillingSection } from './billing-section'
 
 export interface ToolDetailsForDisplay {
   templateName: string
@@ -32,8 +34,10 @@ interface AuditFormProps {
   toolDetails?: ToolDetailsForDisplay | null
   initialToolMetadata?: ToolMetadata
   initialGeneralComments?: string
+  initialBilling?: ToolBilling
   onSaveToolMetadata: (metadata: ToolMetadata) => Promise<void>
   onSaveGeneralComments: (text: string) => void
+  onSaveBilling: (billing: ToolBilling) => void
   isSavingMetadata: boolean
   formLoading?: boolean
   formError?: string | null
@@ -50,8 +54,10 @@ export function AuditForm ({
   toolDetails,
   initialToolMetadata,
   initialGeneralComments = '',
+  initialBilling = emptyBilling,
   onSaveToolMetadata,
   onSaveGeneralComments,
+  onSaveBilling,
   isSavingMetadata,
   formLoading = false,
   formError = null
@@ -89,6 +95,8 @@ export function AuditForm ({
     return () => debouncedSaveGeneralComments.cancel()
   }, [debouncedSaveGeneralComments])
 
+  const { billing, toggleFlag: toggleBillingFlag, changeComments: changeBillingComments, isComplete: isBillingComplete } = useToolBilling(initialBilling, onSaveBilling)
+
   const { currentToolIndex, currentTool, prevTool, nextTool, navigateToTool: navToTool } = useToolNavigation(
     allTools,
     toolId,
@@ -103,7 +111,7 @@ export function AuditForm ({
 
   const filteredQuestions = useFilteredQuestions(questions, searchQuery, activeFilter)
   const { total, completed, percent } = useAuditProgress(questions)
-  const canSubmit = total > 0 && completed === total
+  const canSubmit = total > 0 && completed === total && isBillingComplete
 
   const blockedFromIndex = useMemo(() => {
     for (let i = 0; i < filteredQuestions.length; i++) {
@@ -258,6 +266,13 @@ export function AuditForm ({
                 className='mt-1.5 min-h-[80px] resize-none bg-card text-sm'
               />
             </div>
+
+            <BillingSection
+              billing={billing}
+              isComplete={isBillingComplete}
+              onFlagChange={toggleBillingFlag}
+              onCommentsChange={changeBillingComments}
+            />
 
             <div className='flex gap-2 mb-4 overflow-x-auto lg:hidden pb-1'>
               {[
