@@ -4,7 +4,6 @@ import { toast } from 'sonner'
 import type {
   ToolInfo,
   ToolByIdResponse,
-  ToolBilling,
   ToolFormQuestionResponse,
   ToolMetadata,
   QuestionData
@@ -208,8 +207,6 @@ export interface UpdateToolPayload {
   servicesBilled?: string | null
   socDate?: string | null
   generalComments?: string | null
-  billingFlag?: boolean | null
-  billingComments?: string | null
 }
 
 export const createAuditTool = async (payload: CreateAuditToolPayload): Promise<{ returnValue: number }> => {
@@ -414,26 +411,9 @@ export function mapFormQuestions (questions: ToolFormQuestionResponse[]): Questi
         ...(parsed.displayNumber !== undefined ? { displayNumber: parsed.displayNumber } : {}),
         answer: mapAnswerToValue(q.answers),
         note: q.comments ?? '',
-        flagged: q.flag === true || q.flag === 1 || (q.flag as unknown) === '1'
+        flagged: q.flag === true || q.flag === 1 || (q.flag as unknown) === '1',
+        billing: q.billingFlag === true,
+        billingNote: q.billingComments ?? ''
       }
     })
-}
-
-export const mapToolByIdToBilling = (tool: ToolByIdResponse): ToolBilling => ({
-  flag: tool.billingFlag,
-  comments: tool.billingComments ?? ''
-})
-
-/** Real-time save for the billing flag and its comment; the backend clears the comment when the flag is off. */
-export const updateToolBilling = async (id: string, billing: ToolBilling): Promise<void> => {
-  const payload: UpdateToolPayload = {
-    billingFlag: billing.flag,
-    billingComments: billing.comments
-  }
-  const url = `${ENDPOINTS.GET_TOOLS_BASE}/${id}`
-  const response = await axiosInstance.put(url, payload)
-  if (response.status !== 200 && response.status !== 204) {
-    toast.error('Failed to save billing')
-    throw new Error('error updating billing')
-  }
 }

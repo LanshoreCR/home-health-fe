@@ -5,6 +5,8 @@ export interface UpdateFormPayload {
   answers: number | null
   comments: string | null
   flag: number | null
+  billingFlag?: boolean
+  billingComments?: string
 }
 
 export interface UpdateFormResponse {

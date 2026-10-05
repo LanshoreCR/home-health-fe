@@ -11,4 +11,6 @@ export interface QuestionData {
   answer: AnswerValue
   note: string
   flagged: boolean
+  billing: boolean
+  billingNote: string
 }

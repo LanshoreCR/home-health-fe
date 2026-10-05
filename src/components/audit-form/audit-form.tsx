@@ -8,18 +8,16 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { AuditQuestion } from '@/components/audit-question'
 import { AuditProgressPanel } from '@/components/audit-progress-panel'
-import type { ToolInfo, QuestionFilter, AuditFormContext, ToolMetadata, ToolBilling } from '@/shared/types'
+import type { ToolInfo, QuestionFilter, AuditFormContext, ToolMetadata } from '@/shared/types'
 import { useToolNavigation } from '@/hooks/useToolNavigation'
 import { useFilteredQuestions } from '@/hooks/useFilteredQuestions'
 import { useAuditProgress } from '@/hooks/useAuditProgress'
-import { useToolBilling, emptyBilling } from '@/hooks/useToolBilling'
 import { useFormStore } from '@/stores/useFormStore'
 import { submitAnswers } from '@shared/services/api/endpoints/questions'
 import { AuditFormHeader } from './audit-form-header'
 import { ToolNavigationBar } from './tool-navigation-bar'
 import { ToolDropdown } from './tool-dropdown'
 import { ToolMetadataPanel } from './tool-metadata-panel'
-import { BillingSection } from './billing-section'
 
 export interface ToolDetailsForDisplay {
   templateName: string
@@ -34,10 +32,8 @@ interface AuditFormProps {
   toolDetails?: ToolDetailsForDisplay | null
   initialToolMetadata?: ToolMetadata
   initialGeneralComments?: string
-  initialBilling?: ToolBilling
   onSaveToolMetadata: (metadata: ToolMetadata) => Promise<void>
   onSaveGeneralComments: (text: string) => void
-  onSaveBilling: (billing: ToolBilling) => void
   isSavingMetadata: boolean
   formLoading?: boolean
   formError?: string | null
@@ -54,16 +50,14 @@ export function AuditForm ({
   toolDetails,
   initialToolMetadata,
   initialGeneralComments = '',
-  initialBilling = emptyBilling,
   onSaveToolMetadata,
   onSaveGeneralComments,
-  onSaveBilling,
   isSavingMetadata,
   formLoading = false,
   formError = null
 }: AuditFormProps) {
   const questions = useFormStore((s) => s.questions)
-  const { updateAnswer, updateComment, toggleFlag } = useFormStore.getState()
+  const { updateAnswer, updateComment, toggleFlag, toggleBilling, updateBillingNote } = useFormStore.getState()
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState<QuestionFilter>(null)
@@ -95,8 +89,6 @@ export function AuditForm ({
     return () => debouncedSaveGeneralComments.cancel()
   }, [debouncedSaveGeneralComments])
 
-  const { billing, toggleFlag: toggleBillingFlag, changeComments: changeBillingComments, isComplete: isBillingComplete } = useToolBilling(initialBilling, onSaveBilling)
-
   const { currentToolIndex, currentTool, prevTool, nextTool, navigateToTool: navToTool } = useToolNavigation(
     allTools,
     toolId,
@@ -111,7 +103,8 @@ export function AuditForm ({
 
   const filteredQuestions = useFilteredQuestions(questions, searchQuery, activeFilter)
   const { total, completed, percent } = useAuditProgress(questions)
-  const canSubmit = total > 0 && completed === total && isBillingComplete
+  const hasBillingWithoutNote = questions.some((q) => q.billing && q.billingNote.trim().length === 0)
+  const canSubmit = total > 0 && completed === total && !hasBillingWithoutNote
 
   const blockedFromIndex = useMemo(() => {
     for (let i = 0; i < filteredQuestions.length; i++) {
@@ -267,13 +260,6 @@ export function AuditForm ({
               />
             </div>
 
-            <BillingSection
-              billing={billing}
-              isComplete={isBillingComplete}
-              onFlagChange={toggleBillingFlag}
-              onCommentsChange={changeBillingComments}
-            />
-
             <div className='flex gap-2 mb-4 overflow-x-auto lg:hidden pb-1'>
               {[
                 { key: null as QuestionFilter, label: `All (${total})` },
@@ -305,10 +291,14 @@ export function AuditForm ({
                   answer={q.answer}
                   note={q.note}
                   flagged={q.flagged}
+                  billing={q.billing}
+                  billingNote={q.billingNote}
                   disabled={blockedFromIndex !== -1 && i >= blockedFromIndex}
                   onAnswerChange={(value) => updateAnswer(q.id, value)}
                   onNoteChange={(value) => updateComment(q.id, value)}
                   onFlagToggle={() => toggleFlag(q.id)}
+                  onBillingToggle={() => toggleBilling(q.id)}
+                  onBillingNoteChange={(value) => updateBillingNote(q.id, value)}
                 />
               ))}
 
