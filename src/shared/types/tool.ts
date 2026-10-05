@@ -41,6 +41,13 @@ export interface ToolByIdResponse {
   reviewDate: string | null
   servicesBilled: string | null
   socDate: string | null
+  billingFlag: boolean
+  billingComments: string | null
+}
+
+export interface ToolBilling {
+  flag: boolean
+  comments: string
 }
 
 /** One form question from GET /api/Tools/{id}/form */
