@@ -67,10 +67,14 @@ export function AuditSection ({ title, questions, startNumber, onQuestionUpdate 
               answer={q.answer}
               note={q.note}
               flagged={q.flagged}
+              billing={q.billing}
+              billingNote={q.billingNote}
               disabled={blockedFromIndex !== -1 && i >= blockedFromIndex}
               onAnswerChange={(value) => onQuestionUpdate(q.id, { answer: value })}
               onNoteChange={(value) => onQuestionUpdate(q.id, { note: value })}
               onFlagToggle={() => onQuestionUpdate(q.id, { flagged: !q.flagged })}
+              onBillingToggle={() => onQuestionUpdate(q.id, { billing: !q.billing })}
+              onBillingNoteChange={(value) => onQuestionUpdate(q.id, { billingNote: value })}
             />
           ))}
         </div>
