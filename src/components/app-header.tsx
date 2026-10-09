@@ -1,8 +1,10 @@
 import { useState } from 'react'
-import { ClipboardCheck, Plus, Search, X } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { ClipboardCheck, ListChecks, Plus, Search, X } from 'lucide-react'
 import { CreateAuditModal } from '@/components/create-audit-modal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import useRole from '@shared/hooks/useRole'
 import {
   Select,
   SelectContent,
@@ -35,6 +37,7 @@ export function AppHeader ({
   onAuditCreated
 }: AppHeaderProps) {
   const [createModalOpen, setCreateModalOpen] = useState(false)
+  const { isAdmin } = useRole()
 
   return (
     <header className='border-b border-border bg-card'>
@@ -49,14 +52,24 @@ export function AppHeader ({
               Home Health
             </span>
           </div>
-          <Button
-            size='sm'
-            className='h-8 text-xs'
-            onClick={() => setCreateModalOpen(true)}
-          >
-            <Plus className='size-3.5 mr-1.5' />
-            New Audit
-          </Button>
+          <div className='flex items-center gap-2'>
+            {isAdmin && (
+              <Button asChild variant='ghost' size='sm' className='h-8 text-xs text-muted-foreground'>
+                <Link to='/maintenance'>
+                  <ListChecks className='size-3.5 mr-1.5' />
+                  Definitions
+                </Link>
+              </Button>
+            )}
+            <Button
+              size='sm'
+              className='h-8 text-xs'
+              onClick={() => setCreateModalOpen(true)}
+            >
+              <Plus className='size-3.5 mr-1.5' />
+              New Audit
+            </Button>
+          </div>
         </div>
 
         <CreateAuditModal
