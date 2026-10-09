@@ -9,6 +9,7 @@ export interface ToolInfo {
   assignedAuditor?: string
   templateScore?: string
   templateStatus?: string
+  modifiedOn?: string
 }
 
 export interface ToolMetadata {

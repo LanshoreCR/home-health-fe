@@ -25,6 +25,9 @@ function formatDate (isoString: string): string {
   return isoString.slice(0, 10)
 }
 
+const modifiedTime = (tool: ToolInfo): number =>
+  tool.modifiedOn != null ? new Date(tool.modifiedOn).getTime() : 0
+
 export default function AuditToolsPage () {
   const { id } = useParams<{ id: string }>()
   const [audit, setAudit] = useState<Audit | null>(null)
@@ -79,10 +82,7 @@ export default function AuditToolsPage () {
         if (statusFilter !== 'all' && getToolStatus(t.completed, t.total) !== statusFilter) return false
         return true
       })
-      .sort((a, b) => {
-        const order: Record<string, number> = { 'not-started': 0, 'in-progress': 1, complete: 2 }
-        return order[getToolStatus(a.completed, a.total)] - order[getToolStatus(b.completed, b.total)]
-      })
+      .sort((a, b) => modifiedTime(b) - modifiedTime(a))
   }, [tools, searchQuery, statusFilter])
 
   const refreshTools = async (): Promise<void> => {
