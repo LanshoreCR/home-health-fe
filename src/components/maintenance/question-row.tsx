@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import type { MaintenanceQuestion } from '@shared/types'
-import { hasSection } from './format'
+import { hasDefinition, hasSection } from './format'
 
 interface QuestionRowProps {
   question: MaintenanceQuestion
@@ -65,6 +65,9 @@ export function QuestionRow ({ question, editable, onEdit, onDeactivate, onShowH
             <Badge variant='outline' className='font-mono text-[11px]'>{question.gTag}</Badge>
           )}
           {hasSection(question.categ) && <Badge variant='secondary'>{question.categ}</Badge>}
+          {!hasDefinition(question.definition) && (
+            <Badge variant='outline' className='border-dashed font-normal text-muted-foreground'>No definition</Badge>
+          )}
           {question.isNew && (
             <Badge variant='outline' className='border-emerald-200 bg-emerald-50 text-emerald-700'>
               {question.lastVersionNumber == null ? 'New' : 'Reactivated'}

@@ -14,12 +14,12 @@ interface QuestionDialogProps {
   onSave: (input: MaintenanceQuestionInput) => Promise<void>
 }
 
-const emptyInput: MaintenanceQuestionInput = { questionText: '', categ: 'N/A', gTag: '' }
+const emptyInput: MaintenanceQuestionInput = { questionText: '', categ: 'N/A', gTag: '', definition: '' }
 
 const toInput = (question: MaintenanceQuestion | null): MaintenanceQuestionInput =>
   question == null
     ? emptyInput
-    : { questionText: question.questionText, categ: question.categ ?? '', gTag: question.gTag ?? '' }
+    : { questionText: question.questionText, categ: question.categ ?? '', gTag: question.gTag ?? '', definition: question.definition ?? '' }
 
 export function QuestionDialog ({ open, question, onOpenChange, onSave }: QuestionDialogProps): JSX.Element {
   const [input, setInput] = useState<MaintenanceQuestionInput>(emptyInput)
@@ -46,7 +46,7 @@ export function QuestionDialog ({ open, question, onOpenChange, onSave }: Questi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-lg'>
+      <DialogContent className='sm:max-w-2xl max-h-[90vh] overflow-y-auto'>
         <DialogHeader>
           <DialogTitle>{isNew ? 'Add question' : 'Edit question'}</DialogTitle>
           <DialogDescription>
@@ -84,6 +84,17 @@ export function QuestionDialog ({ open, question, onOpenChange, onSave }: Questi
                 onChange={(e) => setInput({ ...input, gTag: e.target.value })}
               />
             </div>
+          </div>
+          <div className='flex flex-col gap-1.5'>
+            <Label htmlFor='question-definition'>Definition</Label>
+            <Textarea
+              id='question-definition'
+              rows={10}
+              className='min-h-48 max-h-[45vh]'
+              placeholder='Reference text shown on the Definitions tab of the exported Excel'
+              value={input.definition ?? ''}
+              onChange={(e) => setInput({ ...input, definition: e.target.value })}
+            />
           </div>
         </div>
 

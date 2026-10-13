@@ -16,6 +16,7 @@ export interface MaintenanceQuestion {
   questionSort: number | null
   categ: string | null
   gTag: string | null
+  definition: string | null
   isActive: boolean
   lastVersionNumber: number | null
   isNew: boolean
@@ -27,6 +28,7 @@ export interface MaintenanceQuestionInput {
   questionText: string
   categ: string | null
   gTag: string | null
+  definition: string | null
 }
 
 export interface QuestionHistoryEntry {
@@ -39,5 +41,6 @@ export interface QuestionHistoryEntry {
   questionSort: number | null
   categ: string | null
   gTag: string | null
+  definition: string | null
   changes: string[]
 }

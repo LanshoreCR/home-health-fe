@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { getQuestionHistory } from '@shared/services/api/endpoints/maintenance'
 import type { MaintenanceQuestion, QuestionHistoryEntry } from '@shared/types'
-import { formatVersionDate, hasSection } from './format'
+import { formatVersionDate, hasDefinition, hasSection } from './format'
 
 interface QuestionHistoryDialogProps {
   question: MaintenanceQuestion | null
@@ -21,6 +21,7 @@ function HistoryEntry ({ entry }: { entry: QuestionHistoryEntry }): JSX.Element 
   const versionLabel = entry.isDraft
     ? `v${entry.versionNumber} · Draft`
     : `v${entry.versionNumber} · ${formatVersionDate(entry.publishedOn)}${entry.publishedByName != null ? ` · ${entry.publishedByName}` : ''}`
+  const showDefinition = entry.changes.includes('Definition') || (entry.changes.includes('Added') && hasDefinition(entry.definition))
 
   return (
     <li className='relative pl-5 pb-5 last:pb-0 border-l border-border ml-1.5'>
@@ -41,6 +42,14 @@ function HistoryEntry ({ entry }: { entry: QuestionHistoryEntry }): JSX.Element 
               hasSection(entry.categ) ? entry.categ : null
             ].filter(Boolean).join(' · ')}
           </p>
+          {showDefinition && (
+            <div className='mt-2 border-t border-border pt-2'>
+              <p className='text-xs font-medium text-muted-foreground'>Definition</p>
+              {hasDefinition(entry.definition)
+                ? <p className='mt-0.5 text-sm text-card-foreground whitespace-pre-wrap'>{entry.definition}</p>
+                : <p className='mt-0.5 text-sm italic text-muted-foreground'>No definition</p>}
+            </div>
+          )}
         </div>
       )}
     </li>
