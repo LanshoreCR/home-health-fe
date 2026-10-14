@@ -1,4 +1,4 @@
-import { Flag, AlertCircle } from 'lucide-react'
+import { Flag, AlertCircle, Receipt } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
@@ -14,6 +14,9 @@ const ANSWER_ACTIVE_STYLES: Record<Exclude<AnswerValue, null>, string> = {
 
 const ANSWER_INACTIVE_STYLE = 'bg-card text-muted-foreground hover:bg-secondary hover:text-secondary-foreground'
 
+const TOGGLE_ACTIVE_STYLE = 'text-amber-700 bg-amber-50'
+const TOGGLE_INACTIVE_STYLE = 'text-muted-foreground hover:text-card-foreground'
+
 const answerOptions: Array<{ value: AnswerValue, label: string }> = [
   { value: 'yes', label: 'Yes' },
   { value: 'no', label: 'No' },
@@ -26,10 +29,14 @@ interface AuditQuestionProps {
   answer: AnswerValue
   note: string
   flagged: boolean
+  billing: boolean
+  billingNote: string
   disabled?: boolean
   onAnswerChange: (value: AnswerValue) => void
   onNoteChange: (value: string) => void
   onFlagToggle: () => void
+  onBillingToggle: () => void
+  onBillingNoteChange: (value: string) => void
 }
 
 export function AuditQuestion ({
@@ -38,12 +45,17 @@ export function AuditQuestion ({
   answer,
   note,
   flagged,
+  billing,
+  billingNote,
   disabled = false,
   onAnswerChange,
   onNoteChange,
-  onFlagToggle
+  onFlagToggle,
+  onBillingToggle,
+  onBillingNoteChange
 }: AuditQuestionProps) {
   const requiresNote = answer === 'no' && note.trim().length === 0
+  const requiresBillingNote = billing && billingNote.trim().length === 0
 
   return (
     <div
@@ -84,21 +96,29 @@ export function AuditQuestion ({
               ))}
             </div>
 
-            <Button
-              variant='ghost'
-              size='sm'
-              disabled={disabled}
-              className={cn(
-                'h-8 px-2 text-xs',
-                flagged
-                  ? 'text-amber-700 bg-amber-50'
-                  : 'text-muted-foreground hover:text-card-foreground'
-              )}
-              onClick={onFlagToggle}
-            >
-              <Flag className={cn('size-3.5 mr-1', flagged && 'fill-current')} />
-              {flagged ? 'Flagged' : 'Flag'}
-            </Button>
+            <div className='flex items-center gap-1'>
+              <Button
+                variant='ghost'
+                size='sm'
+                disabled={disabled}
+                aria-pressed={billing}
+                className={cn('h-8 px-2 text-xs', billing ? TOGGLE_ACTIVE_STYLE : TOGGLE_INACTIVE_STYLE)}
+                onClick={onBillingToggle}
+              >
+                <Receipt className='size-3.5 mr-1' />
+                Billing
+              </Button>
+              <Button
+                variant='ghost'
+                size='sm'
+                disabled={disabled}
+                className={cn('h-8 px-2 text-xs', flagged ? TOGGLE_ACTIVE_STYLE : TOGGLE_INACTIVE_STYLE)}
+                onClick={onFlagToggle}
+              >
+                <Flag className={cn('size-3.5 mr-1', flagged && 'fill-current')} />
+                {flagged ? 'Flagged' : 'Flag'}
+              </Button>
+            </div>
           </div>
 
           <div className='relative'>
@@ -126,6 +146,32 @@ export function AuditQuestion ({
               </div>
             )}
           </div>
+
+          {billing && (
+            <div className='mt-2'>
+              <Textarea
+                value={billingNote}
+                onChange={(e) => onBillingNoteChange(e.target.value)}
+                disabled={disabled}
+                maxLength={1000}
+                aria-label='Billing comment'
+                placeholder='Required: billing comment...'
+                className={cn(
+                  'min-h-[56px] text-sm bg-background resize-none transition-colors',
+                  requiresBillingNote &&
+                    'border-red-400 bg-red-50/50 focus-visible:ring-red-400 placeholder:text-red-400/70'
+                )}
+              />
+              {requiresBillingNote && (
+                <div className='flex items-center gap-1.5 mt-1.5'>
+                  <AlertCircle className='size-3 text-red-600 shrink-0' />
+                  <span className='text-xs text-red-600'>
+                    A billing comment is required to submit
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

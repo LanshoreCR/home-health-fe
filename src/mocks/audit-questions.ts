@@ -9,7 +9,7 @@ export interface AuditDef {
 let mockAnswerIdCounter = 9000
 
 export function makeQ (id: string, text: string): QuestionData {
-  return { id, templateAnswerId: mockAnswerIdCounter++, text, answer: null, note: '', flagged: false }
+  return { id, templateAnswerId: mockAnswerIdCounter++, text, answer: null, note: '', flagged: false, billing: false, billingNote: '' }
 }
 
 export const auditDatabase: Record<string, AuditDef> = {

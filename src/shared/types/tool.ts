@@ -9,6 +9,7 @@ export interface ToolInfo {
   assignedAuditor?: string
   templateScore?: string
   templateStatus?: string
+  modifiedOn?: string
 }
 
 export interface ToolMetadata {
@@ -54,4 +55,6 @@ export interface ToolFormQuestionResponse {
   comments: string | null
   templateAnswerID?: number | null
   flag: boolean | null
+  billingFlag: boolean | null
+  billingComments: string | null
 }

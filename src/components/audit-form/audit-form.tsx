@@ -57,7 +57,7 @@ export function AuditForm ({
   formError = null
 }: AuditFormProps) {
   const questions = useFormStore((s) => s.questions)
-  const { updateAnswer, updateComment, toggleFlag } = useFormStore.getState()
+  const { updateAnswer, updateComment, toggleFlag, toggleBilling, updateBillingNote } = useFormStore.getState()
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState<QuestionFilter>(null)
@@ -103,7 +103,8 @@ export function AuditForm ({
 
   const filteredQuestions = useFilteredQuestions(questions, searchQuery, activeFilter)
   const { total, completed, percent } = useAuditProgress(questions)
-  const canSubmit = total > 0 && completed === total
+  const hasBillingWithoutNote = questions.some((q) => q.billing && q.billingNote.trim().length === 0)
+  const canSubmit = total > 0 && completed === total && !hasBillingWithoutNote
 
   const blockedFromIndex = useMemo(() => {
     for (let i = 0; i < filteredQuestions.length; i++) {
@@ -290,10 +291,14 @@ export function AuditForm ({
                   answer={q.answer}
                   note={q.note}
                   flagged={q.flagged}
+                  billing={q.billing}
+                  billingNote={q.billingNote}
                   disabled={blockedFromIndex !== -1 && i >= blockedFromIndex}
                   onAnswerChange={(value) => updateAnswer(q.id, value)}
                   onNoteChange={(value) => updateComment(q.id, value)}
                   onFlagToggle={() => toggleFlag(q.id)}
+                  onBillingToggle={() => toggleBilling(q.id)}
+                  onBillingNoteChange={(value) => updateBillingNote(q.id, value)}
                 />
               ))}
 

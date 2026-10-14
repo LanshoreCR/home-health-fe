@@ -43,14 +43,5 @@ export const ENDPOINTS = {
   MANAGE_TEAM_AUDITORS: '/api/AuditTeams/ManageTeamAuditors',
   REASSIGN_AUDITOR: '/api/AuditTeams/ReassignAuditor',
   REASSIGN_TEAM_LEAD: '/api/AuditTeams/ReassignLead',
-  MAINTENANCE_TOOLS: '/api/Maintenance/GetMaintenanceAuditTools',
-  MAINTENANCE_BUSINESSLINES: '/api/Maintenance/GetMaintenanceBusinessLines',
-  TEMPLATE_QUESTIONS: '/api/Maintenance/GetTemplateDetails',
-  UPDATE_MAINTENANCE_QUESTION: '/api/Maintenance/UpdateQuestions',
-  CREATE_TEMPLATE: '/api/Maintenance/CreateTemplate',
-  UPDATE_TEMPLATE: '/api/Maintenance/UpdateTemplate',
-  CREATE_MAINTENANCE_QUESTION: '/api/Maintenance/CreateQuestions',
-  DELETE_TEMPLATE_QUESTION: '/api/Maintenance/DeleteQuestions',
-  PUBLISH_TEMPLATE: '/api/Maintenance/PublishQuestions',
-  UPDATE_SUBSECTION: '/api/Maintenance/UpdateSubsection'
+  MAINTENANCE_BASE: '/api/Maintenance'
 }

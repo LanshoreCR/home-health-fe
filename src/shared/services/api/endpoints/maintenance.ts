@@ -1,334 +1,61 @@
+import { isAxiosError } from 'axios'
+import { toast } from 'sonner'
 import { axiosInstance } from '../api-master'
 import { ENDPOINTS } from '../config'
+import type { MaintenanceQuestion, MaintenanceQuestionInput, QuestionHistoryEntry, TemplateVersion } from '@shared/types'
 
-export const getMaintenanceBusinessLines = async () => {
-  try {
-    const response = await axiosInstance.get(ENDPOINTS.MAINTENANCE_BUSINESSLINES)
-    if (response.status !== 200) throw new Error('error while getting maintenance business lines')
-    const data = response.data as Array<Record<string, unknown>>
+const templateUrl = (templateId: number): string => `${ENDPOINTS.MAINTENANCE_BASE}/templates/${templateId}`
+const draftUrl = (templateId: number): string => `${templateUrl(templateId)}/draft`
 
-    const businessLines = data.map((tool: Record<string, unknown>) => ({
-      templateTypeId: tool.templateTypeID,
-      templateTypeDesc: tool.templateTypeDesc,
-      state: tool.state,
-      businessLine: tool.businessLine
-    }))
-
-    return businessLines
-  } catch (error) {
-    console.error(error)
-    return new Error('cannot get maintenance business lines')
-  }
+// The API answers business-rule failures (400/404/409) with a readable message; show it instead of a generic one.
+const failWith = (fallback: string) => (error: unknown): never => {
+  console.error(error)
+  const apiMessage = isAxiosError(error) && typeof error.response?.data === 'string' ? error.response.data : ''
+  toast.error(apiMessage !== '' ? apiMessage : fallback)
+  throw error
 }
 
-export const getMaintenanceTools = async (templateTypeID: string, state: string) => {
-  try {
-    const response = await axiosInstance.get(ENDPOINTS.MAINTENANCE_TOOLS, {
-      params: {
-        TemplateTypeID: templateTypeID,
-        State: state === '' ? null : state
-      }
-    })
-    if (response.status !== 200) throw new Error('error while getting maintenance tools')
-    const data = response.data as Array<Record<string, unknown>>
-    const tools = data.map((tool: Record<string, unknown>) => ({
-      templateId: tool.templateID,
-      templateDesc: tool.templateDesc,
-      templateTypeId: tool.templateTypeID,
-      releaseDate: tool.releaseDate,
-      templateModifiedOn: tool.templateModifiedOn,
-      inactiveFlag: tool.inactiveFlag
-    }))
+export const getTemplateVersions = async (templateId: number): Promise<TemplateVersion[]> =>
+  await axiosInstance.get<TemplateVersion[]>(`${templateUrl(templateId)}/versions`)
+    .then((response) => response.data)
+    .catch(failWith('Failed to load versions'))
 
-    return tools
-  } catch (error) {
-    console.error(error)
-    return new Error('cannot get maintenance tools')
-  }
+export const getMaintenanceQuestions = async (templateId: number): Promise<MaintenanceQuestion[]> =>
+  await axiosInstance.get<MaintenanceQuestion[]>(`${templateUrl(templateId)}/questions`)
+    .then((response) => response.data)
+    .catch(failWith('Failed to load questions'))
+
+export const createDraft = async (templateId: number): Promise<void> => {
+  await axiosInstance.post(draftUrl(templateId)).catch(failWith('Failed to start a draft'))
 }
 
-export const getTemplateQuestions = async ({ templateId }: { templateId: string }) => {
-  try {
-    const params = {
-      TemplateID: templateId
-    }
-
-    const response = await axiosInstance.get(ENDPOINTS.TEMPLATE_QUESTIONS, { params })
-    if (response.status !== 200) throw new Error('error while getting template questions')
-    const data = response.data as Array<Record<string, unknown>>
-
-    const questions = data.map((question: Record<string, unknown>) => ({
-      templateId: question.templateID,
-      templateDesc: question.templateDesc,
-      templateTypeId: question.templateTypeID,
-      state: question.state,
-      questionId: question.questionID,
-      questionText: question.questionText,
-      questionSort: question.questionSort,
-      category: question.categ,
-      questionStatus: question.questionStatus,
-      templateStatus: question.templateStatus,
-      questionModifiedOn: question.questionModifiedOn,
-      templateModifiedOn: question.templateModifiedOn,
-      releaseDate: question.releaseDate,
-      keyIndicator: question.keyIndicator
-    }))
-
-    return questions
-  } catch (error) {
-    console.error(error)
-    return new Error('cannot get template questions')
-  }
+export const discardDraft = async (templateId: number): Promise<void> => {
+  await axiosInstance.delete(draftUrl(templateId)).catch(failWith('Failed to discard the draft'))
 }
 
-interface MaintenanceQuestion {
-  questionText: string
-  questionSort: number
-  templateId: string
-  category: string
-  questionId: string
-  releaseDate: string
-  keyIndicator: boolean
+export const publishDraft = async (templateId: number): Promise<{ versionNumber: number }> =>
+  await axiosInstance.post<{ versionNumber: number }>(`${draftUrl(templateId)}/publish`)
+    .then((response) => response.data)
+    .catch(failWith('Failed to publish the draft'))
+
+export const createQuestion = async (templateId: number, input: MaintenanceQuestionInput): Promise<void> => {
+  await axiosInstance.post(`${draftUrl(templateId)}/questions`, input).catch(failWith('Failed to add the question'))
 }
 
-export const updateMaintenanceQuestion = async ({ question, userId }: { question: MaintenanceQuestion, userId: string }) => {
-  try {
-    const body = {
-      ModifiedBy: userId,
-      QuestionText: question.questionText,
-      QuestionSort: question.questionSort,
-      TemplateID: question.templateId,
-      Categ: question.category,
-      QuestionID: question.questionId,
-      ReleaseDate: question.releaseDate,
-      KeyIndicator: question.keyIndicator
-    }
-
-    const response = await axiosInstance.put(ENDPOINTS.UPDATE_MAINTENANCE_QUESTION, [body], {})
-    if (response.status !== 200) throw new Error('error while updating maintenance question')
-    const data = response.data
-
-    return data
-  } catch (error) {
-    console.error(error)
-    return new Error('cannot update maintenance question')
-  }
+export const updateQuestion = async (templateId: number, questionId: number, input: MaintenanceQuestionInput): Promise<void> => {
+  await axiosInstance.put(`${draftUrl(templateId)}/questions/${questionId}`, input).catch(failWith('Failed to save the question'))
 }
 
-export const addTool = async ({ name, userId, templateTypeId, state }: { name: string, userId: string, templateTypeId: string, state: string }) => {
-  try {
-    const body = {
-      TemplateDesc: name,
-      TemplateTypeId: templateTypeId,
-      CreatedBy: userId,
-      ModifiedBy: userId,
-      State: state
-    }
-
-    const response = await axiosInstance.post(ENDPOINTS.CREATE_TEMPLATE, body, {})
-    if (response.status !== 200) throw new Error('error while adding tool')
-    const data = response.data
-
-    return data
-  } catch (error) {
-    console.error(error)
-    return new Error('cannot add tool')
-  }
+export const setQuestionActive = async (templateId: number, questionId: number, isActive: boolean): Promise<void> => {
+  await axiosInstance.put(`${draftUrl(templateId)}/questions/${questionId}/active`, { isActive })
+    .catch(failWith(isActive ? 'Failed to activate the question' : 'Failed to deactivate the question'))
 }
 
-interface AddQuestionItem { name: string, questionSort: number, templateId: string, category: string, isKeyIndicator: boolean }
-
-export const addQuestion = async ({ question, userId }: { question: AddQuestionItem, userId: string }) => {
-  try {
-    const body = {
-      CreatedBy: userId,
-      ModifiedBy: userId,
-      QuestionText: question.name,
-      QuestionSort: question.questionSort,
-      TemplateID: question.templateId,
-      Categ: question.category,
-      KeyIndicator: question.isKeyIndicator ? 1 : 0
-    }
-
-    const response = await axiosInstance.post(ENDPOINTS.CREATE_MAINTENANCE_QUESTION, body, {})
-    if (response.status !== 200) throw new Error('error while adding question')
-    const data = response.data
-
-    return data
-  } catch (error) {
-    console.error(error)
-    return new Error('cannot add question')
-  }
+export const reorderQuestions = async (templateId: number, questionIDs: number[]): Promise<void> => {
+  await axiosInstance.put(`${draftUrl(templateId)}/order`, { questionIDs }).catch(failWith('Failed to save the new order'))
 }
 
-export const deleteQuestion = async ({ questionId, userId }: { questionId: string, userId: string }) => {
-  try {
-    const body = {
-      ModifiedBy: userId,
-      QuestionID: questionId,
-      InactiveFlag: 1
-    }
-
-    const response = await axiosInstance.put(ENDPOINTS.DELETE_TEMPLATE_QUESTION, body, {})
-    if (response.status !== 200) throw new Error('error while deleting question')
-    const data = response.data
-
-    return data
-  } catch (error) {
-    console.error(error)
-    return new Error('cannot delete question')
-  }
-}
-
-export const activateQuestion = async ({ questionId, userId }: { questionId: string, userId: string }) => {
-  try {
-    const body = {
-      ModifiedBy: userId,
-      QuestionID: questionId,
-      InactiveFlag: 0
-    }
-
-    const response = await axiosInstance.put(ENDPOINTS.DELETE_TEMPLATE_QUESTION, body, {})
-    if (response.status !== 200) throw new Error('error while deleting question')
-    const data = response.data
-
-    return data
-  } catch (error) {
-    console.error(error)
-    return new Error('cannot delete question')
-  }
-}
-
-export const updateTool = async ({ name, templateId, userId }: { name: string, templateId: string, userId: string }) => {
-  try {
-    const body = {
-      TemplateDesc: name,
-      TemplateTypeID: 1,
-      ModifiedBy: userId,
-      TemplateID: templateId,
-      Controller: 1,
-      InactiveFlag: 0
-    }
-
-    const response = await axiosInstance.put(ENDPOINTS.UPDATE_TEMPLATE, body, {})
-    if (response.status !== 200) throw new Error('error while updating tool template')
-    const data = response.data
-
-    return data
-  } catch (error) {
-    console.error(error)
-    return new Error('cannot update tool template')
-  }
-}
-
-interface UpdateQuestionItem {
-  questionText: string
-  questionSort: number
-  templateId: string
-  category: string
-  questionId: string
-  releaseDate: string
-}
-
-export const updateAllQuestions = async ({ questions, userId }: { questions: UpdateQuestionItem[], userId: string }) => {
-  try {
-    const body = questions.map((question) => ({
-      ModifiedBy: userId,
-      QuestionText: question.questionText,
-      QuestionSort: question.questionSort,
-      TemplateID: question.templateId,
-      Categ: question.category,
-      QuestionID: question.questionId,
-      ReleaseDate: question.releaseDate
-    }))
-
-    const response = await axiosInstance.put(ENDPOINTS.UPDATE_MAINTENANCE_QUESTION, body, {})
-    if (response.status !== 200) throw new Error('error while updating maintenance question')
-    const data = response.data
-
-    return data
-  } catch (error) {
-    console.error(error)
-    return new Error('cannot update maintenance question')
-  }
-}
-
-export const publishToolTemplate = async ({ releaseDate, templateId }: { releaseDate: string, templateId: string }) => {
-  try {
-    const body = {
-      TemplateID: templateId,
-      ReleaseDate: releaseDate
-    }
-
-    const response = await axiosInstance.post(ENDPOINTS.PUBLISH_TEMPLATE, body, {})
-    if (response.status !== 200) throw new Error('error while publishing tool template')
-    const data = response.data
-
-    return data
-  } catch (error) {
-    console.error(error)
-    return new Error('cannot publish tool template')
-  }
-}
-
-export const activeOrInactiveTool = async ({ name, templateId, userId, currentInactiveFlag }: { name: string, templateId: string, userId: string, currentInactiveFlag: number }) => {
-  try {
-    const body = {
-      TemplateDesc: name,
-      TemplateTypeID: 1,
-      ModifiedBy: userId,
-      TemplateID: templateId,
-      Controller: 2,
-      InactiveFlag: currentInactiveFlag === 1 ? 0 : 1
-    }
-
-    const response = await axiosInstance.put(ENDPOINTS.UPDATE_TEMPLATE, body, {})
-    if (response.status !== 200) throw new Error('error while deleting tool template')
-    const data = response.data
-
-    return data
-  } catch (error) {
-    console.error(error)
-    return new Error('cannot delete tool')
-  }
-}
-
-export const updateSubsection = async ({ templateId, userId, oldName, newName }: { templateId: string, userId: string, oldName: string, newName: string }) => {
-  try {
-    const body = {
-      ModifiedBy: userId,
-      TemplateID: templateId,
-      OldCategory: oldName,
-      NewCategory: newName,
-      Controller: 1
-    }
-    const response = await axiosInstance.put(ENDPOINTS.UPDATE_SUBSECTION, body, {})
-    if (response.status !== 200) throw new Error('error while updating subsection')
-    const data = response.data
-
-    return data
-  } catch (error) {
-    console.error(error)
-    return new Error('cannot update subsection')
-  }
-}
-
-export const deleteSubsection = async ({ templateId, userId, name }: { templateId: string, userId: string, name: string }) => {
-  try {
-    const body = {
-      ModifiedBy: userId,
-      TemplateID: templateId,
-      OldCategory: name,
-      NewCategory: name,
-      Controller: 0
-    }
-    const response = await axiosInstance.put(ENDPOINTS.UPDATE_SUBSECTION, body, {})
-    if (response.status !== 200) throw new Error('error while updating subsection')
-    const data = response.data
-
-    return data
-  } catch (error) {
-    console.error(error)
-    return new Error('cannot update subsection')
-  }
-}
+export const getQuestionHistory = async (questionId: number): Promise<QuestionHistoryEntry[]> =>
+  await axiosInstance.get<QuestionHistoryEntry[]>(`${ENDPOINTS.MAINTENANCE_BASE}/questions/${questionId}/history`)
+    .then((response) => response.data)
+    .catch(failWith('Failed to load the question history'))
