@@ -57,7 +57,7 @@ export function AppHeader ({
               <Button asChild variant='ghost' size='sm' className='h-8 text-xs text-muted-foreground'>
                 <Link to='/maintenance'>
                   <ListChecks className='size-3.5 mr-1.5' />
-                  Definitions
+                  Maintenance
                 </Link>
               </Button>
             )}
